@@ -1,0 +1,349 @@
+# ============================================================================
+# DwarfSim Creature Definitions
+# ============================================================================
+# Defines all creature types in the game, their stats, and behaviors.
+# Copy to ./creatures.yaml or ~/.config/dwarfsim/creatures.yaml to customize.
+#
+# Creature Definition Fields:
+#   display_char       - Single character shown on map
+#   base_hp            - Starting/maximum hit points
+#   base_damage        - Damage dealt per attack
+#   hostile_to_dwarves - Whether this creature attacks dwarves
+#   weapon             - Name of weapon used (for combat log flavor)
+#   damage_type        - Type of damage: blunt, slash, pierce, bite, fire, cold
+#   loot_on_death      - Items dropped when killed
+# ============================================================================
+
+creatures:
+  # ==========================================================================
+  # CIVILIZED RACES
+  # ==========================================================================
+
+  dwarf:
+    display_char: "@"
+    base_hp: 100
+    base_damage: 10
+    hostile_to_dwarves: false
+    weapon: "fists"
+    damage_type: "blunt"
+    # Dwarves are the player's units - sturdy, brave, and industrious.
+    # They form the backbone of your fortress.
+
+  # ==========================================================================
+  # GOBLINOIDS - Common raiders and thieves
+  # ==========================================================================
+
+  goblin:
+    display_char: "g"
+    base_hp: 60
+    base_damage: 8
+    hostile_to_dwarves: true
+    weapon: "crude sword"
+    damage_type: "slash"
+    loot_on_death:
+      - item: "goblin_ear"
+        quantity_min: 1
+        quantity_max: 2
+    # Goblins are weak individually but often attack in groups.
+    # They're cunning thieves who target undefended stockpiles.
+
+  hobgoblin:
+    display_char: "H"
+    base_hp: 90
+    base_damage: 14
+    hostile_to_dwarves: true
+    weapon: "iron sword"
+    damage_type: "slash"
+    loot_on_death:
+      - item: "iron_ore"
+        quantity_min: 1
+        quantity_max: 2
+    # Larger and more disciplined than regular goblins.
+    # Often lead goblin raiding parties.
+
+  kobold:
+    display_char: "k"
+    base_hp: 35
+    base_damage: 5
+    hostile_to_dwarves: true
+    weapon: "rusty dagger"
+    damage_type: "pierce"
+    loot_on_death:
+      - item: "stone"
+        quantity_min: 1
+        quantity_max: 3
+    # Small, cowardly creatures that flee when injured.
+    # Primarily a nuisance rather than a real threat.
+
+  # ==========================================================================
+  # WILDLIFE - Natural creatures of the world
+  # ==========================================================================
+
+  wolf:
+    display_char: "w"
+    base_hp: 40
+    base_damage: 12
+    hostile_to_dwarves: true
+    weapon: "fangs"
+    damage_type: "bite"
+    loot_on_death:
+      - item: "raw_meat"
+        quantity_min: 2
+        quantity_max: 4
+      - item: "wolf_pelt"
+        quantity_min: 1
+        quantity_max: 1
+    # Fast and aggressive predators. Hunt in packs.
+    # Their pelts make excellent cloaks.
+
+  bear:
+    display_char: "B"
+    base_hp: 150
+    base_damage: 25
+    hostile_to_dwarves: true
+    weapon: "claws"
+    damage_type: "slash"
+    loot_on_death:
+      - item: "raw_meat"
+        quantity_min: 4
+        quantity_max: 8
+      - item: "bear_pelt"
+        quantity_min: 1
+        quantity_max: 1
+    # Powerful solitary hunters. Dangerous but valuable kills.
+    # Bear meat feeds many dwarves.
+
+  giant_spider:
+    display_char: "S"
+    base_hp: 55
+    base_damage: 10
+    hostile_to_dwarves: true
+    weapon: "venomous fangs"
+    damage_type: "pierce"
+    loot_on_death:
+      - item: "spider_silk"
+        quantity_min: 2
+        quantity_max: 5
+    # Lurks in dark places. Venom can incapacitate victims.
+    # Spider silk is valuable for weaving.
+
+  giant_rat:
+    display_char: "r"
+    base_hp: 20
+    base_damage: 4
+    hostile_to_dwarves: true
+    weapon: "teeth"
+    damage_type: "bite"
+    loot_on_death:
+      - item: "raw_meat"
+        quantity_min: 1
+        quantity_max: 1
+    # Common vermin. Annoying but rarely dangerous alone.
+    # Can spread disease if left unchecked.
+
+  boar:
+    display_char: "p"
+    base_hp: 70
+    base_damage: 15
+    hostile_to_dwarves: true
+    weapon: "tusks"
+    damage_type: "pierce"
+    loot_on_death:
+      - item: "raw_meat"
+        quantity_min: 3
+        quantity_max: 5
+    # Aggressive when threatened. Charges at enemies.
+    # Good source of meat for the fortress.
+
+  elk:
+    display_char: "e"
+    base_hp: 50
+    base_damage: 8
+    hostile_to_dwarves: false    # Passive unless attacked
+    weapon: "antlers"
+    damage_type: "blunt"
+    loot_on_death:
+      - item: "raw_meat"
+        quantity_min: 4
+        quantity_max: 6
+      - item: "bone"
+        quantity_min: 2
+        quantity_max: 4
+    # Peaceful grazers. Good hunting targets.
+    # Bones useful for crafting.
+
+  # ==========================================================================
+  # GIANTS & TROLLS - Large and dangerous
+  # ==========================================================================
+
+  giant:
+    display_char: "G"
+    base_hp: 300
+    base_damage: 40
+    hostile_to_dwarves: true
+    weapon: "massive club"
+    damage_type: "blunt"
+    loot_on_death:
+      - item: "giant_bone"
+        quantity_min: 3
+        quantity_max: 6
+      - item: "raw_meat"
+        quantity_min: 8
+        quantity_max: 12
+    # Towering brutes with immense strength.
+    # A single giant can devastate an unprepared fortress.
+
+  troll:
+    display_char: "T"
+    base_hp: 180
+    base_damage: 28
+    hostile_to_dwarves: true
+    weapon: "claws"
+    damage_type: "slash"
+    loot_on_death:
+      - item: "troll_fat"
+        quantity_min: 2
+        quantity_max: 4
+      - item: "raw_meat"
+        quantity_min: 5
+        quantity_max: 8
+    # Regenerates health slowly. Best killed quickly.
+    # Troll fat burns well in lamps.
+
+  ogre:
+    display_char: "O"
+    base_hp: 140
+    base_damage: 22
+    hostile_to_dwarves: true
+    weapon: "spiked club"
+    damage_type: "blunt"
+    loot_on_death:
+      - item: "raw_meat"
+        quantity_min: 4
+        quantity_max: 7
+    # Dim-witted but brutal. Often found near goblin camps.
+    # Sometimes kept as "pets" by hobgoblin chiefs.
+
+  # ==========================================================================
+  # UNDEAD - Risen from death
+  # ==========================================================================
+
+  undead:
+    display_char: "z"
+    base_hp: 50
+    base_damage: 8
+    hostile_to_dwarves: true
+    weapon: "rotting hands"
+    damage_type: "blunt"
+    # Basic animated corpses. Slow but relentless.
+    # No loot - they're already dead.
+
+  skeleton:
+    display_char: "s"
+    base_hp: 40
+    base_damage: 10
+    hostile_to_dwarves: true
+    weapon: "rusty blade"
+    damage_type: "slash"
+    loot_on_death:
+      - item: "bone"
+        quantity_min: 3
+        quantity_max: 6
+    # Animated bones. Faster than zombies.
+    # Armed with whatever weapons they had in life.
+
+  ghost:
+    display_char: "G"
+    base_hp: 30
+    base_damage: 6
+    hostile_to_dwarves: true
+    weapon: "chilling touch"
+    damage_type: "cold"
+    # Incorporeal spirits. Hard to hit but fragile.
+    # Their touch drains warmth and will.
+
+  # ==========================================================================
+  # FANTASY CREATURES
+  # ==========================================================================
+
+  dragon:
+    display_char: "D"
+    base_hp: 500
+    base_damage: 60
+    hostile_to_dwarves: true
+    weapon: "fire breath"
+    damage_type: "fire"
+    loot_on_death:
+      - item: "dragon_scale"
+        quantity_min: 5
+        quantity_max: 10
+      - item: "dragon_bone"
+        quantity_min: 8
+        quantity_max: 15
+      - item: "raw_meat"
+        quantity_min: 20
+        quantity_max: 30
+    # Legendary beast. Slaying one brings eternal glory.
+    # Dragon materials make the finest equipment.
+
+  wyvern:
+    display_char: "W"
+    base_hp: 200
+    base_damage: 30
+    hostile_to_dwarves: true
+    weapon: "venomous tail"
+    damage_type: "pierce"
+    loot_on_death:
+      - item: "wyvern_scale"
+        quantity_min: 2
+        quantity_max: 4
+      - item: "raw_meat"
+        quantity_min: 6
+        quantity_max: 10
+    # Lesser dragon-kin. Flies and strikes with poison tail.
+
+  basilisk:
+    display_char: "b"
+    base_hp: 120
+    base_damage: 18
+    hostile_to_dwarves: true
+    weapon: "petrifying gaze"
+    damage_type: "pierce"
+    loot_on_death:
+      - item: "basilisk_eye"
+        quantity_min: 1
+        quantity_max: 2
+    # Eight-legged reptile whose gaze turns flesh to stone.
+    # Its eyes are prized by alchemists.
+
+# ============================================================================
+# Hostile Spawn Pool
+# ============================================================================
+# Creatures that can randomly spawn as hostile attackers.
+# Weight affects relative spawn frequency (higher = more common).
+# Adjust this list to change the threat composition of your game.
+# ============================================================================
+hostile_spawn_pool:
+  # Common threats
+  - goblin
+  - wolf
+  - giant_rat
+  - kobold
+
+  # Uncomment for harder game:
+  # - hobgoblin
+  # - bear
+  # - giant_spider
+  # - boar
+
+  # Uncomment for very hard game:
+  # - troll
+  # - ogre
+  # - skeleton
+  # - undead
+
+  # Uncomment for legendary difficulty:
+  # - giant
+  # - wyvern
+  # - basilisk
+  # - dragon  # Warning: Dragons will destroy everything!

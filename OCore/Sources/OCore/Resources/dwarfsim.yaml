@@ -1,0 +1,103 @@
+# ============================================================================
+# DwarfSim Configuration
+# ============================================================================
+# This is the main configuration file for DwarfSim.
+# Copy to ./dwarfsim.yaml or ~/.config/dwarfsim/dwarfsim.yaml to customize.
+#
+# All values shown are the defaults. Remove or comment out any setting
+# to use its default value.
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Simulation Settings
+# ----------------------------------------------------------------------------
+simulation:
+  # World dimensions (tiles)
+  world:
+    width: 50                    # Map width (10-200)
+    height: 20                   # Map height (10-100)
+
+  # Population settings
+  units:
+    initial_count: 8             # Starting dwarves (1-50)
+    max_population: 50           # Colony population cap (1-100)
+
+  # Starting resources
+  resources:
+    food_count: 15               # Initial food items
+    drink_count: 15              # Initial drink items (ale!)
+    bed_count: 5                 # Initial beds
+
+  # Simulation speed
+  speed:
+    ticks_per_second: 5.0        # Game speed (0.1-10000)
+
+  # Difficulty settings
+  difficulty:
+    hard_mode: false             # When true: fewer starting resources,
+                                 # harsher survival conditions
+
+# ----------------------------------------------------------------------------
+# Event Timing Configuration
+# ----------------------------------------------------------------------------
+# These settings control how often various events occur in the simulation.
+# Intervals are measured in game ticks.
+# ----------------------------------------------------------------------------
+events:
+  # Hostile creature spawning
+  hostile_spawn:
+    interval_ticks: 500          # Check for spawn every N ticks
+    chance_percent: 50           # Probability of spawn per check (0-100)
+
+  # Migrant waves (new dwarves arriving)
+  # Migrants are attracted by colony wealth - prosperous fortresses
+  # draw more settlers than struggling ones.
+  migrant_wave:
+    interval_ticks: 10000        # Check for migrants every N ticks
+
+  # Birth events for married couples
+  birth_check:
+    interval_ticks: 5000         # Check for births every N ticks
+    chance_percent: 5            # Probability per married couple (0-100)
+
+# ----------------------------------------------------------------------------
+# Hostile Spawn Pool
+# ----------------------------------------------------------------------------
+# Which creatures can spawn as hostiles. Must match creature names defined
+# in the creatures section or creatures.yaml file.
+# The spawn system picks randomly from this pool.
+# ----------------------------------------------------------------------------
+hostile_spawn_pool:
+  - goblin
+  - wolf
+
+# ----------------------------------------------------------------------------
+# Preset Configurations
+# ----------------------------------------------------------------------------
+# Uncomment one of these blocks to quickly apply a preset configuration.
+# These override the individual settings above.
+# ----------------------------------------------------------------------------
+
+# PEACEFUL MODE - No hostiles, focus on colony building
+# events:
+#   hostile_spawn:
+#     chance_percent: 0
+
+# HARD MODE - Frequent attacks, scarce resources
+# simulation:
+#   resources:
+#     food_count: 5
+#     drink_count: 5
+#     bed_count: 1
+# events:
+#   hostile_spawn:
+#     interval_ticks: 300
+#     chance_percent: 75
+
+# FAST BREEDING - Quick population growth
+# events:
+#   birth_check:
+#     interval_ticks: 2000
+#     chance_percent: 15
+#   migrant_wave:
+#     interval_ticks: 5000

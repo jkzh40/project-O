@@ -1,0 +1,648 @@
+# ============================================================================
+# DwarfSim Item Definitions
+# ============================================================================
+# Defines all item types in the game, their properties, and values.
+# Copy to ./items.yaml or ~/.config/dwarfsim/items.yaml to customize.
+#
+# Item Definition Fields:
+#   category   - Item category (consumable, furniture, tool, material,
+#                weapon, armor, craft_material, treasure)
+#   base_value - Base trade/wealth value (multiplied by quality)
+#   stackable  - Whether multiple items can occupy same inventory slot
+# ============================================================================
+
+items:
+  # ==========================================================================
+  # FOOD & DRINK - Consumables that satisfy hunger and thirst
+  # ==========================================================================
+
+  # --- Prepared Food ---
+  food:
+    category: "consumable"
+    base_value: 5
+    stackable: true
+    # Generic prepared meal. Satisfies hunger.
+
+  plump_helmet_roast:
+    category: "consumable"
+    base_value: 8
+    stackable: true
+    # Classic dwarven dish. Roasted cave mushrooms.
+
+  meat_stew:
+    category: "consumable"
+    base_value: 12
+    stackable: true
+    # Hearty stew with meat and vegetables.
+
+  lavish_meal:
+    category: "consumable"
+    base_value: 25
+    stackable: true
+    # Multi-course feast. Boosts morale significantly.
+
+  travel_rations:
+    category: "consumable"
+    base_value: 6
+    stackable: true
+    # Preserved food for long journeys. Lasts indefinitely.
+
+  biscuit:
+    category: "consumable"
+    base_value: 3
+    stackable: true
+    # Simple hard bread. Filling but not exciting.
+
+  # --- Raw Ingredients ---
+  raw_meat:
+    category: "consumable"
+    base_value: 4
+    stackable: true
+    # Uncooked meat. Must be prepared before eating.
+
+  raw_fish:
+    category: "consumable"
+    base_value: 4
+    stackable: true
+    # Fresh caught fish. Can be cooked or eaten raw.
+
+  plant:
+    category: "consumable"
+    base_value: 2
+    stackable: true
+    # Gathered plants. Used in cooking and brewing.
+
+  plump_helmet:
+    category: "consumable"
+    base_value: 3
+    stackable: true
+    # Underground mushroom. Dwarven staple crop.
+
+  sweet_pod:
+    category: "consumable"
+    base_value: 4
+    stackable: true
+    # Sweet plant used for sugar and syrup.
+
+  pig_tail:
+    category: "consumable"
+    base_value: 3
+    stackable: true
+    # Fibrous plant. Edible but better for cloth.
+
+  quarry_bush_leaf:
+    category: "consumable"
+    base_value: 2
+    stackable: true
+    # Rock-dwelling plant. Mildly nutritious.
+
+  # --- Drinks ---
+  drink:
+    category: "consumable"
+    base_value: 3
+    stackable: true
+    # Generic alcoholic beverage.
+
+  dwarven_ale:
+    category: "consumable"
+    base_value: 5
+    stackable: true
+    # Strong mushroom ale. A dwarven favorite.
+
+  dwarven_wine:
+    category: "consumable"
+    base_value: 8
+    stackable: true
+    # Fermented from plump helmets. Surprisingly refined.
+
+  dwarven_rum:
+    category: "consumable"
+    base_value: 10
+    stackable: true
+    # Distilled spirits. Very potent.
+
+  mead:
+    category: "consumable"
+    base_value: 12
+    stackable: true
+    # Honey wine. Sweet and strong.
+
+  water:
+    category: "consumable"
+    base_value: 1
+    stackable: true
+    # Plain water. Dwarves prefer alcohol.
+
+  milk:
+    category: "consumable"
+    base_value: 2
+    stackable: true
+    # Fresh milk. Used in cooking.
+
+  # ==========================================================================
+  # FURNITURE - Crafted items for fortress rooms
+  # ==========================================================================
+
+  bed:
+    category: "furniture"
+    base_value: 50
+    stackable: false
+    # Essential for sleeping. Every dwarf needs one.
+
+  table:
+    category: "furniture"
+    base_value: 30
+    stackable: false
+    # Dining table. Dwarves prefer to eat at tables.
+
+  chair:
+    category: "furniture"
+    base_value: 20
+    stackable: false
+    # Seating. Used with tables and in offices.
+
+  door:
+    category: "furniture"
+    base_value: 25
+    stackable: false
+    # Controls room access. Can be locked.
+
+  barrel:
+    category: "furniture"
+    base_value: 15
+    stackable: false
+    # Storage container for liquids and food.
+
+  bin:
+    category: "furniture"
+    base_value: 15
+    stackable: false
+    # Storage container for small items.
+
+  cabinet:
+    category: "furniture"
+    base_value: 35
+    stackable: false
+    # Stores clothing and personal items.
+
+  chest:
+    category: "furniture"
+    base_value: 40
+    stackable: false
+    # Secure storage for valuables.
+
+  throne:
+    category: "furniture"
+    base_value: 100
+    stackable: false
+    # Seat of authority. For nobles and leaders.
+
+  statue:
+    category: "furniture"
+    base_value: 75
+    stackable: false
+    # Decorative sculpture. Increases room value.
+
+  armor_stand:
+    category: "furniture"
+    base_value: 30
+    stackable: false
+    # Displays and stores armor.
+
+  weapon_rack:
+    category: "furniture"
+    base_value: 30
+    stackable: false
+    # Displays and stores weapons.
+
+  coffin:
+    category: "furniture"
+    base_value: 45
+    stackable: false
+    # Final resting place. Prevents ghosts.
+
+  sarcophagus:
+    category: "furniture"
+    base_value: 150
+    stackable: false
+    # Ornate stone coffin for nobles.
+
+  well:
+    category: "furniture"
+    base_value: 80
+    stackable: false
+    # Water source. Essential for fortress survival.
+
+  lever:
+    category: "furniture"
+    base_value: 20
+    stackable: false
+    # Controls mechanisms like bridges and doors.
+
+  cage:
+    category: "furniture"
+    base_value: 25
+    stackable: false
+    # Holds captured creatures.
+
+  chain:
+    category: "furniture"
+    base_value: 15
+    stackable: false
+    # Restrains creatures. Used in guard posts.
+
+  # ==========================================================================
+  # TOOLS - Equipment for various labors
+  # ==========================================================================
+
+  pickaxe:
+    category: "tool"
+    base_value: 40
+    stackable: false
+    # Essential for mining. Every miner needs one.
+
+  axe:
+    category: "tool"
+    base_value: 35
+    stackable: false
+    # For woodcutting and combat.
+
+  hammer:
+    category: "tool"
+    base_value: 30
+    stackable: false
+    # For masonry and smithing.
+
+  saw:
+    category: "tool"
+    base_value: 35
+    stackable: false
+    # For carpentry work.
+
+  crossbow:
+    category: "tool"
+    base_value: 50
+    stackable: false
+    # Ranged weapon. Requires bolts.
+
+  fishing_rod:
+    category: "tool"
+    base_value: 20
+    stackable: false
+    # For catching fish.
+
+  bucket:
+    category: "tool"
+    base_value: 10
+    stackable: false
+    # Carries water for various tasks.
+
+  wheelbarrow:
+    category: "tool"
+    base_value: 25
+    stackable: false
+    # Speeds up hauling heavy materials.
+
+  anvil:
+    category: "tool"
+    base_value: 100
+    stackable: false
+    # Essential for metalworking.
+
+  # ==========================================================================
+  # RAW MATERIALS - Used in crafting and construction
+  # ==========================================================================
+
+  log:
+    category: "material"
+    base_value: 5
+    stackable: true
+    # Raw wood. Used for carpentry and fuel.
+
+  stone:
+    category: "material"
+    base_value: 3
+    stackable: true
+    # Building material. Very common.
+
+  stone_block:
+    category: "material"
+    base_value: 8
+    stackable: true
+    # Processed stone. Used in construction.
+
+  ore:
+    category: "material"
+    base_value: 10
+    stackable: true
+    # Generic metal ore. Needs smelting.
+
+  iron_ore:
+    category: "material"
+    base_value: 15
+    stackable: true
+    # Common metal ore. Makes steel when combined with flux.
+
+  copper_ore:
+    category: "material"
+    base_value: 12
+    stackable: true
+    # Soft metal ore. Easy to work.
+
+  gold_ore:
+    category: "material"
+    base_value: 50
+    stackable: true
+    # Precious metal. Highly valuable.
+
+  silver_ore:
+    category: "material"
+    base_value: 35
+    stackable: true
+    # Precious metal. Good for crafts.
+
+  coal:
+    category: "material"
+    base_value: 8
+    stackable: true
+    # Fuel for forges and smelters.
+
+  charcoal:
+    category: "material"
+    base_value: 6
+    stackable: true
+    # Processed wood fuel.
+
+  iron_bar:
+    category: "material"
+    base_value: 25
+    stackable: true
+    # Smelted iron. Ready for smithing.
+
+  steel_bar:
+    category: "material"
+    base_value: 50
+    stackable: true
+    # Refined iron. Superior material.
+
+  copper_bar:
+    category: "material"
+    base_value: 20
+    stackable: true
+    # Smelted copper.
+
+  bronze_bar:
+    category: "material"
+    base_value: 30
+    stackable: true
+    # Copper-tin alloy. Good for weapons.
+
+  gold_bar:
+    category: "material"
+    base_value: 100
+    stackable: true
+    # Pure gold. Extremely valuable.
+
+  silver_bar:
+    category: "material"
+    base_value: 70
+    stackable: true
+    # Pure silver. Valuable.
+
+  cloth:
+    category: "material"
+    base_value: 10
+    stackable: true
+    # Woven fabric. Used for clothing.
+
+  leather:
+    category: "material"
+    base_value: 12
+    stackable: true
+    # Tanned hide. Used for armor and goods.
+
+  thread:
+    category: "material"
+    base_value: 5
+    stackable: true
+    # For sewing and weaving.
+
+  rope:
+    category: "material"
+    base_value: 8
+    stackable: true
+    # Braided fibers. Many uses.
+
+  bone:
+    category: "material"
+    base_value: 4
+    stackable: true
+    # Animal bones. Used in crafts.
+
+  shell:
+    category: "material"
+    base_value: 6
+    stackable: true
+    # From shellfish. Decorative material.
+
+  # ==========================================================================
+  # WEAPONS - Equipment for combat
+  # ==========================================================================
+
+  short_sword:
+    category: "weapon"
+    base_value: 45
+    stackable: false
+    # Standard sidearm. Balanced stats.
+
+  battle_axe:
+    category: "weapon"
+    base_value: 55
+    stackable: false
+    # Heavy weapon. High damage, slower attack.
+
+  war_hammer:
+    category: "weapon"
+    base_value: 50
+    stackable: false
+    # Blunt weapon. Good against armor.
+
+  spear:
+    category: "weapon"
+    base_value: 40
+    stackable: false
+    # Reach weapon. Keeps enemies at distance.
+
+  mace:
+    category: "weapon"
+    base_value: 45
+    stackable: false
+    # Blunt weapon. Crushes bones.
+
+  dagger:
+    category: "weapon"
+    base_value: 25
+    stackable: false
+    # Small blade. Quick attacks.
+
+  crossbow_bolt:
+    category: "weapon"
+    base_value: 2
+    stackable: true
+    # Ammunition for crossbows.
+
+  # ==========================================================================
+  # ARMOR - Protective equipment
+  # ==========================================================================
+
+  helmet:
+    category: "armor"
+    base_value: 40
+    stackable: false
+    # Protects the head.
+
+  breastplate:
+    category: "armor"
+    base_value: 80
+    stackable: false
+    # Torso protection. Heavy but effective.
+
+  mail_shirt:
+    category: "armor"
+    base_value: 60
+    stackable: false
+    # Chain mail. Good protection, less weight.
+
+  gauntlets:
+    category: "armor"
+    base_value: 30
+    stackable: false
+    # Protects hands and forearms.
+
+  greaves:
+    category: "armor"
+    base_value: 35
+    stackable: false
+    # Leg protection.
+
+  shield:
+    category: "armor"
+    base_value: 45
+    stackable: false
+    # Blocks attacks. Essential for defense.
+
+  leather_armor:
+    category: "armor"
+    base_value: 35
+    stackable: false
+    # Light protection. Doesn't slow movement.
+
+  # ==========================================================================
+  # GEMS & TREASURES - Valuable items
+  # ==========================================================================
+
+  rough_gem:
+    category: "treasure"
+    base_value: 40
+    stackable: true
+    # Uncut gemstone. Needs cutting.
+
+  cut_gem:
+    category: "treasure"
+    base_value: 80
+    stackable: true
+    # Polished gemstone. Very valuable.
+
+  diamond:
+    category: "treasure"
+    base_value: 200
+    stackable: true
+    # Rare and precious stone.
+
+  ruby:
+    category: "treasure"
+    base_value: 150
+    stackable: true
+    # Red precious stone.
+
+  emerald:
+    category: "treasure"
+    base_value: 140
+    stackable: true
+    # Green precious stone.
+
+  sapphire:
+    category: "treasure"
+    base_value: 130
+    stackable: true
+    # Blue precious stone.
+
+  artifact:
+    category: "treasure"
+    base_value: 1000
+    stackable: false
+    # Legendary crafted item. Priceless.
+
+  # ==========================================================================
+  # CREATURE DROPS - Materials from hunting and combat
+  # ==========================================================================
+
+  wolf_pelt:
+    category: "craft_material"
+    base_value: 20
+    stackable: true
+    # Wolf fur. Makes warm clothing.
+
+  bear_pelt:
+    category: "craft_material"
+    base_value: 40
+    stackable: true
+    # Bear fur. Premium leather.
+
+  spider_silk:
+    category: "craft_material"
+    base_value: 25
+    stackable: true
+    # Strong fiber for weaving.
+
+  troll_fat:
+    category: "craft_material"
+    base_value: 15
+    stackable: true
+    # Burns bright. Good lamp oil.
+
+  giant_bone:
+    category: "craft_material"
+    base_value: 30
+    stackable: true
+    # Massive bones for crafting.
+
+  dragon_scale:
+    category: "craft_material"
+    base_value: 200
+    stackable: true
+    # Nearly indestructible. Legendary armor material.
+
+  dragon_bone:
+    category: "craft_material"
+    base_value: 150
+    stackable: true
+    # Powerful crafting material.
+
+  wyvern_scale:
+    category: "craft_material"
+    base_value: 80
+    stackable: true
+    # Strong scales for armor.
+
+  basilisk_eye:
+    category: "craft_material"
+    base_value: 100
+    stackable: true
+    # Alchemical ingredient. Rare.
+
+  goblin_ear:
+    category: "craft_material"
+    base_value: 2
+    stackable: true
+    # Trophy. Worth almost nothing.

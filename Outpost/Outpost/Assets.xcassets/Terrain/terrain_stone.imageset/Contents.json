@@ -1,0 +1,23 @@
+{
+  "images": [
+    {
+      "filename": "terrain_stone.png",
+      "idiom": "universal",
+      "scale": "1x"
+    },
+    {
+      "filename": "terrain_stone@2x.png",
+      "idiom": "universal",
+      "scale": "2x"
+    },
+    {
+      "filename": "terrain_stone@3x.png",
+      "idiom": "universal",
+      "scale": "3x"
+    }
+  ],
+  "info": {
+    "author": "xcode",
+    "version": 1
+  }
+}
