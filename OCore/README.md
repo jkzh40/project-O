@@ -562,9 +562,21 @@ time swift run DwarfSim --headless -t 100000
 ---
 
 ## TODO
-- Cleanup the configuration to allow grabbing images for SpriteKit
-- How to 
-- Rebrand to orcs
+- speech bubbles when chatting
+- socialization and interactions
 - Refactor rendering and main run loop code
+- terrain type configuration
+- plant type configuration
+- expose API surface for user interactions
+- Cleanup the configuration to allow grabbing images for SpriteKit
+- Rebrand to orcs
+- How to more tightly integrate with the world generator
+- overall objectives and goals
+- automated construction
+- animations
+- persisted world state
+- background updating
 - Inventory system, random starting items etc.
+- time based decay?
+- health and wounding system and body parts
 - LLM integration
