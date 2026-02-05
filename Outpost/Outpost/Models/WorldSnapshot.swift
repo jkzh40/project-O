@@ -13,6 +13,17 @@ struct WorldSnapshot: Sendable {
     let tiles: [[TileSnapshot]]
     let units: [UnitSnapshot]
     let items: [ItemSnapshot]
+    let activeConversations: [ConversationSnapshot]
+}
+
+/// Snapshot of an active conversation for speech bubble display
+struct ConversationSnapshot: Sendable {
+    let participant1Id: UInt64
+    let participant2Id: UInt64
+    let participant1Name: String
+    let participant2Name: String
+    let topic: String
+    let isSuccess: Bool
 }
 
 /// Sendable snapshot of a single tile
@@ -125,6 +136,18 @@ extension WorldSnapshot {
             )
         }
 
+        // Build conversation snapshots
+        let conversations: [ConversationSnapshot] = simulation.activeConversations.map { conv in
+            ConversationSnapshot(
+                participant1Id: conv.participant1Id,
+                participant2Id: conv.participant2Id,
+                participant1Name: conv.participant1Name,
+                participant2Name: conv.participant2Name,
+                topic: conv.topic,
+                isSuccess: conv.isSuccess
+            )
+        }
+
         return WorldSnapshot(
             tick: world.currentTick,
             width: width,
@@ -133,7 +156,8 @@ extension WorldSnapshot {
             currentZ: currentZ,
             tiles: tiles,
             units: units,
-            items: items
+            items: items,
+            activeConversations: conversations
         )
     }
 }

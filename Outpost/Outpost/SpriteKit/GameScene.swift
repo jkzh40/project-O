@@ -33,6 +33,7 @@ class GameScene: SKScene {
     private let itemLayer = SKNode()
     private let unitLayer = SKNode()
     private let selectionLayer = SKNode()
+    private let speechBubbleLayer = SKNode()
 
     // MARK: - Sprite Pools
 
@@ -66,6 +67,7 @@ class GameScene: SKScene {
         addChild(itemLayer)
         addChild(unitLayer)
         addChild(selectionLayer)
+        addChild(speechBubbleLayer)
 
         // Setup gesture recognizers
         setupGestureRecognizers()
@@ -112,6 +114,7 @@ class GameScene: SKScene {
         updateItems(snapshot)
         updateUnits(snapshot)
         updateSelection()
+        updateSpeechBubbles(snapshot)
     }
 
     // MARK: - Tile Rendering
@@ -285,6 +288,114 @@ class GameScene: SKScene {
 
         selectionLayer.addChild(selection)
         selectionSprite = selection
+    }
+
+    // MARK: - Speech Bubble Rendering
+
+    private func updateSpeechBubbles(_ snapshot: WorldSnapshot) {
+        // Remove all existing speech bubbles
+        speechBubbleLayer.removeAllChildren()
+
+        // Create speech bubbles for each active conversation
+        for conversation in snapshot.activeConversations {
+            // Find both participants
+            guard let unit1 = snapshot.units.first(where: { $0.id == conversation.participant1Id }),
+                  let unit2 = snapshot.units.first(where: { $0.id == conversation.participant2Id }) else {
+                continue
+            }
+
+            // Create bubble for participant 1
+            let bubble1 = createSpeechBubble(
+                text: conversation.topic,
+                isSuccess: conversation.isSuccess,
+                isInitiator: true
+            )
+            bubble1.position = worldToScene(
+                x: unit1.x, y: unit1.y,
+                worldHeight: snapshot.height,
+                tileSize: tileSize
+            )
+            bubble1.position.y += tileSize * 0.8  // Position above unit
+            speechBubbleLayer.addChild(bubble1)
+
+            // Create smaller "listening" indicator for participant 2
+            let bubble2 = createSpeechBubble(
+                text: "...",
+                isSuccess: conversation.isSuccess,
+                isInitiator: false
+            )
+            bubble2.position = worldToScene(
+                x: unit2.x, y: unit2.y,
+                worldHeight: snapshot.height,
+                tileSize: tileSize
+            )
+            bubble2.position.y += tileSize * 0.8  // Position above unit
+            speechBubbleLayer.addChild(bubble2)
+        }
+    }
+
+    private func createSpeechBubble(text: String, isSuccess: Bool, isInitiator: Bool) -> SKNode {
+        let container = SKNode()
+        container.zPosition = 100
+
+        // Bubble sizing
+        let fontSize: CGFloat = isInitiator ? 8 : 6
+        let padding: CGFloat = isInitiator ? 4 : 2
+        let maxWidth: CGFloat = isInitiator ? tileSize * 2.5 : tileSize
+
+        // Create text label
+        let label = SKLabelNode(fontNamed: "Helvetica")
+        label.text = text.capitalized
+        label.fontSize = fontSize
+        label.fontColor = .white
+        label.horizontalAlignmentMode = .center
+        label.verticalAlignmentMode = .center
+
+        // Calculate bubble size
+        let textWidth = min(label.frame.width, maxWidth)
+        let bubbleWidth = textWidth + padding * 2
+        let bubbleHeight = label.frame.height + padding * 2
+
+        // Create bubble background
+        let bubbleRect = CGRect(
+            x: -bubbleWidth / 2,
+            y: -bubbleHeight / 2,
+            width: bubbleWidth,
+            height: bubbleHeight
+        )
+
+        let bubble = SKShapeNode(rect: bubbleRect, cornerRadius: 4)
+        bubble.fillColor = isSuccess ?
+            SKColor(red: 0.2, green: 0.6, blue: 0.3, alpha: 0.9) :  // Green for success
+            SKColor(red: 0.6, green: 0.4, blue: 0.2, alpha: 0.9)    // Orange for awkward
+        bubble.strokeColor = .white
+        bubble.lineWidth = 0.5
+
+        // Create speech bubble pointer (small triangle pointing down)
+        let pointerPath = CGMutablePath()
+        pointerPath.move(to: CGPoint(x: -3, y: -bubbleHeight / 2))
+        pointerPath.addLine(to: CGPoint(x: 0, y: -bubbleHeight / 2 - 4))
+        pointerPath.addLine(to: CGPoint(x: 3, y: -bubbleHeight / 2))
+        pointerPath.closeSubpath()
+
+        let pointer = SKShapeNode(path: pointerPath)
+        pointer.fillColor = bubble.fillColor
+        pointer.strokeColor = .white
+        pointer.lineWidth = 0.5
+
+        container.addChild(bubble)
+        container.addChild(pointer)
+        container.addChild(label)
+
+        // Add subtle animation
+        if isInitiator {
+            let scaleUp = SKAction.scale(to: 1.05, duration: 0.3)
+            let scaleDown = SKAction.scale(to: 1.0, duration: 0.3)
+            let pulse = SKAction.sequence([scaleUp, scaleDown])
+            container.run(SKAction.repeatForever(pulse))
+        }
+
+        return container
     }
 
     // MARK: - iOS Gesture Handlers

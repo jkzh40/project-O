@@ -59,6 +59,12 @@ public final class Simulation: Sendable {
     /// Statistics
     public private(set) var stats: SimulationStats = SimulationStats()
 
+    /// Active conversations for display (cleared each tick, populated when socializing starts)
+    public private(set) var activeConversations: [ActiveConversation] = []
+
+    /// Duration in ticks to display a speech bubble
+    private let speechBubbleDuration: UInt64 = 30
+
     // MARK: - Event Configuration
 
     /// Hostile spawn interval in ticks
@@ -141,6 +147,11 @@ public final class Simulation: Sendable {
         // Trim event log if needed
         while eventLog.count > maxEventLogSize {
             eventLog.removeFirst()
+        }
+
+        // Expire old active conversations (for speech bubble display)
+        activeConversations.removeAll { conversation in
+            world.currentTick - conversation.startTick > speechBubbleDuration
         }
     }
 
@@ -901,6 +912,18 @@ public final class Simulation: Sendable {
 
                 logEvent(.social(unit1Name: unit.name.firstName, unit2Name: partner.name.firstName, message: result.description))
                 stats.totalConversations += 1
+
+                // Track active conversation for speech bubble display
+                let conversation = ActiveConversation(
+                    participant1Id: unit.id,
+                    participant2Id: partner.id,
+                    participant1Name: unit.name.firstName,
+                    participant2Name: partner.name.firstName,
+                    topic: result.topic.rawValue,
+                    isSuccess: result.success,
+                    startTick: world.currentTick
+                )
+                activeConversations.append(conversation)
             }
             return
         }
@@ -1619,5 +1642,36 @@ public enum SimulationEvent: Sendable, CustomStringConvertible {
         default:
             return false
         }
+    }
+}
+
+// MARK: - Active Conversation
+
+/// Represents a conversation currently being displayed with speech bubbles
+public struct ActiveConversation: Sendable {
+    public let participant1Id: UInt64
+    public let participant2Id: UInt64
+    public let participant1Name: String
+    public let participant2Name: String
+    public let topic: String
+    public let isSuccess: Bool
+    public let startTick: UInt64
+
+    public init(
+        participant1Id: UInt64,
+        participant2Id: UInt64,
+        participant1Name: String,
+        participant2Name: String,
+        topic: String,
+        isSuccess: Bool,
+        startTick: UInt64
+    ) {
+        self.participant1Id = participant1Id
+        self.participant2Id = participant2Id
+        self.participant1Name = participant1Name
+        self.participant2Name = participant2Name
+        self.topic = topic
+        self.isSuccess = isSuccess
+        self.startTick = startTick
     }
 }
