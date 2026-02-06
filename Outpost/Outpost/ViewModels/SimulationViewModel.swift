@@ -30,7 +30,7 @@ final class SimulationViewModel {
     var currentZ: Int = 0
 
     /// Population statistics
-    private(set) var dwarfCount: Int = 0
+    private(set) var orcCount: Int = 0
     private(set) var hostileCount: Int = 0
     private(set) var totalUnits: Int = 0
 
@@ -50,7 +50,7 @@ final class SimulationViewModel {
     }
 
     private func setupSimulation() {
-        // Spawn initial dwarves
+        // Spawn initial orcs
         simulation.spawnUnits(count: 7)
 
         // Spawn initial resources
@@ -114,7 +114,7 @@ final class SimulationViewModel {
         currentTick = simulation.world.currentTick
 
         // Update population counts
-        dwarfCount = simulation.world.units.values.filter { $0.creatureType == .dwarf && $0.state != .dead }.count
+        orcCount = simulation.world.units.values.filter { $0.creatureType == .orc && $0.state != .dead }.count
         hostileCount = simulation.hostileUnits.count
         totalUnits = simulation.world.units.count
 

@@ -348,7 +348,7 @@ def terrain_ramp_down():
 
 # ============== CREATURE SPRITES ==============
 
-def creature_dwarf():
+def creature_orc():
     img = new_image()
     # Body (tunic)
     fill_rect(img, 4, 7, 8, 6, 'fabric_blue')
@@ -718,7 +718,7 @@ def main():
 
     # Generate creature sprites
     creature_sprites = {
-        "creature_dwarf": creature_dwarf,
+        "creature_orc": creature_orc,
         "creature_goblin": creature_goblin,
         "creature_wolf": creature_wolf,
         "creature_bear": creature_bear,

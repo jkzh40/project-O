@@ -1,6 +1,6 @@
-// OCore - Dwarf Fortress Inspired Simulation Engine
+// OCore - Orc Outpost Simulation Engine
 //
-// A watch-only simulation featuring autonomous dwarves with emergent behavior
+// A watch-only simulation featuring autonomous orcs with emergent behavior
 // driven by needs, personality, and environment.
 
 /// Re-export all public types for convenient access

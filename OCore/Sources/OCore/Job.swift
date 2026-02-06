@@ -1,5 +1,5 @@
 // MARK: - Job System
-// Manages work assignments for dwarves
+// Manages work assignments for orcs
 
 import Foundation
 

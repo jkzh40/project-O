@@ -56,14 +56,14 @@ public struct ColonyNeeds: Sendable {
     public var oreNeed: ResourceNeed = .normal
     public var plantNeed: ResourceNeed = .normal
 
-    /// Food/drink per dwarf thresholds
-    public static let criticalFoodPerDwarf = 1
-    public static let lowFoodPerDwarf = 3
-    public static let adequateFoodPerDwarf = 5
+    /// Food/drink per orc thresholds
+    public static let criticalFoodPerOrc = 1
+    public static let lowFoodPerOrc = 3
+    public static let adequateFoodPerOrc = 5
 
-    public static let criticalDrinkPerDwarf = 1
-    public static let lowDrinkPerDwarf = 3
-    public static let adequateDrinkPerDwarf = 5
+    public static let criticalDrinkPerOrc = 1
+    public static let lowDrinkPerOrc = 3
+    public static let adequateDrinkPerOrc = 5
 
     /// Material thresholds (absolute)
     public static let criticalWood = 5
@@ -108,7 +108,7 @@ public final class AutonomousWorkManager: Sendable {
 
     /// Assess current colony resource needs
     public func assessColonyNeeds(
-        dwarfCount: Int,
+        orcCount: Int,
         foodCount: Int,
         drinkCount: Int,
         rawMeatCount: Int,
@@ -118,30 +118,30 @@ public final class AutonomousWorkManager: Sendable {
         oreCount: Int
     ) -> ColonyNeeds {
         var needs = ColonyNeeds()
-        let effectiveDwarfCount = max(1, dwarfCount)
+        let effectiveOrcCount = max(1, orcCount)
 
         // Food assessment (raw meat + cooked food + plants)
         let totalFood = foodCount + rawMeatCount + plantCount
-        let foodPerDwarf = totalFood / effectiveDwarfCount
+        let foodPerOrc = totalFood / effectiveOrcCount
 
-        if foodPerDwarf < ColonyNeeds.criticalFoodPerDwarf {
+        if foodPerOrc < ColonyNeeds.criticalFoodPerOrc {
             needs.foodNeed = .critical
-        } else if foodPerDwarf < ColonyNeeds.lowFoodPerDwarf {
+        } else if foodPerOrc < ColonyNeeds.lowFoodPerOrc {
             needs.foodNeed = .high
-        } else if foodPerDwarf < ColonyNeeds.adequateFoodPerDwarf {
+        } else if foodPerOrc < ColonyNeeds.adequateFoodPerOrc {
             needs.foodNeed = .normal
         } else {
             needs.foodNeed = .low
         }
 
         // Drink assessment
-        let drinkPerDwarf = drinkCount / effectiveDwarfCount
+        let drinkPerOrc = drinkCount / effectiveOrcCount
 
-        if drinkPerDwarf < ColonyNeeds.criticalDrinkPerDwarf {
+        if drinkPerOrc < ColonyNeeds.criticalDrinkPerOrc {
             needs.drinkNeed = .critical
-        } else if drinkPerDwarf < ColonyNeeds.lowDrinkPerDwarf {
+        } else if drinkPerOrc < ColonyNeeds.lowDrinkPerOrc {
             needs.drinkNeed = .high
-        } else if drinkPerDwarf < ColonyNeeds.adequateDrinkPerDwarf {
+        } else if drinkPerOrc < ColonyNeeds.adequateDrinkPerOrc {
             needs.drinkNeed = .normal
         } else {
             needs.drinkNeed = .low
@@ -390,7 +390,7 @@ public final class AutonomousWorkManager: Sendable {
 
         for (unitId, unit) in world.units {
             guard unit.isAlive else { continue }
-            guard unit.creatureType != .dwarf else { continue }
+            guard unit.creatureType != .orc else { continue }
 
             // Hunt wild animals (wolves, bears) - they're animals that can be hunted for food
             // regardless of whether they're currently hostile

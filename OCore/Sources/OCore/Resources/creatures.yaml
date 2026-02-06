@@ -1,14 +1,14 @@
 # ============================================================================
-# DwarfSim Creature Definitions
+# Outpost Creature Definitions
 # ============================================================================
 # Defines all creature types in the game, their stats, and behaviors.
-# Copy to ./creatures.yaml or ~/.config/dwarfsim/creatures.yaml to customize.
+# Copy to ./creatures.yaml or ~/.config/outpost/creatures.yaml to customize.
 #
 # Creature Definition Fields:
 #   display_char       - Single character shown on map
 #   base_hp            - Starting/maximum hit points
 #   base_damage        - Damage dealt per attack
-#   hostile_to_dwarves - Whether this creature attacks dwarves
+#   hostile_to_orcs - Whether this creature attacks orcs
 #   weapon             - Name of weapon used (for combat log flavor)
 #   damage_type        - Type of damage: blunt, slash, pierce, bite, fire, cold
 #   loot_on_death      - Items dropped when killed
@@ -19,15 +19,15 @@ creatures:
   # CIVILIZED RACES
   # ==========================================================================
 
-  dwarf:
+  orc:
     display_char: "@"
     base_hp: 100
     base_damage: 10
-    hostile_to_dwarves: false
+    hostile_to_orcs: false
     weapon: "fists"
     damage_type: "blunt"
-    # Dwarves are the player's units - sturdy, brave, and industrious.
-    # They form the backbone of your fortress.
+    # Orcs are the player's units - sturdy, brave, and industrious.
+    # They form the backbone of your outpost.
 
   # ==========================================================================
   # GOBLINOIDS - Common raiders and thieves
@@ -37,7 +37,7 @@ creatures:
     display_char: "g"
     base_hp: 60
     base_damage: 8
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "crude sword"
     damage_type: "slash"
     loot_on_death:
@@ -51,7 +51,7 @@ creatures:
     display_char: "H"
     base_hp: 90
     base_damage: 14
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "iron sword"
     damage_type: "slash"
     loot_on_death:
@@ -65,7 +65,7 @@ creatures:
     display_char: "k"
     base_hp: 35
     base_damage: 5
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "rusty dagger"
     damage_type: "pierce"
     loot_on_death:
@@ -83,7 +83,7 @@ creatures:
     display_char: "w"
     base_hp: 40
     base_damage: 12
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "fangs"
     damage_type: "bite"
     loot_on_death:
@@ -100,7 +100,7 @@ creatures:
     display_char: "B"
     base_hp: 150
     base_damage: 25
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "claws"
     damage_type: "slash"
     loot_on_death:
@@ -111,13 +111,13 @@ creatures:
         quantity_min: 1
         quantity_max: 1
     # Powerful solitary hunters. Dangerous but valuable kills.
-    # Bear meat feeds many dwarves.
+    # Bear meat feeds many orcs.
 
   giant_spider:
     display_char: "S"
     base_hp: 55
     base_damage: 10
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "venomous fangs"
     damage_type: "pierce"
     loot_on_death:
@@ -131,7 +131,7 @@ creatures:
     display_char: "r"
     base_hp: 20
     base_damage: 4
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "teeth"
     damage_type: "bite"
     loot_on_death:
@@ -145,7 +145,7 @@ creatures:
     display_char: "p"
     base_hp: 70
     base_damage: 15
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "tusks"
     damage_type: "pierce"
     loot_on_death:
@@ -153,13 +153,13 @@ creatures:
         quantity_min: 3
         quantity_max: 5
     # Aggressive when threatened. Charges at enemies.
-    # Good source of meat for the fortress.
+    # Good source of meat for the outpost.
 
   elk:
     display_char: "e"
     base_hp: 50
     base_damage: 8
-    hostile_to_dwarves: false    # Passive unless attacked
+    hostile_to_orcs: false    # Passive unless attacked
     weapon: "antlers"
     damage_type: "blunt"
     loot_on_death:
@@ -180,7 +180,7 @@ creatures:
     display_char: "G"
     base_hp: 300
     base_damage: 40
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "massive club"
     damage_type: "blunt"
     loot_on_death:
@@ -191,13 +191,13 @@ creatures:
         quantity_min: 8
         quantity_max: 12
     # Towering brutes with immense strength.
-    # A single giant can devastate an unprepared fortress.
+    # A single giant can devastate an unprepared outpost.
 
   troll:
     display_char: "T"
     base_hp: 180
     base_damage: 28
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "claws"
     damage_type: "slash"
     loot_on_death:
@@ -214,7 +214,7 @@ creatures:
     display_char: "O"
     base_hp: 140
     base_damage: 22
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "spiked club"
     damage_type: "blunt"
     loot_on_death:
@@ -232,7 +232,7 @@ creatures:
     display_char: "z"
     base_hp: 50
     base_damage: 8
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "rotting hands"
     damage_type: "blunt"
     # Basic animated corpses. Slow but relentless.
@@ -242,7 +242,7 @@ creatures:
     display_char: "s"
     base_hp: 40
     base_damage: 10
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "rusty blade"
     damage_type: "slash"
     loot_on_death:
@@ -256,7 +256,7 @@ creatures:
     display_char: "G"
     base_hp: 30
     base_damage: 6
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "chilling touch"
     damage_type: "cold"
     # Incorporeal spirits. Hard to hit but fragile.
@@ -270,7 +270,7 @@ creatures:
     display_char: "D"
     base_hp: 500
     base_damage: 60
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "fire breath"
     damage_type: "fire"
     loot_on_death:
@@ -290,7 +290,7 @@ creatures:
     display_char: "W"
     base_hp: 200
     base_damage: 30
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "venomous tail"
     damage_type: "pierce"
     loot_on_death:
@@ -306,7 +306,7 @@ creatures:
     display_char: "b"
     base_hp: 120
     base_damage: 18
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "petrifying gaze"
     damage_type: "pierce"
     loot_on_death:

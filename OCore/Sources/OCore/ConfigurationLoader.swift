@@ -14,12 +14,12 @@ public struct ConfigurationLoader: Sendable {
         var paths: [String] = []
 
         // 1. Current directory
-        paths.append("./dwarfsim.yaml")
+        paths.append("./outpost.yaml")
 
         // 2. User config directory
         if let home = ProcessInfo.processInfo.environment["HOME"] {
-            paths.append("\(home)/.config/dwarfsim/dwarfsim.yaml")
-            paths.append("\(home)/.config/dwarfsim/config.yaml")
+            paths.append("\(home)/.config/outpost/outpost.yaml")
+            paths.append("\(home)/.config/outpost/config.yaml")
         }
 
         return paths
@@ -30,7 +30,7 @@ public struct ConfigurationLoader: Sendable {
         var paths: [String] = []
         paths.append("./creatures.yaml")
         if let home = ProcessInfo.processInfo.environment["HOME"] {
-            paths.append("\(home)/.config/dwarfsim/creatures.yaml")
+            paths.append("\(home)/.config/outpost/creatures.yaml")
         }
         return paths
     }()
@@ -40,7 +40,7 @@ public struct ConfigurationLoader: Sendable {
         var paths: [String] = []
         paths.append("./items.yaml")
         if let home = ProcessInfo.processInfo.environment["HOME"] {
-            paths.append("\(home)/.config/dwarfsim/items.yaml")
+            paths.append("\(home)/.config/outpost/items.yaml")
         }
         return paths
     }()
@@ -48,7 +48,7 @@ public struct ConfigurationLoader: Sendable {
     // MARK: - Main Loading Method
 
     /// Loads the full configuration from bundled defaults, then applies user overrides
-    public static func loadConfiguration() -> DwarfSimConfig {
+    public static func loadConfiguration() -> OutpostConfig {
         // Step 1: Load bundled defaults (the source of truth)
         var config = loadBundledDefaults()
 
@@ -101,11 +101,11 @@ public struct ConfigurationLoader: Sendable {
     // MARK: - Bundled Defaults Loading
 
     /// Loads default configuration from bundled YAML resources
-    private static func loadBundledDefaults() -> DwarfSimConfig {
-        var config = DwarfSimConfig()
+    private static func loadBundledDefaults() -> OutpostConfig {
+        var config = OutpostConfig()
 
         // Load bundled main config
-        if let mainConfig = loadBundledYAML("dwarfsim", as: DwarfSimConfig.self) {
+        if let mainConfig = loadBundledYAML("outpost", as: OutpostConfig.self) {
             config.simulation = mainConfig.simulation
             config.events = mainConfig.events
             if !mainConfig.hostileSpawnPool.isEmpty {
@@ -150,9 +150,9 @@ public struct ConfigurationLoader: Sendable {
     // MARK: - User Config Loading
 
     /// Loads user's main configuration file (if present)
-    private static func loadUserMainConfig() -> DwarfSimConfig? {
+    private static func loadUserMainConfig() -> OutpostConfig? {
         for path in userConfigPaths {
-            if let config = loadYAMLFile(at: path, as: DwarfSimConfig.self) {
+            if let config = loadYAMLFile(at: path, as: OutpostConfig.self) {
                 return config
             }
         }
@@ -246,7 +246,7 @@ struct ItemsFileConfig: Codable {
 
 // MARK: - Config Validation
 
-extension DwarfSimConfig {
+extension OutpostConfig {
     /// Validates configuration values and returns warnings
     public func validate() -> [String] {
         var warnings: [String] = []
@@ -313,7 +313,7 @@ extension DwarfSimConfig {
     }
 
     /// Returns a validated and clamped configuration
-    public func validated() -> DwarfSimConfig {
+    public func validated() -> OutpostConfig {
         var config = self
 
         // Clamp world size

@@ -1,4 +1,4 @@
-// MARK: - Core Enumerations for Dwarf Fortress-inspired Simulation
+// MARK: - Core Enumerations for Orc Outpost Simulation
 
 import Foundation
 

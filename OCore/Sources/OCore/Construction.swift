@@ -9,7 +9,7 @@ import Foundation
 public enum WorkshopType: String, Sendable, CaseIterable {
     case carpenterWorkshop = "Carpenter's Workshop"
     case masonWorkshop = "Mason's Workshop"
-    case craftsdwarfWorkshop = "Craftsdwarf's Workshop"
+    case craftsorcWorkshop = "Craftsorc's Workshop"
     case kitchen = "Kitchen"
     case brewery = "Brewery"
     case forge = "Forge"
@@ -24,7 +24,7 @@ public enum WorkshopType: String, Sendable, CaseIterable {
         switch self {
         case .carpenterWorkshop: return .carpentry
         case .masonWorkshop: return .masonry
-        case .craftsdwarfWorkshop: return .carpentry  // General crafting
+        case .craftsorcWorkshop: return .carpentry  // General crafting
         case .kitchen: return .cooking
         case .brewery: return .brewing
         case .forge, .smelter: return .mining  // Metalworking skill would be ideal
@@ -51,7 +51,7 @@ public enum WorkshopType: String, Sendable, CaseIterable {
             return [.log: 3]
         case .masonWorkshop:
             return [.stone: 3]
-        case .craftsdwarfWorkshop:
+        case .craftsorcWorkshop:
             return [.log: 1, .stone: 1]
         case .kitchen:
             return [.stone: 2, .log: 1]
@@ -73,7 +73,7 @@ public enum WorkshopType: String, Sendable, CaseIterable {
         switch self {
         case .carpenterWorkshop: return "W"
         case .masonWorkshop: return "M"
-        case .craftsdwarfWorkshop: return "C"
+        case .craftsorcWorkshop: return "C"
         case .kitchen: return "K"
         case .brewery: return "B"
         case .forge: return "F"

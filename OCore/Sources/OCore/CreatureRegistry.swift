@@ -30,7 +30,7 @@ public final class CreatureRegistry: Sendable {
     // MARK: - Initialization
 
     /// Initialize the registry with configuration (config already has bundled YAML loaded)
-    public func initialize(with config: DwarfSimConfig) {
+    public func initialize(with config: OutpostConfig) {
         // Config already contains merged bundled + user creatures from ConfigurationLoader
         self.definitions = config.creatures
 
@@ -79,9 +79,9 @@ public final class CreatureRegistry: Sendable {
         return type.hardcodedDisplayChar
     }
 
-    /// Check if a creature type is hostile to dwarves
-    public func isHostileToDwarves(_ type: CreatureType) -> Bool {
-        definitions[type.rawValue]?.hostileToDwarves ?? type.hardcodedHostileToDwarves
+    /// Check if a creature type is hostile to orcs
+    public func isHostileToOrcs(_ type: CreatureType) -> Bool {
+        definitions[type.rawValue]?.hostileToOrcs ?? type.hardcodedHostileToOrcs
     }
 
     /// Get weapon name for a creature type
@@ -160,7 +160,7 @@ extension CreatureType {
     /// Hardcoded base HP (fallback when registry has no definition)
     var hardcodedBaseHP: Int {
         switch self {
-        case .dwarf: return 100
+        case .orc: return 100
         case .goblin: return 60
         case .wolf: return 40
         case .bear: return 150
@@ -172,7 +172,7 @@ extension CreatureType {
     /// Hardcoded base damage (fallback when registry has no definition)
     var hardcodedBaseDamage: Int {
         switch self {
-        case .dwarf: return 10
+        case .orc: return 10
         case .goblin: return 8
         case .wolf: return 12
         case .bear: return 25
@@ -184,7 +184,7 @@ extension CreatureType {
     /// Hardcoded display character (fallback when registry has no definition)
     var hardcodedDisplayChar: Character {
         switch self {
-        case .dwarf: return "@"
+        case .orc: return "@"
         case .goblin: return "g"
         case .wolf: return "w"
         case .bear: return "B"
@@ -194,9 +194,9 @@ extension CreatureType {
     }
 
     /// Hardcoded hostile flag (fallback when registry has no definition)
-    var hardcodedHostileToDwarves: Bool {
+    var hardcodedHostileToOrcs: Bool {
         switch self {
-        case .dwarf: return false
+        case .orc: return false
         case .goblin, .wolf, .bear, .giant, .undead: return true
         }
     }

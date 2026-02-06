@@ -26,7 +26,7 @@ public final class ItemRegistry: Sendable {
     // MARK: - Initialization
 
     /// Initialize the registry with configuration (config already has bundled YAML loaded)
-    public func initialize(with config: DwarfSimConfig) {
+    public func initialize(with config: OutpostConfig) {
         // Config already contains merged bundled + user items from ConfigurationLoader
         self.definitions = config.items
         self.isInitialized = true

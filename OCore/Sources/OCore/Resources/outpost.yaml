@@ -1,8 +1,8 @@
 # ============================================================================
-# DwarfSim Configuration
+# Outpost Configuration
 # ============================================================================
-# This is the main configuration file for DwarfSim.
-# Copy to ./dwarfsim.yaml or ~/.config/dwarfsim/dwarfsim.yaml to customize.
+# This is the main configuration file for Outpost.
+# Copy to ./outpost.yaml or ~/.config/outpost/outpost.yaml to customize.
 #
 # All values shown are the defaults. Remove or comment out any setting
 # to use its default value.
@@ -19,7 +19,7 @@ simulation:
 
   # Population settings
   units:
-    initial_count: 8             # Starting dwarves (1-50)
+    initial_count: 8             # Starting orcs (1-50)
     max_population: 50           # Colony population cap (1-100)
 
   # Starting resources
@@ -49,7 +49,7 @@ events:
     interval_ticks: 500          # Check for spawn every N ticks
     chance_percent: 50           # Probability of spawn per check (0-100)
 
-  # Migrant waves (new dwarves arriving)
+  # Migrant waves (new orcs arriving)
   # Migrants are attracted by colony wealth - prosperous fortresses
   # draw more settlers than struggling ones.
   migrant_wave:

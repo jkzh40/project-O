@@ -1,8 +1,8 @@
-// MARK: - Unit Model for Dwarf Fortress-inspired Simulation
+// MARK: - Unit Model for Orc Outpost Simulation
 
 import Foundation
 
-/// A unit in the simulation (dwarf, creature, etc.)
+/// A unit in the simulation (orc, creature, etc.)
 public struct Unit: Sendable, Identifiable {
     // MARK: - Identity
 
@@ -87,14 +87,14 @@ public struct Unit: Sendable, Identifiable {
         // Empty skills dictionary
         self.skills = [:]
 
-        // Initialize physical attributes with typical dwarf values (1000-1250 range)
+        // Initialize physical attributes with typical orc values (1000-1250 range)
         self.physicalAttributes = [:]
         for attribute in PhysicalAttribute.allCases {
             let baseValue = Int.random(in: 1000...1250)
             self.physicalAttributes[attribute] = AttributeValue(base: baseValue)
         }
 
-        // Initialize mental attributes with typical dwarf values (1000-1250 range)
+        // Initialize mental attributes with typical orc values (1000-1250 range)
         self.mentalAttributes = [:]
         for attribute in MentalAttribute.allCases {
             let baseValue = Int.random(in: 1000...1250)
@@ -114,7 +114,7 @@ public struct Unit: Sendable, Identifiable {
         self.laborPreferences = LaborPreferences()
 
         // Default creature type
-        self.creatureType = .dwarf
+        self.creatureType = .orc
     }
 
     // MARK: - Factory Method

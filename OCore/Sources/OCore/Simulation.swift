@@ -53,7 +53,7 @@ public final class Simulation: Sendable {
     /// Maximum events to keep in log
     public var maxEventLogSize: Int = 100
 
-    /// Hostile creatures in the world (non-dwarf units)
+    /// Hostile creatures in the world (non-orc units)
     public private(set) var hostileUnits: Set<UInt64> = []
 
     /// Statistics
@@ -193,8 +193,8 @@ public final class Simulation: Sendable {
     /// Generate autonomous jobs based on colony needs
     private func generateAutonomousJobs() {
         // Count resources
-        let dwarfCount = world.units.values.filter { $0.creatureType == .dwarf && $0.isAlive }.count
-        guard dwarfCount > 0 else { return }
+        let orcCount = world.units.values.filter { $0.creatureType == .orc && $0.isAlive }.count
+        guard orcCount > 0 else { return }
 
         let foodCount = world.items.values.filter { $0.itemType == .food }.count
         let drinkCount = world.items.values.filter { $0.itemType == .drink }.count
@@ -206,7 +206,7 @@ public final class Simulation: Sendable {
 
         // Assess colony needs
         let needs = autonomousWorkManager.assessColonyNeeds(
-            dwarfCount: dwarfCount,
+            orcCount: orcCount,
             foodCount: foodCount,
             drinkCount: drinkCount,
             rawMeatCount: rawMeatCount,
@@ -471,14 +471,14 @@ public final class Simulation: Sendable {
 
     /// Find nearby hostile threat
     private func findNearbyThreat(for unit: Unit) -> Unit? {
-        // Only dwarves care about threats
-        guard unit.creatureType == .dwarf else { return nil }
+        // Only orcs care about threats
+        guard unit.creatureType == .orc else { return nil }
 
         let nearbyUnits = world.getUnitsInRange(of: unit.position, radius: 8)
         return nearbyUnits.first { other in
             other.id != unit.id &&
             other.state != .dead &&
-            other.creatureType.hostileToDwarves &&
+            other.creatureType.hostileToOrcs &&
             hostileUnits.contains(other.id)
         }
     }
@@ -549,8 +549,8 @@ public final class Simulation: Sendable {
             world.updateUnit(target)
 
             // Get names for logging
-            let attackerName = unit.creatureType == .dwarf ? unit.name.firstName : unit.creatureType.rawValue
-            let defenderName = target.creatureType == .dwarf ? target.name.firstName : target.creatureType.rawValue
+            let attackerName = unit.creatureType == .orc ? unit.name.firstName : unit.creatureType.rawValue
+            let defenderName = target.creatureType == .orc ? target.name.firstName : target.creatureType.rawValue
 
             if result.hit {
                 logEvent(.combat(
@@ -609,9 +609,9 @@ public final class Simulation: Sendable {
     /// Determine weapon and damage type for a unit based on creature type and equipment
     private func determineWeaponAndDamage(for unit: Unit) -> (weapon: String, damageType: DamageType) {
         switch unit.creatureType {
-        case .dwarf:
+        case .orc:
             // Check for equipped weapon (simplified - check if they have any weapon items)
-            // For now, dwarves use fists by default
+            // For now, orcs use fists by default
             return ("fists", .blunt)
         case .goblin:
             return ("crude sword", .slash)
@@ -690,8 +690,8 @@ public final class Simulation: Sendable {
 
     /// Find a job for the unit
     private func findJobForUnit(_ unit: inout Unit) -> Job? {
-        // Only dwarves work
-        guard unit.creatureType == .dwarf else { return nil }
+        // Only orcs work
+        guard unit.creatureType == .orc else { return nil }
 
         let job = jobManager.findJobForUnit(
             unitId: unit.id,
@@ -792,7 +792,7 @@ public final class Simulation: Sendable {
         // Higher gregariousness = more likely to seek social interaction
         if gregariousness > 60 && Int.random(in: 0...100) < gregariousness {
             let nearbyUnits = world.getUnitsInRange(of: unit.position, radius: 10)
-                .filter { $0.id != unit.id && $0.state == .idle && $0.creatureType == .dwarf }
+                .filter { $0.id != unit.id && $0.state == .idle && $0.creatureType == .orc }
 
             if let target = nearbyUnits.randomElement() {
                 if let path = world.findPath(from: unit.position, to: target.position) {
@@ -892,7 +892,7 @@ public final class Simulation: Sendable {
 
         // Check if arrived near another unit for socializing
         let nearbyUnits = world.getUnitsInRange(of: unit.position, radius: 2)
-            .filter { $0.id != unit.id && $0.state != .dead && $0.creatureType == .dwarf }
+            .filter { $0.id != unit.id && $0.state != .dead && $0.creatureType == .orc }
         if !nearbyUnits.isEmpty {
             unit.transition(to: .socializing)
 
@@ -1098,7 +1098,7 @@ public final class Simulation: Sendable {
             } else {
                 // Fallback: find any nearby huntable creature
                 let nearbyCreatures = world.getUnitsInRange(of: unit.position, radius: 5)
-                    .filter { $0.id != unit.id && $0.creatureType != .dwarf && $0.isAlive }
+                    .filter { $0.id != unit.id && $0.creatureType != .orc && $0.isAlive }
                     .filter { $0.creatureType == .wolf || $0.creatureType == .bear }
                 prey = nearbyCreatures.first
             }
@@ -1226,8 +1226,8 @@ public final class Simulation: Sendable {
 
         // Migrant wave (configurable interval, based on colony wealth)
         if tick % UInt64(migrantWaveInterval) == 0 && tick > 0 {
-            let dwarfCount = world.units.values.filter { $0.creatureType == .dwarf && $0.isAlive }.count
-            if dwarfCount < maxPopulation {
+            let orcCount = world.units.values.filter { $0.creatureType == .orc && $0.isAlive }.count
+            if orcCount < maxPopulation {
                 spawnMigrantsBasedOnWealth()
             }
         }
@@ -1243,9 +1243,9 @@ public final class Simulation: Sendable {
     public func calculateColonyWealth() -> Int {
         var wealth = 0
 
-        // Population value (each dwarf is worth 100)
-        let dwarfCount = world.units.values.filter { $0.creatureType == .dwarf && $0.isAlive }.count
-        wealth += dwarfCount * 100
+        // Population value (each orc is worth 100)
+        let orcCount = world.units.values.filter { $0.creatureType == .orc && $0.isAlive }.count
+        wealth += orcCount * 100
 
         // Item wealth (varies by type and quality)
         for item in world.items.values {
@@ -1295,7 +1295,7 @@ public final class Simulation: Sendable {
     /// Spawn migrants based on colony wealth/strength
     private func spawnMigrantsBasedOnWealth() {
         let wealth = calculateColonyWealth()
-        let dwarfCount = world.units.values.filter { $0.creatureType == .dwarf && $0.isAlive }.count
+        let orcCount = world.units.values.filter { $0.creatureType == .orc && $0.isAlive }.count
 
         // Determine migrant count based on wealth tiers
         // Weak colony (< 500 wealth): 0-1 migrants, 30% chance of any
@@ -1331,11 +1331,11 @@ public final class Simulation: Sendable {
         }
 
         // Reduce migrants if population is already high
-        let populationPenalty = max(0, (dwarfCount - 10) / 5)
+        let populationPenalty = max(0, (orcCount - 10) / 5)
         let finalMigrantCount = max(0, baseMigrants - populationPenalty)
 
         guard finalMigrantCount > 0 else {
-            logEvent(.milestone(tick: world.currentTick, message: "Colony too crowded for migrants (pop: \(dwarfCount))"))
+            logEvent(.milestone(tick: world.currentTick, message: "Colony too crowded for migrants (pop: \(orcCount))"))
             return
         }
 
@@ -1343,9 +1343,9 @@ public final class Simulation: Sendable {
         for _ in 0..<finalMigrantCount {
             if let position = findRandomPassablePosition() {
                 var migrant = Unit.create(at: position)
-                migrant.creatureType = .dwarf
+                migrant.creatureType = .orc
                 world.addUnit(migrant)
-                logEvent(.unitSpawned(unitId: migrant.id, name: "\(migrant.name.firstName) migrated to the fortress"))
+                logEvent(.unitSpawned(unitId: migrant.id, name: "\(migrant.name.firstName) migrated to the outpost"))
                 stats.migrants += 1
                 spawned += 1
             }
@@ -1359,14 +1359,14 @@ public final class Simulation: Sendable {
             else if wealth < 6000 { wealthTier = "prosperous" }
             else { wealthTier = "legendary" }
 
-            logEvent(.milestone(tick: world.currentTick, message: "Migrant wave! \(spawned) dwarves drawn to our \(wealthTier) fortress (wealth: \(wealth))"))
+            logEvent(.milestone(tick: world.currentTick, message: "Migrant wave! \(spawned) orcs drawn to our \(wealthTier) outpost (wealth: \(wealth))"))
         }
     }
 
     /// Check for births from married couples
     private func checkForBirths() {
         for (unitId, unit) in world.units {
-            guard unit.creatureType == .dwarf && unit.isAlive else { continue }
+            guard unit.creatureType == .orc && unit.isAlive else { continue }
             guard let spouseId = socialManager.getSpouse(of: unitId) else { continue }
             guard let spouse = world.getUnit(id: spouseId), spouse.isAlive else { continue }
 
@@ -1374,7 +1374,7 @@ public final class Simulation: Sendable {
             if Int.random(in: 0...100) < birthChancePercent {
                 if let position = findRandomPassablePosition() {
                     var baby = Unit.create(at: position)
-                    baby.creatureType = .dwarf
+                    baby.creatureType = .orc
 
                     // Set family relationships
                     socialManager.setFamilyRelationship(parent: unitId, child: baby.id, currentTick: world.currentTick)
@@ -1433,14 +1433,14 @@ public final class Simulation: Sendable {
     /// Check for potential marriages between close friends
     private func checkForMarriages() {
         for (unitId, unit) in world.units {
-            guard unit.creatureType == .dwarf && unit.state != .dead else { continue }
+            guard unit.creatureType == .orc && unit.state != .dead else { continue }
             guard socialManager.getSpouse(of: unitId) == nil else { continue }
 
             // Find potential partner
             let friends = socialManager.getFriends(of: unitId)
             for friendId in friends {
                 guard let friend = world.getUnit(id: friendId) else { continue }
-                guard friend.creatureType == .dwarf && friend.state != .dead else { continue }
+                guard friend.creatureType == .orc && friend.state != .dead else { continue }
                 guard socialManager.getSpouse(of: friendId) == nil else { continue }
 
                 // Check if can become lovers
@@ -1471,7 +1471,7 @@ public final class Simulation: Sendable {
 
     // MARK: - Setup Helpers
 
-    /// Spawns dwarf units at random passable positions
+    /// Spawns orc units at random passable positions
     public func spawnUnits(count: Int) {
         var spawned = 0
         var attempts = 0
@@ -1484,7 +1484,7 @@ public final class Simulation: Sendable {
 
             if world.isPassable(position) {
                 var unit = Unit.create(at: position)
-                unit.creatureType = .dwarf
+                unit.creatureType = .orc
 
                 // Initialize mood
                 moodManager.initializeMood(

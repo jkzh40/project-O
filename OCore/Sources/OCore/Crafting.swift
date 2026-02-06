@@ -173,7 +173,7 @@ public enum StandardRecipes {
         // Brewery
         Recipe(
             id: "brew_basic",
-            name: "Dwarven Ale",
+            name: "Orcish Ale",
             inputs: [.plant: 2],
             outputs: [.drink: 3],
             workshopType: .brewery,
@@ -191,13 +191,13 @@ public enum StandardRecipes {
             minimumSkillLevel: 3
         ),
 
-        // Craftsdwarf's Workshop
+        // Craftsorc's Workshop
         Recipe(
             id: "craft_stone",
             name: "Stone Crafts",
             inputs: [.stone: 1],
             outputs: [.stone: 1],  // Would be a craft item
-            workshopType: .craftsdwarfWorkshop,
+            workshopType: .craftsorcWorkshop,
             skill: .carpentry,
             workTicks: 60
         ),

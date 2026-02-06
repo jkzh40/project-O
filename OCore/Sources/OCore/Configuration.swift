@@ -6,7 +6,7 @@ import Foundation
 // MARK: - Root Configuration
 
 /// Root configuration that encompasses all config sections
-public struct DwarfSimConfig: Codable, Sendable {
+public struct OutpostConfig: Codable, Sendable {
     public var simulation: SimulationConfig
     public var events: EventsConfig
     public var creatures: [String: CreatureDefinition]
@@ -36,7 +36,7 @@ public struct DwarfSimConfig: Codable, Sendable {
     }
 
     // Custom Decodable to handle missing keys with defaults
-    // (dwarfsim.yaml doesn't have creatures/items sections)
+    // (outpost.yaml doesn't have creatures/items sections)
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.simulation = try container.decodeIfPresent(SimulationConfig.self, forKey: .simulation) ?? SimulationConfig()
@@ -229,7 +229,7 @@ public struct CreatureDefinition: Codable, Sendable {
     public var displayChar: String
     public var baseHP: Int
     public var baseDamage: Int
-    public var hostileToDwarves: Bool
+    public var hostileToOrcs: Bool
     public var weapon: String?
     public var damageType: String?
     public var lootOnDeath: [LootDefinition]?
@@ -238,7 +238,7 @@ public struct CreatureDefinition: Codable, Sendable {
         displayChar: String,
         baseHP: Int,
         baseDamage: Int,
-        hostileToDwarves: Bool,
+        hostileToOrcs: Bool,
         weapon: String? = nil,
         damageType: String? = nil,
         lootOnDeath: [LootDefinition]? = nil
@@ -246,7 +246,7 @@ public struct CreatureDefinition: Codable, Sendable {
         self.displayChar = displayChar
         self.baseHP = baseHP
         self.baseDamage = baseDamage
-        self.hostileToDwarves = hostileToDwarves
+        self.hostileToOrcs = hostileToOrcs
         self.weapon = weapon
         self.damageType = damageType
         self.lootOnDeath = lootOnDeath
@@ -256,7 +256,7 @@ public struct CreatureDefinition: Codable, Sendable {
         case displayChar = "display_char"
         case baseHP = "base_hp"
         case baseDamage = "base_damage"
-        case hostileToDwarves = "hostile_to_dwarves"
+        case hostileToOrcs = "hostile_to_orcs"
         case weapon
         case damageType = "damage_type"
         case lootOnDeath = "loot_on_death"

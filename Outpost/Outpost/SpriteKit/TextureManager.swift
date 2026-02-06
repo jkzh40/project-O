@@ -61,7 +61,7 @@ final class TextureManager {
 
     private func loadUnitTextures() {
         let creatureAssetNames: [CreatureType: String] = [
-            .dwarf: "Creatures/creature_dwarf",
+            .orc: "Creatures/creature_orc",
             .goblin: "Creatures/creature_goblin",
             .wolf: "Creatures/creature_wolf",
             .bear: "Creatures/creature_bear",
@@ -112,7 +112,7 @@ final class TextureManager {
     }
 
     func texture(for creature: CreatureType) -> SKTexture {
-        unitTextures[creature] ?? unitTextures[.dwarf]!
+        unitTextures[creature] ?? unitTextures[.orc]!
     }
 
     func texture(for item: ItemType) -> SKTexture {

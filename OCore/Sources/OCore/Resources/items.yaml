@@ -1,8 +1,8 @@
 # ============================================================================
-# DwarfSim Item Definitions
+# Outpost Item Definitions
 # ============================================================================
 # Defines all item types in the game, their properties, and values.
-# Copy to ./items.yaml or ~/.config/dwarfsim/items.yaml to customize.
+# Copy to ./items.yaml or ~/.config/outpost/items.yaml to customize.
 #
 # Item Definition Fields:
 #   category   - Item category (consumable, furniture, tool, material,
@@ -27,7 +27,7 @@ items:
     category: "consumable"
     base_value: 8
     stackable: true
-    # Classic dwarven dish. Roasted cave mushrooms.
+    # Classic orcish dish. Roasted cave mushrooms.
 
   meat_stew:
     category: "consumable"
@@ -76,7 +76,7 @@ items:
     category: "consumable"
     base_value: 3
     stackable: true
-    # Underground mushroom. Dwarven staple crop.
+    # Underground mushroom. Orcish staple crop.
 
   sweet_pod:
     category: "consumable"
@@ -103,19 +103,19 @@ items:
     stackable: true
     # Generic alcoholic beverage.
 
-  dwarven_ale:
+  orcish_ale:
     category: "consumable"
     base_value: 5
     stackable: true
-    # Strong mushroom ale. A dwarven favorite.
+    # Strong mushroom ale. An orcish favorite.
 
-  dwarven_wine:
+  orcish_wine:
     category: "consumable"
     base_value: 8
     stackable: true
     # Fermented from plump helmets. Surprisingly refined.
 
-  dwarven_rum:
+  orcish_rum:
     category: "consumable"
     base_value: 10
     stackable: true
@@ -131,7 +131,7 @@ items:
     category: "consumable"
     base_value: 1
     stackable: true
-    # Plain water. Dwarves prefer alcohol.
+    # Plain water. Orcs prefer alcohol.
 
   milk:
     category: "consumable"
@@ -147,13 +147,13 @@ items:
     category: "furniture"
     base_value: 50
     stackable: false
-    # Essential for sleeping. Every dwarf needs one.
+    # Essential for sleeping. Every orc needs one.
 
   table:
     category: "furniture"
     base_value: 30
     stackable: false
-    # Dining table. Dwarves prefer to eat at tables.
+    # Dining table. Orcs prefer to eat at tables.
 
   chair:
     category: "furniture"

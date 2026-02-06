@@ -86,16 +86,16 @@ public final class Renderer: Sendable {
     /// Renders the header with tick count
     private func renderHeader() -> String {
         let tick = simulation.world.currentTick
-        let dwarfCount = simulation.world.units.values.filter { $0.creatureType == .dwarf }.count
-        let aliveDwarves = simulation.world.units.values.filter { $0.isAlive && $0.creatureType == .dwarf }.count
-        let hostileCount = simulation.world.units.values.filter { $0.isAlive && $0.creatureType != .dwarf }.count
+        let orcCount = simulation.world.units.values.filter { $0.creatureType == .orc }.count
+        let aliveOrcs = simulation.world.units.values.filter { $0.isAlive && $0.creatureType == .orc }.count
+        let hostileCount = simulation.world.units.values.filter { $0.isAlive && $0.creatureType != .orc }.count
 
         let stats = simulation.stats
         let statsLine = "Kills:\(stats.totalKills) Deaths:\(stats.totalDeaths) Jobs:\(stats.totalJobsCompleted)"
 
         var header = "╔══════════════════════════════════════════════════════════════════╗\(ANSI.clearLine)\n"
-        header += "║  🏰 DWARF SIMULATION                                             ║\(ANSI.clearLine)\n"
-        header += "║  Tick: \(String(format: "%6d", tick)) │ Dwarves: \(aliveDwarves)/\(dwarfCount) │ Hostiles: \(String(format: "%2d", hostileCount))           ║\(ANSI.clearLine)\n"
+        header += "║  🏰 ORC OUTPOST                                             ║\(ANSI.clearLine)\n"
+        header += "║  Tick: \(String(format: "%6d", tick)) │ Orcs: \(aliveOrcs)/\(orcCount) │ Hostiles: \(String(format: "%2d", hostileCount))           ║\(ANSI.clearLine)\n"
         header += "║  \(statsLine.padding(toLength: 62, withPad: " ", startingAt: 0))  ║\(ANSI.clearLine)\n"
         header += "╚══════════════════════════════════════════════════════════════════╝\(ANSI.clearLine)\n"
 
@@ -198,7 +198,7 @@ public final class Renderer: Sendable {
     /// Returns display character for creature type
     private func characterForCreature(_ type: CreatureType) -> Character {
         switch type {
-        case .dwarf:
+        case .orc:
             return "@"
         case .goblin:
             return "g"
@@ -217,15 +217,15 @@ public final class Renderer: Sendable {
     private func renderUnitPanel() -> String {
         var panel = "── Unit Status ────────────────────────────────────────────────────\(ANSI.clearLine)\n"
 
-        // Separate dwarves and hostiles
-        let dwarves = Array(simulation.world.units.values)
-            .filter { $0.isAlive && $0.creatureType == .dwarf }
+        // Separate orcs and hostiles
+        let orcs = Array(simulation.world.units.values)
+            .filter { $0.isAlive && $0.creatureType == .orc }
             .prefix(5)
 
         let hostiles = Array(simulation.world.units.values)
-            .filter { $0.isAlive && $0.creatureType != .dwarf }
+            .filter { $0.isAlive && $0.creatureType != .orc }
 
-        for unit in dwarves {
+        for unit in orcs {
             let name = unit.name.description.padding(toLength: 14, withPad: " ", startingAt: 0)
             let state = unit.state.rawValue.padding(toLength: 10, withPad: " ", startingAt: 0)
 
@@ -241,9 +241,9 @@ public final class Renderer: Sendable {
             panel += "\(name) \(stateColor)\(state)\(ANSI.reset) \(healthBar) \(moodBar) \(hungerBar) \(thirstBar)\(ANSI.clearLine)\n"
         }
 
-        if simulation.world.units.values.filter({ $0.creatureType == .dwarf }).count > 5 {
-            let extraDwarves = simulation.world.units.values.filter { $0.creatureType == .dwarf }.count - 5
-            panel += "  ... and \(extraDwarves) more dwarves\(ANSI.clearLine)\n"
+        if simulation.world.units.values.filter({ $0.creatureType == .orc }).count > 5 {
+            let extraOrcs = simulation.world.units.values.filter { $0.creatureType == .orc }.count - 5
+            panel += "  ... and \(extraOrcs) more orcs\(ANSI.clearLine)\n"
         }
 
         // Show hostiles if any
@@ -324,7 +324,7 @@ public final class Renderer: Sendable {
     /// Renders the legend
     private func renderLegend() -> String {
         var legend = "── Legend ─────────────────────────────────────────────────────────\(ANSI.clearLine)\n"
-        legend += "  \(ANSI.white)@\(ANSI.reset)=Dwarf  "
+        legend += "  \(ANSI.white)@\(ANSI.reset)=Orc  "
         legend += "\(ANSI.red)g\(ANSI.reset)=Goblin  "
         legend += "\(ANSI.red)w\(ANSI.reset)=Wolf  "
         legend += "\(ANSI.yellow)!\(ANSI.reset)=Item  "

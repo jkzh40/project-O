@@ -112,7 +112,7 @@ struct UnitDetailPanel: View {
 
     private func creatureColor(for type: CreatureType) -> Color {
         switch type {
-        case .dwarf:
+        case .orc:
             return Color(red: 0.85, green: 0.7, blue: 0.55)
         case .goblin:
             return Color(red: 0.3, green: 0.5, blue: 0.3)

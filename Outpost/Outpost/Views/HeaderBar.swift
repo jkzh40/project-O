@@ -19,8 +19,8 @@ struct HeaderBar: View {
             // Population
             StatBadge(
                 icon: "person.2.fill",
-                label: "Dwarves",
-                value: "\(viewModel.dwarfCount)",
+                label: "Orcs",
+                value: "\(viewModel.orcCount)",
                 color: .blue
             )
 

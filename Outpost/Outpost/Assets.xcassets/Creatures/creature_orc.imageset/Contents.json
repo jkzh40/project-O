@@ -1,17 +1,17 @@
 {
   "images": [
     {
-      "filename": "creature_dwarf.png",
+      "filename": "creature_orc.png",
       "idiom": "universal",
       "scale": "1x"
     },
     {
-      "filename": "creature_dwarf@2x.png",
+      "filename": "creature_orc@2x.png",
       "idiom": "universal",
       "scale": "2x"
     },
     {
-      "filename": "creature_dwarf@3x.png",
+      "filename": "creature_orc@3x.png",
       "idiom": "universal",
       "scale": "3x"
     }

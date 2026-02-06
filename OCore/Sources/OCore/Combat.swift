@@ -100,7 +100,7 @@ public struct AttackResult: Sendable {
 
 /// Types of creatures that can exist in the world
 public enum CreatureType: String, Sendable, CaseIterable {
-    case dwarf = "dwarf"
+    case orc = "orc"
     case goblin = "goblin"
     case wolf = "wolf"
     case bear = "bear"
@@ -119,10 +119,10 @@ public enum CreatureType: String, Sendable, CaseIterable {
         CreatureRegistry.shared.baseDamage(for: self)
     }
 
-    /// Whether this creature is hostile to dwarves (delegates to registry with hardcoded fallback)
+    /// Whether this creature is hostile to orcs (delegates to registry with hardcoded fallback)
     @MainActor
-    public var hostileToDwarves: Bool {
-        CreatureRegistry.shared.isHostileToDwarves(self)
+    public var hostileToOrcs: Bool {
+        CreatureRegistry.shared.isHostileToOrcs(self)
     }
 
     /// Display character for this creature (delegates to registry with hardcoded fallback)

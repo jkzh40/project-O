@@ -1,5 +1,5 @@
-// DwarfSim - A Dwarf Fortress inspired simulation viewer
-// Run this to watch autonomous dwarves live their tiny lives
+// OutpostSim - An Orc Outpost simulation viewer
+// Run this to watch autonomous orcs live their tiny lives
 
 import Foundation
 import OCore
@@ -38,7 +38,7 @@ struct Config {
     var birthChancePercent = 5
 
     /// Initialize config with values from YAML configuration
-    static func fromYAMLConfig(_ yamlConfig: DwarfSimConfig) -> Config {
+    static func fromYAMLConfig(_ yamlConfig: OutpostConfig) -> Config {
         var config = Config()
 
         // Simulation settings
@@ -66,7 +66,7 @@ struct Config {
 // MARK: - Main Entry Point
 
 @main
-struct DwarfSimApp {
+struct OutpostSimApp {
     static func main() async {
         // Load YAML configuration first
         let yamlConfig = ConfigurationLoader.loadConfiguration().validated()
@@ -102,7 +102,7 @@ struct DwarfSimApp {
     }
 
     @MainActor
-    static func parseArguments(defaults: DwarfSimConfig) -> Config {
+    static func parseArguments(defaults: OutpostConfig) -> Config {
         // Start with values from YAML config
         var config = Config.fromYAMLConfig(defaults)
         let args = CommandLine.arguments
@@ -189,9 +189,9 @@ struct DwarfSimApp {
     }
 
     @MainActor
-    static func printConfigInfo(_ config: DwarfSimConfig) {
-        print("DwarfSim Configuration")
-        print("======================\n")
+    static func printConfigInfo(_ config: OutpostConfig) {
+        print("Outpost Configuration")
+        print("=====================\n")
 
         print(ConfigurationLoader.configSearchInfo())
 
@@ -220,7 +220,7 @@ struct DwarfSimApp {
             if let def = CreatureRegistry.shared.getDefinition(for: name) {
                 // Show [config] only if a config file exists and contains this creature
                 let overridden = configFound && config.creatures[name] != nil ? " [config]" : ""
-                print("  \(name): HP=\(def.baseHP), DMG=\(def.baseDamage), char='\(def.displayChar)', hostile=\(def.hostileToDwarves)\(overridden)")
+                print("  \(name): HP=\(def.baseHP), DMG=\(def.baseDamage), char='\(def.displayChar)', hostile=\(def.hostileToOrcs)\(overridden)")
             }
         }
 
@@ -242,7 +242,7 @@ struct DwarfSimApp {
             print("""
             ╔══════════════════════════════════════════════════════════════════╗
             ║                                                                  ║
-            ║   🏰  DWARF FORTRESS INSPIRED SIMULATION  🏰                     ║
+            ║   🏰  ORC OUTPOST SIMULATION  🏰                                  ║
             ║                                                                  ║
             ║   Creating a new world with history and lore...                  ║
             ║                                                                  ║
@@ -263,11 +263,11 @@ struct DwarfSimApp {
             print("""
             ╔══════════════════════════════════════════════════════════════════╗
             ║                                                                  ║
-            ║   🏰  DWARF FORTRESS INSPIRED SIMULATION  🏰                     ║
+            ║   🏰  ORC OUTPOST SIMULATION  🏰                                  ║
             ║                                                                  ║
-            ║   Watch autonomous dwarves live their tiny lives!                ║
+            ║   Watch autonomous orcs live their tiny lives!                   ║
             ║                                                                  ║
-            ║   Each dwarf has:                                                ║
+            ║   Each orc has:                                                  ║
             ║   • Hunger, thirst, and drowsiness needs                         ║
             ║   • Unique personality traits                                    ║
             ║   • Emergent behavior driven by needs                            ║
@@ -285,14 +285,14 @@ struct DwarfSimApp {
 
     static func printHelp() {
         print("""
-        DwarfSim - A Dwarf Fortress inspired simulation viewer
+        OutpostSim - An Orc Outpost simulation viewer
 
-        Usage: DwarfSim [options]
+        Usage: OutpostSim [options]
 
         Simulation Options:
           -w, --width <n>      World width (20-100, default: 50)
           -h, --height <n>     World height (10-50, default: 20)
-          -u, --units <n>      Number of dwarves (1-20, default: 8)
+          -u, --units <n>      Number of orcs (1-20, default: 8)
           -s, --speed <n>      Ticks per second (0.1-10000, default: 5.0)
                                Use "max", "turbo", or "0" for maximum speed
 
@@ -312,8 +312,8 @@ struct DwarfSimApp {
           --show-config        Show config file search paths and loaded values
 
         Config File Locations (searched in order):
-          1. ./dwarfsim.yaml
-          2. ~/.config/dwarfsim/dwarfsim.yaml
+          1. ./outpost.yaml
+          2. ~/.config/outpost/outpost.yaml
 
         Other:
           --help               Show this help message
@@ -322,15 +322,15 @@ struct DwarfSimApp {
           Ctrl+C               Exit the simulation
 
         Examples:
-          DwarfSim                           # Quick start with defaults
-          DwarfSim --worldgen                # Generate world history first
-          DwarfSim -T -t 5000                # Turbo mode, stop at 5000 ticks
-          DwarfSim -s max -r 500 -t 10000    # Max speed, render every 500, 10k ticks
-          DwarfSim --headless -t 50000       # Benchmark 50k ticks with no display
-          DwarfSim -s 100 -u 12              # 100 ticks/sec, 12 dwarves
+          OutpostSim                           # Quick start with defaults
+          OutpostSim --worldgen                # Generate world history first
+          OutpostSim -T -t 5000                # Turbo mode, stop at 5000 ticks
+          OutpostSim -s max -r 500 -t 10000    # Max speed, render every 500, 10k ticks
+          OutpostSim --headless -t 50000       # Benchmark 50k ticks with no display
+          OutpostSim -s 100 -u 12              # 100 ticks/sec, 12 orcs
 
         Legend:
-          @  Dwarf    g  Goblin   w  Wolf    !  Item
+          @  Orc      g  Goblin   w  Wolf    !  Item
           .  Grass    T  Tree     ~  Water   _  Stone   #  Wall
 
         States (by color):
@@ -395,7 +395,7 @@ struct DwarfSimApp {
         if worldHistory != nil {
             // Clear event log to start fresh
             simulation.clearEventLog()
-            // Future: Could name dwarves after historical figures, use world lore, etc.
+            // Future: Could name orcs after historical figures, use world lore, etc.
         }
 
         // Create renderer (unless headless)
@@ -495,16 +495,16 @@ struct DwarfSimApp {
         print("  Drinks Brewed: \(stats.drinksBrewedSIM)")
         print("───────────────────────────────────────────────────────────────────")
 
-        // Show alive dwarves
-        let aliveDwarves = simulation.world.units.values.filter { $0.isAlive && $0.creatureType == .dwarf }
-        print("  Dwarves Alive: \(aliveDwarves.count)")
-        for dwarf in aliveDwarves.prefix(5) {
-            let hp = "\(dwarf.health.currentHP)/\(dwarf.health.maxHP)HP"
-            let mood = "Mood:\(dwarf.mood.happiness)"
-            print("    - \(dwarf.name.description): \(hp), \(mood)")
+        // Show alive orcs
+        let aliveOrcs = simulation.world.units.values.filter { $0.isAlive && $0.creatureType == .orc }
+        print("  Orcs Alive: \(aliveOrcs.count)")
+        for orc in aliveOrcs.prefix(5) {
+            let hp = "\(orc.health.currentHP)/\(orc.health.maxHP)HP"
+            let mood = "Mood:\(orc.mood.happiness)"
+            print("    - \(orc.name.description): \(hp), \(mood)")
         }
-        if aliveDwarves.count > 5 {
-            print("    ... and \(aliveDwarves.count - 5) more")
+        if aliveOrcs.count > 5 {
+            print("    ... and \(aliveOrcs.count - 5) more")
         }
         print("═══════════════════════════════════════════════════════════════════")
     }

@@ -16,8 +16,8 @@ let package = Package(
             targets: ["OCore"]
         ),
         .executable(
-            name: "DwarfSim",
-            targets: ["DwarfSim"]
+            name: "OutpostSim",
+            targets: ["OutpostSim"]
         ),
     ],
     dependencies: [
@@ -30,13 +30,13 @@ let package = Package(
             name: "OCore",
             dependencies: ["Yams"],
             resources: [
-                .copy("Resources/dwarfsim.yaml"),
+                .copy("Resources/outpost.yaml"),
                 .copy("Resources/creatures.yaml"),
                 .copy("Resources/items.yaml")
             ]
         ),
         .executableTarget(
-            name: "DwarfSim",
+            name: "OutpostSim",
             dependencies: ["OCore"]
         ),
         .testTarget(

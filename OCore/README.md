@@ -1,6 +1,6 @@
 # OCore
 
-A Dwarf Fortress inspired simulation engine written in Swift. Watch autonomous dwarves live their tiny lives with emergent behavior driven by needs, personalities, and social dynamics.
+An Orc Outpost simulation engine written in Swift. Watch autonomous orcs live their tiny lives with emergent behavior driven by needs, personalities, and social dynamics.
 
 ## Quick Start
 
@@ -8,14 +8,14 @@ A Dwarf Fortress inspired simulation engine written in Swift. Watch autonomous d
 # Build
 swift build
 
-# Run with defaults (50x20 world, 8 dwarves)
-swift run DwarfSim
+# Run with defaults (50x20 world, 8 orcs)
+swift run OutpostSim
 
 # Run with world generation (creates history and lore)
-swift run DwarfSim --worldgen
+swift run OutpostSim --worldgen
 
 # Show current configuration
-swift run DwarfSim --show-config
+swift run OutpostSim --show-config
 ```
 
 ## CLI Options
@@ -25,7 +25,7 @@ swift run DwarfSim --show-config
 |------|-------------|---------|
 | `-w, --width <n>` | World width (20-100) | 50 |
 | `-h, --height <n>` | World height (10-50) | 20 |
-| `-u, --units <n>` | Starting dwarves (1-20) | 8 |
+| `-u, --units <n>` | Starting orcs (1-20) | 8 |
 | `-s, --speed <n>` | Ticks per second (0.1-10000, or "max"/"turbo") | 5.0 |
 
 ### Speed/Testing Options
@@ -53,22 +53,22 @@ swift run DwarfSim --show-config
 ### Examples
 ```bash
 # Quick start with defaults
-swift run DwarfSim
+swift run OutpostSim
 
 # Generate world history first
-swift run DwarfSim --worldgen
+swift run OutpostSim --worldgen
 
 # Turbo mode, stop at 5000 ticks
-swift run DwarfSim -T -t 5000
+swift run OutpostSim -T -t 5000
 
 # Max speed, render every 500 ticks, stop at 10k
-swift run DwarfSim -s max -r 500 -t 10000
+swift run OutpostSim -s max -r 500 -t 10000
 
 # Benchmark 50k ticks with no display
-swift run DwarfSim --headless -t 50000
+swift run OutpostSim --headless -t 50000
 
-# 100 ticks/sec with 12 dwarves
-swift run DwarfSim -s 100 -u 12
+# 100 ticks/sec with 12 orcs
+swift run OutpostSim -s 100 -u 12
 ```
 
 ---
@@ -87,17 +87,17 @@ swift run DwarfSim -s 100 -u 12
 **How to Test:**
 ```bash
 # Basic simulation test (runs 100 ticks)
-swift run DwarfSim -t 100
+swift run OutpostSim -t 100
 
 # Stress test with max speed
-swift run DwarfSim --headless -t 10000
+swift run OutpostSim --headless -t 10000
 
 # Longer test with rendering
-swift run DwarfSim -T -r 100 -t 5000
+swift run OutpostSim -T -r 100 -t 5000
 ```
 
 **What to Verify:**
-- Dwarves spawn and move around
+- Orcs spawn and move around
 - Needs (hunger/thirst/sleep) increase over time
 - Units transition between states (idle → moving → eating → sleeping)
 
@@ -105,7 +105,7 @@ swift run DwarfSim -T -r 100 -t 5000
 
 ### 2. Unit System (`Unit.swift`)
 
-**Purpose:** Represents individual units (dwarves, creatures) with personality, skills, and needs.
+**Purpose:** Represents individual units (orcs, creatures) with personality, skills, and needs.
 
 **Key Struct:** `Unit`
 - Identity: ID, name, position
@@ -117,16 +117,16 @@ swift run DwarfSim -T -r 100 -t 5000
 **How to Test:**
 ```bash
 # Watch units for ~500 ticks to see need cycles
-swift run DwarfSim -t 500
+swift run OutpostSim -t 500
 
 # Test with more units
-swift run DwarfSim -u 15 -t 300
+swift run OutpostSim -u 15 -t 300
 ```
 
 **What to Verify:**
 - Unit status panel shows changing needs
-- Dwarves seek food/drink when hungry/thirsty (hunger > 60)
-- Dwarves sleep when drowsy (drowsiness > 70)
+- Orcs seek food/drink when hungry/thirsty (hunger > 60)
+- Orcs sleep when drowsy (drowsiness > 70)
 - Different personality displays in behavior
 
 ---
@@ -148,7 +148,7 @@ swift run DwarfSim -u 15 -t 300
 **How to Test:**
 ```bash
 # Run long enough for hostile spawns (default: every 500 ticks, 50% chance)
-swift run DwarfSim -t 2000
+swift run OutpostSim -t 2000
 
 # Increase hostile spawn rate via config file
 # Or wait and watch for combat events in the log
@@ -156,9 +156,9 @@ swift run DwarfSim -t 2000
 
 **What to Verify:**
 - Hostiles spawn (goblins, wolves, etc.)
-- Dwarves engage in combat (red "fight" state)
+- Orcs engage in combat (red "fight" state)
 - Combat log shows attacks, damage, deaths
-- Wounded dwarves flee when low HP
+- Wounded orcs flee when low HP
 
 ---
 
@@ -177,13 +177,13 @@ swift run DwarfSim -t 2000
 **How to Test:**
 ```bash
 # Basic world (no history)
-swift run DwarfSim -w 60 -h 25 -t 100
+swift run OutpostSim -w 60 -h 25 -t 100
 
 # Full world generation with history
-swift run DwarfSim --worldgen -y 250
+swift run OutpostSim --worldgen -y 250
 
 # Quick world gen
-swift run DwarfSim --worldgen -y 50 --gen-speed 50
+swift run OutpostSim --worldgen -y 50 --gen-speed 50
 ```
 
 **What to Verify:**
@@ -206,14 +206,14 @@ swift run DwarfSim --worldgen -y 50 --gen-speed 50
 **How to Test:**
 ```bash
 # Run long enough for social interactions
-swift run DwarfSim -t 3000
+swift run OutpostSim -t 3000
 
-# More dwarves = more social activity
-swift run DwarfSim -u 12 -t 2000
+# More orcs = more social activity
+swift run OutpostSim -u 12 -t 2000
 ```
 
 **What to Verify:**
-- Dwarves enter "social" state (magenta)
+- Orcs enter "social" state (magenta)
 - Event log shows "seeking friend", conversations
 - Marriages occur over time
 - Births happen after marriages (every 5000 ticks, 5% chance)
@@ -238,10 +238,10 @@ swift run DwarfSim -u 12 -t 2000
 **How to Test:**
 ```bash
 # Hard mode creates more stress conditions
-swift run DwarfSim --hard -t 3000
+swift run OutpostSim --hard -t 3000
 
 # Long run to see mood changes
-swift run DwarfSim -t 5000
+swift run OutpostSim -t 5000
 ```
 
 **What to Verify:**
@@ -261,20 +261,20 @@ swift run DwarfSim -t 5000
 - hunt, fish, harvest, build, demolish, clean
 
 **Autonomous Generation:**
-- Assesses colony needs (food/drink/materials per dwarf)
+- Assesses colony needs (food/drink/materials per orc)
 - Auto-creates: hunting, fishing, gathering, chopping, mining, cooking
 
 **How to Test:**
 ```bash
 # Watch job creation and completion
-swift run DwarfSim -t 1000
+swift run OutpostSim -t 1000
 
 # More units = more job activity
-swift run DwarfSim -u 12 -t 1500
+swift run OutpostSim -u 12 -t 1500
 ```
 
 **What to Verify:**
-- Dwarves enter "working" state
+- Orcs enter "working" state
 - Job counter in header changes
 - Resources appear (food, drink items)
 - Autonomous jobs created based on needs
@@ -287,7 +287,7 @@ swift run DwarfSim -u 12 -t 1500
 
 **Workshop Types:**
 - carpenter, mason, forge, kitchen, brewery
-- craftsdwarf, jeweler, clothier, tannery, butcher, smelter
+- craftsorc, jeweler, clothier, tannery, butcher, smelter
 
 **Quality Levels:**
 - Standard (1.0x), Fine (1.1x), Superior (1.3x), Excellent (1.5x)
@@ -295,10 +295,10 @@ swift run DwarfSim -u 12 -t 1500
 **How to Test:**
 ```bash
 # Long run to see crafting cycles
-swift run DwarfSim -t 2000
+swift run OutpostSim -t 2000
 
 # Check items via --show-config
-swift run DwarfSim --show-config
+swift run OutpostSim --show-config
 ```
 
 **What to Verify:**
@@ -320,12 +320,12 @@ swift run DwarfSim --show-config
 **How to Test:**
 ```bash
 # Items should be organized
-swift run DwarfSim -t 1000
+swift run OutpostSim -t 1000
 ```
 
 **What to Verify:**
 - Items (!) appear on map
-- Dwarves haul items (moving state toward items)
+- Orcs haul items (moving state toward items)
 
 ---
 
@@ -334,24 +334,24 @@ swift run DwarfSim -t 1000
 **Purpose:** YAML-based configuration for simulation parameters.
 
 **Config Files:**
-- `dwarfsim.yaml` - simulation settings, events
+- `outpost.yaml` - simulation settings, events
 - `creatures.yaml` - creature definitions
 - `items.yaml` - item definitions
 
 **Search Order:**
-1. `./dwarfsim.yaml`
-2. `~/.config/dwarfsim/dwarfsim.yaml`
+1. `./outpost.yaml`
+2. `~/.config/outpost/outpost.yaml`
 3. Bundled defaults
 
 **How to Test:**
 ```bash
 # Show loaded configuration
-swift run DwarfSim --show-config
+swift run OutpostSim --show-config
 
 # Create custom config
-cp Sources/OCore/Resources/dwarfsim.yaml ./dwarfsim.yaml
+cp Sources/OCore/Resources/outpost.yaml ./outpost.yaml
 # Edit values, then run
-swift run DwarfSim --show-config
+swift run OutpostSim --show-config
 ```
 
 **What to Verify:**
@@ -374,10 +374,10 @@ swift run DwarfSim --show-config
 **How to Test:**
 ```bash
 # Full world generation
-swift run DwarfSim --worldgen -y 250
+swift run OutpostSim --worldgen -y 250
 
 # Quick history
-swift run DwarfSim --worldgen -y 100 --gen-speed 30
+swift run OutpostSim --worldgen -y 100 --gen-speed 30
 ```
 
 **What to Verify:**
@@ -402,7 +402,7 @@ swift run DwarfSim --worldgen -y 100 --gen-speed 30
 **Symbols:**
 | Symbol | Meaning |
 |--------|---------|
-| `@` | Dwarf |
+| `@` | Orc |
 | `g` | Goblin |
 | `w` | Wolf |
 | `!` | Item |
@@ -424,16 +424,16 @@ swift run DwarfSim --worldgen -y 100 --gen-speed 30
 **How to Test:**
 ```bash
 # Watch rendering at different speeds
-swift run DwarfSim -s 2
-swift run DwarfSim -s 20
-swift run DwarfSim -T -r 50 -t 500
+swift run OutpostSim -s 2
+swift run OutpostSim -s 20
+swift run OutpostSim -T -r 50 -t 500
 ```
 
 ---
 
 ## Configuration Reference
 
-### dwarfsim.yaml
+### outpost.yaml
 ```yaml
 simulation:
   world:
@@ -473,7 +473,7 @@ creatures:
     display_char: "g"
     base_hp: 60
     base_damage: 8
-    hostile_to_dwarves: true
+    hostile_to_orcs: true
     weapon: "crude sword"
     damage_type: "slash"
     loot_on_death:
@@ -503,7 +503,7 @@ items:
         │
         ├──► World (3D tile grid, pathfinding, terrain)
         │
-        ├──► Units (dwarves, creatures with needs/personality)
+        ├──► Units (orcs, creatures with needs/personality)
         │       │
         │       ├──► MoodManager (thoughts, stress, breaks)
         │       ├──► SocialManager (relationships, conversations)
@@ -524,7 +524,7 @@ items:
                 └──► ItemRegistry (item definitions)
 
 Configuration loaded from:
-  ConfigurationLoader → DwarfSimConfig → Registries
+  ConfigurationLoader → OutpostConfig → Registries
 ```
 
 ---
@@ -533,50 +533,30 @@ Configuration loaded from:
 
 ### Quick Smoke Test
 ```bash
-swift build && swift run DwarfSim -t 100
+swift build && swift run OutpostSim -t 100
 ```
 
 ### Full System Test
 ```bash
 # 1. Config loading
-swift run DwarfSim --show-config
+swift run OutpostSim --show-config
 
 # 2. Basic simulation
-swift run DwarfSim -t 500
+swift run OutpostSim -t 500
 
 # 3. World generation
-swift run DwarfSim --worldgen -y 100
+swift run OutpostSim --worldgen -y 100
 
 # 4. Stress test
-swift run DwarfSim --headless -t 50000
+swift run OutpostSim --headless -t 50000
 
 # 5. Hard mode
-swift run DwarfSim --hard -t 1000
+swift run OutpostSim --hard -t 1000
 ```
 
 ### Performance Benchmark
 ```bash
-time swift run DwarfSim --headless -t 100000
+time swift run OutpostSim --headless -t 100000
 ```
 
 ---
-
-## TODO
-- speech bubbles when chatting
-- socialization and interactions
-- Refactor rendering and main run loop code
-- terrain type configuration
-- plant type configuration
-- expose API surface for user interactions
-- Cleanup the configuration to allow grabbing images for SpriteKit
-- Rebrand to orcs
-- How to more tightly integrate with the world generator
-- overall objectives and goals
-- automated construction
-- animations
-- persisted world state
-- background updating
-- Inventory system, random starting items etc.
-- time based decay?
-- health and wounding system and body parts
-- LLM integration
