@@ -2,20 +2,22 @@
 
 An Orc Outpost simulation engine written in Swift. Watch autonomous orcs live their tiny lives with emergent behavior driven by needs, personalities, and social dynamics.
 
+> **Note:** The OutpostSim CLI has moved to its own package at `../OutpostSim/`. Run it from there:
+> ```bash
+> cd ../OutpostSim && swift run OutpostSim
+> ```
+
 ## Quick Start
 
 ```bash
-# Build
+# Build OCore library
 swift build
 
-# Run with defaults (50x20 world, 8 orcs)
-swift run OutpostSim
-
-# Run with world generation (creates history and lore)
-swift run OutpostSim --worldgen
-
-# Show current configuration
-swift run OutpostSim --show-config
+# Run CLI (from the OutpostSim package)
+cd ../OutpostSim
+swift run OutpostSim                    # Default: 50x20 world, 8 orcs
+swift run OutpostSim --worldgen         # World generation with history
+swift run OutpostSim --show-config      # Show current configuration
 ```
 
 ## CLI Options

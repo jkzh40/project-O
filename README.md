@@ -8,15 +8,17 @@ A Dwarf Fortress-inspired colony simulation where autonomous orcs build, fight, 
 project-O/
 ├── OCore/          # Game engine & simulation library (Swift Package)
 │   ├── Sources/
-│   │   ├── OCore/          # Core library
-│   │   │   ├── Core/       # Data model (Unit, World, Tile, Item, Enums)
-│   │   │   ├── Systems/    # Simulation systems (Combat, Jobs, Mood, Social, etc.)
-│   │   │   ├── WorldGen/   # Procedural world & history generation
-│   │   │   │   └── Terrain/  # 7-stage terrain pipeline
-│   │   │   ├── Config/     # YAML configuration loading
-│   │   │   └── Resources/  # Default YAML configs
-│   │   └── OutpostSim/     # Terminal-based CLI runner
+│   │   └── OCore/          # Core library
+│   │       ├── Core/       # Data model (Unit, World, Tile, Item, Enums)
+│   │       ├── Systems/    # Simulation systems (Combat, Jobs, Mood, Social, etc.)
+│   │       ├── WorldGen/   # Procedural world & history generation
+│   │       │   └── Terrain/  # 7-stage terrain pipeline
+│   │       ├── Config/     # YAML configuration loading
+│   │       └── Resources/  # Default YAML configs
 │   └── Tests/
+├── OutpostSim/     # Terminal-based CLI runner (Swift Package)
+│   └── Sources/
+│       └── OutpostSim/
 ├── Outpost/        # macOS/iOS SpriteKit app
 │   ├── Outpost/
 │   │   ├── SpriteKit/      # GameScene, TextureManager
@@ -33,7 +35,7 @@ project-O/
 ### CLI (OutpostSim)
 
 ```bash
-cd OCore
+cd OutpostSim
 swift build
 swift run OutpostSim                    # Default: 50x20 world, 8 orcs
 swift run OutpostSim --worldgen         # Full world generation with history
@@ -73,4 +75,4 @@ Or open `Outpost/Outpost.xcodeproj` in Xcode and run.
 - **Language:** Swift 6.2 (strict concurrency)
 - **Platforms:** macOS 13+, iOS 17+
 - **Rendering:** SpriteKit (app), ANSI terminal (CLI)
-- **Dependencies:** [Yams](https://github.com/jpsim/Yams) (YAML), [swift-argument-parser](https://github.com/apple/swift-argument-parser) (CLI)
+- **Dependencies:** [Yams](https://github.com/jpsim/Yams) (YAML, OCore), [swift-argument-parser](https://github.com/apple/swift-argument-parser) (CLI, OutpostSim)

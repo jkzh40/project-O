@@ -1,30 +1,17 @@
-# CLAUDE.md
-
-## Build & Test
-
-```bash
-# OCore (Swift Package)
-cd OCore && swift build
-swift test                              # Unit tests
-swift run OutpostSim -t 100             # Smoke test (100 ticks)
-
-# Outpost (Xcode)
-xcodebuild -scheme Outpost -destination 'platform=macOS' build
-
-# Asset generation
-swift Outpost/Scripts/GenerateAssets.swift
-```
+# CLAUDE
 
 ## Project Layout
 
-- **OCore/** — Game engine library + CLI runner (Swift Package)
+- **OCore/** — Game engine library (Swift Package)
   - `Sources/OCore/Core/` — Data model: `Unit`, `World`, `Tile`, `Item`, `Enums`
   - `Sources/OCore/Systems/` — Simulation systems: Combat, Job, Mood, Social, Construction, Crafting, Stockpile, AutonomousWork, Memory
   - `Sources/OCore/WorldGen/` — World generation + history (`WorldGenerator.swift`, `History.swift`)
   - `Sources/OCore/WorldGen/Terrain/` — 7-stage procedural terrain pipeline (13 files)
   - `Sources/OCore/Config/` — YAML config loading (`ConfigurationLoader`, registries)
   - `Sources/OCore/Resources/` — Default YAML configs (`outpost.yaml`, `creatures.yaml`, `items.yaml`)
-  - `Sources/OutpostSim/` — Terminal CLI app
+  - `Tests/` — Unit tests
+- **OutpostSim/** — Terminal CLI app (Swift Package, depends on OCore)
+  - `Sources/OutpostSim/` — CLI runner, ANSI renderers
 - **Outpost/** — macOS/iOS SpriteKit app (Xcode project)
   - `Outpost/SpriteKit/` — `GameScene` (rendering), `TextureManager` (sprite loading)
   - `Outpost/ViewModels/` — `SimulationViewModel` (bridges OCore → SwiftUI)
@@ -41,13 +28,55 @@ swift Outpost/Scripts/GenerateAssets.swift
 - World generation is a 7-stage pipeline: Tectonics → Heightmap → Erosion → Climate → Hydrology → Biomes → Detail
 - All randomness flows through `SeededRNG` (Xoshiro256**) for deterministic replay from a `WorldSeed`
 
+## Build & Test
+
+```bash
+cd OCore && swift build                 # Build OCore
+cd OCore && swift test                  # Unit tests
+cd OutpostSim && swift build            # Build OutpostSim
+cd OutpostSim && swift run OutpostSim -t 100  # Smoke test (100 ticks)
+xcodebuild -scheme Outpost -destination 'platform=macOS' build  # Build Outpost
+swift Outpost/Scripts/GenerateAssets.swift     # Asset generation
+```
+
+For full E2E testing, run OutpostSim. Use turbo + headless mode for long-running tests. For interactive/short tests, enable terminal rendering with the fastest tick rate.
+
 ## Conventions
 
-- Swift 6.2, strict concurrency — `@MainActor` on simulation + rendering, `Sendable` conformance required
-- Asset names: `category_name` (e.g., `creature_orc_walk_0`)
-- GameScene z-layers: tile(0), ambient(1), item(2), shadow(9), unit(10), health(15), selection(20), speech(30), effects(40), overlay(500)
-- Animation frames per creature: walk(4), attack(3), idle(2), death(3)
+### Swift
+
+- Swift 6.2, strict concurrency
+- Use `async`/`await` and structured concurrency (`TaskGroup`, `async let`) over callbacks, Combine, or GCD
+- Default to `@MainActor`. For CPU-bound work, create a dedicated actor
+- All types crossing concurrency boundaries must conform to `Sendable`
+- Prefer the Observation framework (`@Observable`) over `ObservableObject`/`@Published`
 - Enums use lowercase camelCase cases
 - Configuration structs mirror YAML structure
+
+### Game Domain
+
 - Creature types: `.orc`, `.goblin`, `.wolf`, `.bear`, `.giant`, `.undead`
 - Unit states: `.idle`, `.moving`, `.sleeping`, `.eating`, `.drinking`, `.working`, `.fighting`, `.fleeing`, `.socializing`, `.unconscious`, `.dead`
+- Asset names: `category_name` (e.g., `creature_orc_walk_0`)
+- Animation frames per creature: walk(4), attack(3), idle(2), death(3)
+- GameScene z-layers: tile(0), ambient(1), item(2), shadow(9), unit(10), health(15), selection(20), speech(30), effects(40), overlay(500)
+
+## Workflow
+
+- Use subagents to parallelize independent tasks whenever possible
+- Before writing new code, examine the existing codebase for reusable components
+- Create or update tests for every new feature and bug fix
+- When new files are created, update this CLAUDE.md (Project Layout section)
+
+## Complex Workflows
+
+For complex features (e.g., tasks requiring plan mode or touching multiple subsystems):
+
+1. Create a git worktree with a descriptive branch name
+2. Implement the feature in the worktree
+3. Run builds and tests to verify
+4. Audit: ensure all code follows Swift best practices, all code is used (no dead code), and no unused imports or stubs remain
+5. Run full E2E testing via OutpostSim
+6. Commit the changes
+7. Push the branch to the remote
+8. Open a PR against `main` — if the work addresses a GitHub issue, reference it in the PR body (e.g., `Closes #123`) so it is automatically linked and closed on merge
