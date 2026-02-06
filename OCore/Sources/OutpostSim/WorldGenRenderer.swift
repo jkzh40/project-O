@@ -144,11 +144,19 @@ public final class WorldGenRenderer: Sendable {
     private func phaseOrder(_ phase: WorldGenPhase) -> Int {
         switch phase {
         case .creation: return 0
-        case .terrain: return 1
-        case .regions: return 2
-        case .civilizations: return 3
-        case .history: return 4
-        case .complete: return 5
+        case .tectonics: return 1
+        case .heightmap: return 2
+        case .erosion: return 3
+        case .climate: return 4
+        case .hydrology: return 5
+        case .biomes: return 6
+        case .detailPass: return 7
+        case .terrain: return 8
+        case .embark: return 9
+        case .regions: return 10
+        case .civilizations: return 11
+        case .history: return 12
+        case .complete: return 13
         }
     }
 
@@ -227,10 +235,18 @@ public final class WorldGenRenderer: Sendable {
 
         let progress: Double
         switch currentPhase {
-        case .creation: progress = 0.1
-        case .terrain: progress = 0.2
-        case .regions: progress = 0.3
-        case .civilizations: progress = 0.4
+        case .creation: progress = 0.05
+        case .tectonics: progress = 0.08
+        case .heightmap: progress = 0.11
+        case .erosion: progress = 0.14
+        case .climate: progress = 0.17
+        case .hydrology: progress = 0.20
+        case .biomes: progress = 0.23
+        case .detailPass: progress = 0.26
+        case .terrain: progress = 0.29
+        case .embark: progress = 0.32
+        case .regions: progress = 0.35
+        case .civilizations: progress = 0.40
         case .history:
             // Calculate based on year progress (assuming 250 years)
             progress = 0.4 + 0.6 * min(1.0, Double(stats.year) / 250.0)

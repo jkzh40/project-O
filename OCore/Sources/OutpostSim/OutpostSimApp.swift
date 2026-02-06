@@ -455,6 +455,57 @@ struct OutpostSimApp: AsyncParsableCommand {
         if aliveOrcs.count > 5 {
             print("    ... and \(aliveOrcs.count - 5) more")
         }
+        print("───────────────────────────────────────────────────────────────────")
+        print("  MEMORIES")
+        print("───────────────────────────────────────────────────────────────────")
+        // Debug: show state distribution and drowsiness
+        var stateCounts: [UnitState: Int] = [:]
+        for orc in aliveOrcs {
+            stateCounts[orc.state, default: 0] += 1
+        }
+        let stateStr = stateCounts.sorted(by: { $0.key.rawValue < $1.key.rawValue })
+            .map { "\($0.key.rawValue):\($0.value)" }.joined(separator: " ")
+        print("  States: \(stateStr)")
+        for orc in aliveOrcs.prefix(5) {
+            print("  \(orc.name.description): state=\(orc.state.rawValue) drowsiness=\(orc.drowsiness)")
+        }
+        var totalEpisodic = 0
+        var totalSemantic = 0
+        var totalEmotional = 0
+        var totalBuffer = 0
+        for orc in aliveOrcs {
+            totalEpisodic += orc.memories.episodic.count
+            totalSemantic += orc.memories.semantic.count
+            totalEmotional += orc.memories.emotionalAssociations.count
+            totalBuffer += orc.memories.shortTermBuffer.count
+        }
+        var totalConsolidations = 0
+        for orc in aliveOrcs { totalConsolidations += orc.memories.consolidationCount }
+        print("  Episodic:    \(totalEpisodic) across \(aliveOrcs.count) orcs")
+        print("  Semantic:    \(totalSemantic) beliefs")
+        print("  Emotional:   \(totalEmotional) associations")
+        print("  Buffer:      \(totalBuffer) pending")
+        print("  Consolidations: \(totalConsolidations) total sleep cycles")
+        // Show detailed memories for up to 3 orcs
+        for orc in aliveOrcs.prefix(3) {
+            let memCount = orc.memories.totalEpisodicCount
+            guard memCount > 0 else { continue }
+            print("\n  \(orc.name.description)'s memories (\(memCount)):")
+            for mem in orc.memories.recallRecent(limit: 3) {
+                print("    - \(mem.detail) (salience:\(mem.salience))")
+            }
+            for belief in orc.memories.topBeliefs(limit: 2) {
+                print("    * Believes: \"\(belief.belief)\" (confidence:\(belief.confidence))")
+            }
+            let positives = orc.memories.topPositiveAssociations(limit: 2)
+            for assoc in positives {
+                print("    + Likes \(assoc.entityName) (\(assoc.feeling))")
+            }
+            let negatives = orc.memories.topNegativeAssociations(limit: 2)
+            for assoc in negatives {
+                print("    - Dislikes \(assoc.entityName) (\(assoc.feeling))")
+            }
+        }
         print("═══════════════════════════════════════════════════════════════════")
     }
 }

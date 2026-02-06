@@ -59,6 +59,22 @@ public final class World: Sendable {
         generateTerrain()
     }
 
+    /// Creates a new world with pre-built tiles (used by procedural terrain pipeline)
+    /// - Parameters:
+    ///   - width: Width of the world
+    ///   - height: Height of the world
+    ///   - depth: Number of z-levels
+    ///   - tiles: Pre-built 3D tile array [z][y][x]
+    public init(width: Int, height: Int, depth: Int, tiles: [[[Tile]]]) {
+        self.width = width
+        self.height = height
+        self.depth = depth
+        self.units = [:]
+        self.items = [:]
+        self.currentTick = 0
+        self.tiles = tiles
+    }
+
     /// Generates terrain features for the world
     private func generateTerrain() {
         let random = { () -> Double in Double.random(in: 0...1) }

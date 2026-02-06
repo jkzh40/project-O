@@ -41,6 +41,7 @@ struct TileSnapshot: Sendable {
     let x: Int
     let y: Int
     let terrain: TerrainType
+    let biome: BiomeType
     let hasItems: Bool
     let hasUnit: Bool
 }
@@ -63,6 +64,8 @@ struct UnitSnapshot: Sendable, Identifiable {
     let drowsinessPercent: Int
     let facing: Direction
     let isHostile: Bool
+    let recentMemoryCount: Int
+    let topMemory: String?
 }
 
 /// Sendable snapshot of an item
@@ -98,13 +101,14 @@ extension WorldSnapshot {
                         x: x,
                         y: y,
                         terrain: tile.terrain,
+                        biome: tile.biome,
                         hasItems: !tile.itemIds.isEmpty,
                         hasUnit: tile.unitId != nil
                     )
                     row.append(snapshot)
                 } else {
                     // Out of bounds - use empty air
-                    row.append(TileSnapshot(x: x, y: y, terrain: .emptyAir, hasItems: false, hasUnit: false))
+                    row.append(TileSnapshot(x: x, y: y, terrain: .emptyAir, biome: .temperateGrassland, hasItems: false, hasUnit: false))
                 }
             }
             tiles.append(row)
@@ -131,7 +135,9 @@ extension WorldSnapshot {
                 thirstPercent: min(100, (unit.thirst * 100) / NeedThresholds.thirstDeath),
                 drowsinessPercent: min(100, (unit.drowsiness * 100) / NeedThresholds.drowsyInsane),
                 facing: unit.facing,
-                isHostile: hostileUnits.contains(unit.id)
+                isHostile: hostileUnits.contains(unit.id),
+                recentMemoryCount: unit.memories.totalEpisodicCount,
+                topMemory: unit.memories.topMemoryDescription
             )
         }
 

@@ -460,7 +460,8 @@ public final class SocialManager: Sendable {
     /// Have a group of units converse (2-5 participants) — returns a multi-turn plan
     public func haveGroupConversation(
         participants: [ConversationParticipant],
-        currentTick: UInt64
+        currentTick: UInt64,
+        initiatorMemories: MemoryStore? = nil
     ) -> ConversationPlan {
         guard participants.count >= 2 else {
             return ConversationPlan(participantIds: [], exchanges: [], topic: .weather, overallSuccess: false, relationshipChange: 0)
@@ -473,8 +474,14 @@ public final class SocialManager: Sendable {
         let relation = getRelationship(from: initiator.unitId, to: second.unitId, currentTick: currentTick)
         let history = relation.conversationHistory
 
-        // Select topic based on initiator + second's personalities/history
-        let topic = selectTopic(personality1: initiator.personality, personality2: second.personality, history: history)
+        // Select topic based on initiator + second's personalities/history and memories
+        let topic = selectTopic(
+            personality1: initiator.personality,
+            personality2: second.personality,
+            history: history,
+            initiatorMemories: initiatorMemories,
+            partnerId: second.unitId
+        )
 
         // Success chance uses average gregariousness of all participants
         let baseChance = 60
@@ -613,8 +620,14 @@ public final class SocialManager: Sendable {
         return exchanges
     }
 
-    /// Select a conversation topic based on personalities and history
-    private func selectTopic(personality1: Personality, personality2: Personality, history: [ConversationTopic] = []) -> ConversationTopic {
+    /// Select a conversation topic based on personalities, history, and memories
+    private func selectTopic(
+        personality1: Personality,
+        personality2: Personality,
+        history: [ConversationTopic] = [],
+        initiatorMemories: MemoryStore? = nil,
+        partnerId: UInt64? = nil
+    ) -> ConversationTopic {
         // Weight topics by personality
         var weights: [ConversationTopic: Int] = [:]
 
@@ -650,6 +663,37 @@ public final class SocialManager: Sendable {
             }
 
             weights[topic] = max(1, weight)
+        }
+
+        // Memory-based topic bias
+        if let memories = initiatorMemories {
+            // Check 2-3 recent high-salience memories and adjust weights
+            let recentSalient = memories.recallRecent(limit: 3)
+
+            for memory in recentSalient {
+                switch memory.eventType {
+                case .attackedBy, .wasInjured, .nearDeath:
+                    weights[.stories, default: 10] += 2
+                    weights[.complaint, default: 10] += 2
+                case .madeNewFriend, .conversationWith:
+                    weights[.gossip, default: 10] += 2
+                case .completedTask, .builtStructure:
+                    weights[.work, default: 10] += 2
+                    weights[.praise, default: 10] += 2
+                default:
+                    break
+                }
+            }
+
+            // Emotional association with conversation partner
+            if let pid = partnerId, let feeling = memories.getFeeling(about: pid) {
+                if feeling > 20 {
+                    weights[.memories, default: 10] += 2
+                    weights[.joke, default: 10] += 2
+                } else if feeling < -20 {
+                    weights[.complaint, default: 10] += 2
+                }
+            }
         }
 
         // Weighted random selection

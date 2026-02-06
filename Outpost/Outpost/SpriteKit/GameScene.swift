@@ -311,7 +311,7 @@ class GameScene: SKScene {
                 let sprite = tileSprites[y][x]
                 let tileIndex = y * snapshot.width + x
 
-                if tile.terrain == .water && !waterFrames.isEmpty {
+                if (tile.terrain == .water || tile.terrain == .deepWater) && !waterFrames.isEmpty {
                     // Animated water (seasonal)
                     if !waterAnimated.contains(tileIndex) || seasonChanged {
                         waterAnimated.insert(tileIndex)
@@ -332,8 +332,11 @@ class GameScene: SKScene {
                     }
                 }
 
-                // Tree/shrub sway
-                if (tile.terrain == .tree || tile.terrain == .shrub) {
+                // Tree/shrub sway (includes new tree types)
+                if tile.terrain == .tree || tile.terrain == .shrub
+                    || tile.terrain == .coniferTree || tile.terrain == .palmTree
+                    || tile.terrain == .deadTree || tile.terrain == .reeds
+                    || tile.terrain == .tallGrass {
                     if !treeSwayApplied.contains(tileIndex) {
                         treeSwayApplied.insert(tileIndex)
                         let angle: CGFloat = 1.5 * .pi / 180.0

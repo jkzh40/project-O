@@ -146,6 +146,12 @@ final class SimulationViewModel {
         guard let id = selectedUnitId,
               let unit = simulation.world.getUnit(id: id) else { return nil }
 
+        // Build memory summary
+        let recentMemories = unit.memories.recallRecent(limit: 5).map { $0.detail }
+        let topBeliefs = unit.memories.topBeliefs(limit: 3).map { $0.belief }
+        let positiveAssoc = unit.memories.topPositiveAssociations(limit: 3).map { (name: $0.entityName, feeling: $0.feeling) }
+        let negativeAssoc = unit.memories.topNegativeAssociations(limit: 3).map { (name: $0.entityName, feeling: $0.feeling) }
+
         return UnitDetail(
             id: unit.id,
             name: unit.name.description,
@@ -162,7 +168,11 @@ final class SimulationViewModel {
             thirstPercent: min(100, (unit.thirst * 100) / NeedThresholds.thirstDeath),
             drowsiness: unit.drowsiness,
             drowsinessPercent: min(100, (unit.drowsiness * 100) / NeedThresholds.drowsyInsane),
-            facing: unit.facing
+            facing: unit.facing,
+            recentMemories: recentMemories,
+            topBeliefs: topBeliefs,
+            positiveAssociations: positiveAssoc,
+            negativeAssociations: negativeAssoc
         )
     }
 
@@ -216,4 +226,8 @@ struct UnitDetail: Sendable {
     let drowsiness: Int
     let drowsinessPercent: Int
     let facing: Direction
+    let recentMemories: [String]
+    let topBeliefs: [String]
+    let positiveAssociations: [(name: String, feeling: Int)]
+    let negativeAssociations: [(name: String, feeling: Int)]
 }

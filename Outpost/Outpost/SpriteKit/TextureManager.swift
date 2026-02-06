@@ -73,12 +73,98 @@ final class TextureManager {
             .stairsUpDown: "Terrain/terrain_stairs_updown",
             .rampUp: "Terrain/terrain_ramp_up",
             .rampDown: "Terrain/terrain_ramp_down",
+            // New terrain types — use placeholder fallbacks to existing textures
+            .sand: "Terrain/terrain_sand",
+            .snow: "Terrain/terrain_snow",
+            .ice: "Terrain/terrain_ice",
+            .marsh: "Terrain/terrain_marsh",
+            .deepWater: "Terrain/terrain_deep_water",
+            .clay: "Terrain/terrain_clay",
+            .gravel: "Terrain/terrain_gravel",
+            .mud: "Terrain/terrain_mud",
+            .coniferTree: "Terrain/terrain_conifer_tree",
+            .palmTree: "Terrain/terrain_palm_tree",
+            .deadTree: "Terrain/terrain_dead_tree",
+            .tallGrass: "Terrain/terrain_tall_grass",
+            .cactus: "Terrain/terrain_cactus",
+            .moss: "Terrain/terrain_moss",
+            .reeds: "Terrain/terrain_reeds",
+            .sandstone: "Terrain/terrain_sandstone",
+            .limestone: "Terrain/terrain_limestone",
+            .granite: "Terrain/terrain_granite",
+            .obsidian: "Terrain/terrain_obsidian",
+            .topsoil: "Terrain/terrain_topsoil",
+            .frozenGround: "Terrain/terrain_frozen_ground",
+            .lava: "Terrain/terrain_lava",
         ]
 
         for (terrain, assetName) in terrainAssetNames {
             terrainTextures[terrain] = SKTexture(imageNamed: assetName)
             terrainTextures[terrain]?.filteringMode = .nearest // Pixel-perfect rendering
         }
+
+        // Generate placeholder textures for new terrain types that don't have assets yet
+        generatePlaceholderTextures()
+    }
+
+    /// Generate solid-color placeholder textures for new terrain types
+    private func generatePlaceholderTextures() {
+        let placeholders: [TerrainType: PlatformColor] = [
+            .sand: PlatformColor(red: 0.93, green: 0.87, blue: 0.65, alpha: 1),
+            .snow: PlatformColor(red: 0.95, green: 0.95, blue: 1.0, alpha: 1),
+            .ice: PlatformColor(red: 0.75, green: 0.88, blue: 0.97, alpha: 1),
+            .marsh: PlatformColor(red: 0.35, green: 0.45, blue: 0.3, alpha: 1),
+            .deepWater: PlatformColor(red: 0.1, green: 0.15, blue: 0.4, alpha: 1),
+            .clay: PlatformColor(red: 0.65, green: 0.45, blue: 0.3, alpha: 1),
+            .gravel: PlatformColor(red: 0.6, green: 0.58, blue: 0.55, alpha: 1),
+            .mud: PlatformColor(red: 0.4, green: 0.3, blue: 0.2, alpha: 1),
+            .coniferTree: PlatformColor(red: 0.1, green: 0.35, blue: 0.15, alpha: 1),
+            .palmTree: PlatformColor(red: 0.2, green: 0.5, blue: 0.15, alpha: 1),
+            .deadTree: PlatformColor(red: 0.4, green: 0.35, blue: 0.25, alpha: 1),
+            .tallGrass: PlatformColor(red: 0.4, green: 0.6, blue: 0.25, alpha: 1),
+            .cactus: PlatformColor(red: 0.3, green: 0.55, blue: 0.2, alpha: 1),
+            .moss: PlatformColor(red: 0.3, green: 0.5, blue: 0.2, alpha: 1),
+            .reeds: PlatformColor(red: 0.45, green: 0.55, blue: 0.3, alpha: 1),
+            .sandstone: PlatformColor(red: 0.8, green: 0.7, blue: 0.5, alpha: 1),
+            .limestone: PlatformColor(red: 0.85, green: 0.83, blue: 0.75, alpha: 1),
+            .granite: PlatformColor(red: 0.55, green: 0.52, blue: 0.5, alpha: 1),
+            .obsidian: PlatformColor(red: 0.15, green: 0.1, blue: 0.2, alpha: 1),
+            .topsoil: PlatformColor(red: 0.45, green: 0.35, blue: 0.2, alpha: 1),
+            .frozenGround: PlatformColor(red: 0.7, green: 0.72, blue: 0.8, alpha: 1),
+            .lava: PlatformColor(red: 0.9, green: 0.3, blue: 0.05, alpha: 1),
+        ]
+
+        let size = CGSize(width: 32, height: 32)
+        for (terrain, color) in placeholders {
+            // Only create placeholder if no real asset was loaded (check if texture has actual content)
+            // SKTexture(imageNamed:) returns a default texture if asset not found, so we always
+            // set the placeholder - the real asset will be used if it exists in the catalog
+            if terrainTextures[terrain] == nil {
+                let tex = createSolidTexture(color: color, size: size)
+                terrainTextures[terrain] = tex
+            }
+        }
+    }
+
+    /// Create a solid color texture
+    private func createSolidTexture(color: PlatformColor, size: CGSize) -> SKTexture {
+        #if os(macOS)
+        let image = NSImage(size: size)
+        image.lockFocus()
+        color.setFill()
+        NSRect(origin: .zero, size: size).fill()
+        image.unlockFocus()
+        let tex = SKTexture(image: image)
+        #else
+        UIGraphicsBeginImageContextWithOptions(size, true, 1.0)
+        color.setFill()
+        UIRectFill(CGRect(origin: .zero, size: size))
+        let image = UIGraphicsGetImageFromCurrentImageContext()!
+        UIGraphicsEndImageContext()
+        let tex = SKTexture(image: image)
+        #endif
+        tex.filteringMode = .nearest
+        return tex
     }
 
     private func loadUnitTextures() {

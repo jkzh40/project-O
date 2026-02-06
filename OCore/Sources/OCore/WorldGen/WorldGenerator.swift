@@ -9,6 +9,14 @@ public typealias WorldGenCallback = @MainActor (WorldGenPhase, String, WorldHist
 /// Phases of world generation
 public enum WorldGenPhase: String, Sendable {
     case creation = "Creating World"
+    case tectonics = "Simulating Tectonics"
+    case heightmap = "Generating Heightmap"
+    case erosion = "Simulating Erosion"
+    case climate = "Simulating Climate"
+    case hydrology = "Tracing Rivers"
+    case biomes = "Classifying Biomes"
+    case detailPass = "Adding Detail"
+    case embark = "Selecting Embark Site"
     case terrain = "Shaping Terrain"
     case regions = "Defining Regions"
     case civilizations = "Founding Civilizations"
@@ -22,6 +30,9 @@ public final class WorldGenerator: Sendable {
     /// The world being generated
     public private(set) var world: World
 
+    /// The large-scale world map (kept for potential world map display)
+    public private(set) var worldMap: WorldMap?
+
     /// Historical data
     public private(set) var history: WorldHistory
 
@@ -30,6 +41,9 @@ public final class WorldGenerator: Sendable {
 
     /// Years of history to simulate
     public let historyYears: Int
+
+    /// World generation parameters
+    public let genParams: WorldGenParameters
 
     /// Callback for progress updates
     public var onProgress: WorldGenCallback?
@@ -42,12 +56,21 @@ public final class WorldGenerator: Sendable {
     private var nextFigureId: UInt64 = 1
     private var nextCivId: UInt64 = 1
 
-    /// Creates a new world generator
+    /// Creates a new world generator with procedural terrain
     public init(
         worldWidth: Int = 50,
         worldHeight: Int = 25,
-        historyYears: Int = 250
+        historyYears: Int = 250,
+        seed: WorldSeed? = nil
     ) {
+        let genSeed = seed ?? WorldSeed()
+        self.genParams = WorldGenParameters(
+            seed: genSeed,
+            mapSize: 257,
+            plateCount: 12,
+            erosionDroplets: 500_000,
+            embarkSize: worldWidth
+        )
         self.world = World(width: worldWidth, height: worldHeight)
         self.history = WorldHistory(worldName: WorldNameGenerator.generate())
         self.historyYears = historyYears
@@ -60,21 +83,125 @@ public final class WorldGenerator: Sendable {
         // Phase 1: World Creation
         await phaseCreation()
 
-        // Phase 2: Terrain Shaping
+        // Phase 2: Procedural Terrain Pipeline
+        await phaseProceduralTerrain()
+
+        // Phase 3: Narrative Terrain (lore events about the terrain)
         await phaseTerrain()
 
-        // Phase 3: Region Definition
+        // Phase 4: Region Definition
         await phaseRegions()
 
-        // Phase 4: Civilization Founding
+        // Phase 5: Civilization Founding
         await phaseCivilizations()
 
-        // Phase 5: History Simulation
+        // Phase 6: History Simulation
         await phaseHistory()
 
         // Complete
         currentPhase = .complete
         emitProgress("World generation complete! \(history.events.count) events recorded.")
+    }
+
+    // MARK: - Procedural Terrain Pipeline
+
+    private func phaseProceduralTerrain() async {
+        let params = genParams
+        let depth = world.depth
+
+        let phases: [(WorldGenPhase, String)] = [
+            (.tectonics, "Simulating tectonic plates..."),
+            (.heightmap, "Generating heightmap..."),
+            (.erosion, "Simulating erosion (\(params.erosionDroplets) droplets)..."),
+            (.climate, "Simulating climate..."),
+            (.hydrology, "Tracing rivers and lakes..."),
+            (.biomes, "Classifying biomes..."),
+            (.detailPass, "Adding vegetation and ore deposits..."),
+            (.embark, "Selecting embark site..."),
+        ]
+
+        // Show initial phase
+        currentPhase = .tectonics
+        emitProgress("Simulating tectonic plates...")
+
+        let (stream, continuation) = AsyncStream<Int>.makeStream()
+
+        // Run the heavy pipeline off the main thread so UI stays responsive
+        let task = Task.detached { () -> (WorldMap, [[[Tile]]], EmbarkRegion) in
+            let seed = params.seed
+            let rng = seed.makeRNG()
+            var map = WorldMap(size: params.mapSize, seed: seed)
+            let noise = SimplexNoise(seed: seed.value)
+
+            // Stage 1: Tectonic Plates
+            continuation.yield(0)
+            var tectonicRNG = rng.fork("tectonic")
+            TectonicSimulator.simulate(map: &map, params: params, rng: &tectonicRNG)
+
+            // Stage 2: Heightmap
+            continuation.yield(1)
+            var heightmapRNG = rng.fork("heightmap")
+            HeightmapGenerator.generate(map: &map, noise: noise, rng: &heightmapRNG)
+
+            // Stage 3: Erosion
+            continuation.yield(2)
+            var erosionRNG = rng.fork("erosion")
+            ErosionSimulator.simulate(map: &map, params: params, rng: &erosionRNG)
+
+            // Stage 4: Climate
+            continuation.yield(3)
+            var climateRNG = rng.fork("climate")
+            ClimateSimulator.simulate(map: &map, noise: noise, rng: &climateRNG)
+
+            // Stage 5: Hydrology
+            continuation.yield(4)
+            var hydrologyRNG = rng.fork("hydrology")
+            HydrologySimulator.simulate(map: &map, rng: &hydrologyRNG)
+
+            // Stage 6: Biome Classification
+            continuation.yield(5)
+            BiomeClassifier.classify(map: &map)
+
+            // Stage 7: Detail Pass
+            continuation.yield(6)
+            var detailRNG = rng.fork("detail")
+            DetailPass.apply(map: &map, noise: noise, rng: &detailRNG)
+
+            // Find embark site
+            continuation.yield(7)
+            var embarkRNG = seed.makeRNG().fork("embark")
+            let region = WorldMapGenerator.findEmbarkSite(map: map, size: params.embarkSize, rng: &embarkRNG)
+
+            // Generate local terrain from world map
+            var localRNG = seed.makeRNG().fork("local")
+            let tiles = LocalTerrainGenerator.generate(from: map, region: region, depth: depth, rng: &localRNG)
+
+            continuation.finish()
+            return (map, tiles, region)
+        }
+
+        // Process progress updates on the main thread as each stage begins
+        for await stageIndex in stream {
+            if stageIndex < phases.count {
+                currentPhase = phases[stageIndex].0
+                emitProgress(phases[stageIndex].1)
+            }
+        }
+
+        let (map, tiles, region) = await task.value
+
+        self.worldMap = map
+
+        // Replace the world with the procedurally generated one
+        self.world = World(
+            width: region.width,
+            height: region.height,
+            depth: depth,
+            tiles: tiles
+        )
+
+        emitProgress("Terrain generated: \(region.width)x\(region.height) embark site ready")
+        await delay()
     }
 
     // MARK: - Generation Phases

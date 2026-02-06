@@ -65,6 +65,54 @@ public enum Direction: Int, CaseIterable, Sendable {
     }
 }
 
+// MARK: - Biome
+
+/// Biome classification based on temperature and moisture (extended Whittaker diagram)
+public enum BiomeType: String, CaseIterable, Sendable {
+    // Aquatic
+    case ocean
+    case deepOcean
+    case coastalWaters
+    case frozenOcean
+    case lake
+    case frozenLake
+    case river
+
+    // Cold
+    case tundra
+    case iceCap
+    case alpineMeadow
+    case borealForest       // Taiga
+
+    // Temperate
+    case temperateGrassland
+    case temperateForest
+    case temperateRainforest
+    case swamp
+    case marsh
+
+    // Warm
+    case savanna
+    case tropicalForest
+    case tropicalRainforest
+    case mangrove
+
+    // Dry
+    case desert
+    case hotDesert
+    case coldDesert
+    case scrubland
+
+    // Elevation-based
+    case mountain
+    case snowPeak
+    case volcanicWaste
+
+    // Transitional
+    case beach
+    case riverBank
+}
+
 // MARK: - Terrain
 
 /// Types of terrain tiles
@@ -79,6 +127,32 @@ public enum TerrainType: String, CaseIterable, Sendable {
     case shrub
     case wall
     case ore             // Minable ore
+
+    // Expanded natural terrain
+    case sand
+    case snow
+    case ice
+    case marsh
+    case deepWater
+    case clay
+    case gravel
+    case mud
+    case coniferTree
+    case palmTree
+    case deadTree
+    case tallGrass
+    case cactus
+    case moss
+    case reeds
+
+    // Rock types
+    case sandstone
+    case limestone
+    case granite
+    case obsidian
+    case topsoil
+    case frozenGround
+    case lava
 
     // Constructed terrain
     case woodenFloor
@@ -96,9 +170,13 @@ public enum TerrainType: String, CaseIterable, Sendable {
     public var isPassable: Bool {
         switch self {
         case .emptyAir, .grass, .dirt, .stone, .woodenFloor, .stoneFloor,
-             .stairsUp, .stairsDown, .stairsUpDown, .rampUp, .rampDown, .ore:
+             .stairsUp, .stairsDown, .stairsUpDown, .rampUp, .rampDown, .ore,
+             .sand, .snow, .gravel, .mud, .tallGrass, .moss, .topsoil,
+             .frozenGround, .clay, .sandstone, .limestone, .granite:
             return true
-        case .water, .tree, .shrub, .wall, .constructedWall:
+        case .water, .tree, .shrub, .wall, .constructedWall,
+             .deepWater, .ice, .coniferTree, .palmTree, .deadTree,
+             .cactus, .reeds, .marsh, .obsidian, .lava:
             return false
         }
     }
@@ -126,7 +204,38 @@ public enum TerrainType: String, CaseIterable, Sendable {
     /// Whether this is a solid tile that can be mined
     public var isMinable: Bool {
         switch self {
-        case .wall, .stone, .ore:
+        case .wall, .stone, .ore, .sandstone, .limestone, .granite, .obsidian:
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// Whether this is a tree that can be chopped
+    public var isHarvestableTree: Bool {
+        switch self {
+        case .tree, .coniferTree, .palmTree, .deadTree:
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// Whether this is a body of water
+    public var isWaterBody: Bool {
+        switch self {
+        case .water, .deepWater:
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// Whether this is a vegetation tile
+    public var isVegetation: Bool {
+        switch self {
+        case .tree, .shrub, .coniferTree, .palmTree, .deadTree,
+             .tallGrass, .cactus, .reeds, .moss:
             return true
         default:
             return false
@@ -136,12 +245,21 @@ public enum TerrainType: String, CaseIterable, Sendable {
     /// Movement cost multiplier (1.0 = normal)
     public var movementCost: Double {
         switch self {
-        case .grass, .dirt, .woodenFloor, .stoneFloor, .stairsUp, .stairsDown, .stairsUpDown:
+        case .grass, .dirt, .woodenFloor, .stoneFloor, .stairsUp, .stairsDown, .stairsUpDown,
+             .topsoil, .moss:
             return 1.0
-        case .stone, .ore:
+        case .stone, .ore, .sandstone, .limestone, .granite:
             return 1.2
         case .rampUp, .rampDown:
             return 1.5
+        case .sand, .gravel:
+            return 1.3
+        case .snow, .frozenGround:
+            return 1.4
+        case .mud, .clay:
+            return 1.6
+        case .tallGrass:
+            return 1.1
         case .water:
             return 5.0
         default:
@@ -158,9 +276,31 @@ public enum TerrainType: String, CaseIterable, Sendable {
         case .stone: return "_"
         case .ore: return "$"
         case .water: return "~"
+        case .deepWater: return "≈"
         case .tree: return "T"
+        case .coniferTree: return "♠"
+        case .palmTree: return "♣"
+        case .deadTree: return "†"
         case .shrub: return "*"
+        case .tallGrass: return ";"
+        case .cactus: return "¡"
+        case .reeds: return "|"
+        case .moss: return "·"
         case .wall: return "#"
+        case .sand: return "∘"
+        case .snow: return "○"
+        case .ice: return "◇"
+        case .marsh: return "≋"
+        case .clay: return "▪"
+        case .gravel: return "░"
+        case .mud: return "▓"
+        case .sandstone: return "▤"
+        case .limestone: return "▥"
+        case .granite: return "▦"
+        case .obsidian: return "■"
+        case .topsoil: return "▫"
+        case .frozenGround: return "◻"
+        case .lava: return "▣"
         case .woodenFloor: return "="
         case .stoneFloor: return "+"
         case .constructedWall: return "H"
@@ -366,6 +506,7 @@ public enum IdleActivity: String, CaseIterable, Sendable {
     case selfTrain
     case appreciateArt
     case contemplateNature
+    case reminisce
 }
 
 // MARK: - Season

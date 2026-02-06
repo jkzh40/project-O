@@ -208,7 +208,7 @@ public final class AutonomousWorkManager: Sendable {
                 let pos = Position(x: x, y: y, z: 0)
                 guard let tile = world.getTile(at: pos) else { continue }
 
-                if tile.terrain == .tree {
+                if tile.terrain.isHarvestableTree {
                     // Check distance from center
                     let distance = searchCenter.distance(to: pos)
                     if distance <= resourceScanRadius {
@@ -361,7 +361,7 @@ public final class AutonomousWorkManager: Sendable {
                     for dir in Direction.allCases {
                         let neighborPos = pos.moved(in: dir)
                         if let neighborTile = world.getTile(at: neighborPos),
-                           neighborTile.terrain == .water {
+                           neighborTile.terrain.isWaterBody {
                             targets.append(WorkTarget(position: pos, type: .water, priority: .normal))
                             break
                         }

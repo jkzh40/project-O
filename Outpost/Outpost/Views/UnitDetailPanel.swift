@@ -97,6 +97,76 @@ struct UnitDetailPanel: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
 
+                // Memories section
+                if !detail.recentMemories.isEmpty || !detail.topBeliefs.isEmpty {
+                    Divider()
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Image(systemName: "brain.head.profile")
+                                .font(.caption2)
+                                .foregroundStyle(.purple)
+                            Text("Memories")
+                                .font(.caption2.bold())
+                                .foregroundStyle(.secondary)
+                        }
+
+                        // Recent memories
+                        if !detail.recentMemories.isEmpty {
+                            ForEach(Array(detail.recentMemories.enumerated()), id: \.offset) { _, memory in
+                                Text(memory)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+
+                        // Beliefs
+                        if !detail.topBeliefs.isEmpty {
+                            Text("Beliefs:")
+                                .font(.caption2.bold())
+                                .foregroundStyle(.secondary)
+                                .padding(.top, 2)
+                            ForEach(Array(detail.topBeliefs.enumerated()), id: \.offset) { _, belief in
+                                Text(belief)
+                                    .font(.caption2)
+                                    .foregroundStyle(.orange)
+                                    .lineLimit(1)
+                            }
+                        }
+
+                        // Emotional associations
+                        if !detail.positiveAssociations.isEmpty || !detail.negativeAssociations.isEmpty {
+                            Text("Feelings:")
+                                .font(.caption2.bold())
+                                .foregroundStyle(.secondary)
+                                .padding(.top, 2)
+                            ForEach(Array(detail.positiveAssociations.enumerated()), id: \.offset) { _, assoc in
+                                HStack(spacing: 4) {
+                                    Image(systemName: "heart.fill")
+                                        .font(.system(size: 8))
+                                        .foregroundStyle(.green)
+                                    Text("\(assoc.name) +\(assoc.feeling)")
+                                        .font(.caption2)
+                                        .foregroundStyle(.green)
+                                }
+                            }
+                            ForEach(Array(detail.negativeAssociations.enumerated()), id: \.offset) { _, assoc in
+                                HStack(spacing: 4) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 8))
+                                        .foregroundStyle(.red)
+                                    Text("\(assoc.name) \(assoc.feeling)")
+                                        .font(.caption2)
+                                        .foregroundStyle(.red)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                }
+
             } else {
                 Text("No unit selected")
                     .font(.caption)

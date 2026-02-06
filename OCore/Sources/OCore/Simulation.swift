@@ -290,7 +290,11 @@ public final class Simulation: Sendable {
         // 4. Check for combat threats (if not already in combat)
         if unit.state != .fighting && unit.state != .fleeing {
             if let threat = findNearbyThreat(for: unit) {
+                let wasSleeping = unit.state == .sleeping
                 handleCombatThreat(&unit, threat: threat)
+                if wasSleeping {
+                    print("[SLEEP-INT] \(unit.name.firstName) sleep interrupted by combat at tick \(world.currentTick), drowsiness=\(unit.drowsiness)")
+                }
                 world.updateUnit(unit)
                 return
             }
@@ -361,6 +365,15 @@ public final class Simulation: Sendable {
         // Add thoughts based on needs
         if unit.hunger > NeedThresholds.hungerCritical {
             moodManager.addThought(unitId: unit.id, type: .wasHungry, currentTick: currentTick)
+            // Record near-starvation memory at very high hunger
+            if unit.hunger > NeedThresholds.hungerDecide && unit.creatureType == .orc {
+                unit.memories.recordEvent(
+                    type: .starvedNearly,
+                    tick: currentTick,
+                    location: unit.position,
+                    detail: "nearly starved"
+                )
+            }
         }
         if unit.thirst > NeedThresholds.thirstCritical {
             moodManager.addThought(unitId: unit.id, type: .wasThirsty, currentTick: currentTick)
@@ -481,6 +494,18 @@ public final class Simulation: Sendable {
                 currentTick: world.currentTick,
                 source: unit.name.firstName
             )
+            // Record lostFriend memory
+            if var friendUnit = world.getUnit(id: friendId), friendUnit.creatureType == .orc {
+                friendUnit.memories.recordEvent(
+                    type: .lostFriend,
+                    tick: world.currentTick,
+                    entities: [unit.id],
+                    names: [unit.name.firstName],
+                    location: friendUnit.position,
+                    detail: "lost friend \(unit.name.firstName)"
+                )
+                world.updateUnit(friendUnit)
+            }
         }
 
         // Notify nearby units they witnessed death
@@ -488,6 +513,18 @@ public final class Simulation: Sendable {
             .filter { $0.id != unit.id }
         for witness in witnesses {
             moodManager.addThought(unitId: witness.id, type: .sawDeath, currentTick: world.currentTick)
+            // Record witnessedDeath memory
+            if var witnessUnit = world.getUnit(id: witness.id), witnessUnit.creatureType == .orc {
+                witnessUnit.memories.recordEvent(
+                    type: .witnessedDeath,
+                    tick: world.currentTick,
+                    entities: [unit.id],
+                    names: [unit.name.firstName],
+                    location: unit.position,
+                    detail: "witnessed \(unit.name.firstName) die"
+                )
+                world.updateUnit(witnessUnit)
+            }
         }
 
         // Clear social relationships
@@ -541,6 +578,18 @@ public final class Simulation: Sendable {
         }
 
         moodManager.addThought(unitId: unit.id, type: .wasAttacked, currentTick: world.currentTick)
+
+        // Record attackedBy memory
+        if unit.creatureType == .orc {
+            unit.memories.recordEvent(
+                type: .attackedBy,
+                tick: world.currentTick,
+                entities: [threat.id],
+                names: [threat.creatureType.rawValue],
+                location: unit.position,
+                detail: "attacked by \(threat.creatureType.rawValue)"
+            )
+        }
     }
 
     /// Process fighting state
@@ -602,6 +651,18 @@ public final class Simulation: Sendable {
                     moodManager.addThought(unitId: unit.id, type: .hadToKill, currentTick: world.currentTick)
                     stats.totalKills += 1
 
+                    // Record killedEnemy memory
+                    if unit.creatureType == .orc {
+                        unit.memories.recordEvent(
+                            type: .killedEnemy,
+                            tick: world.currentTick,
+                            entities: [target.id],
+                            names: [defenderName],
+                            location: unit.position,
+                            detail: "killed \(defenderName)"
+                        )
+                    }
+
                     // Remove from hostile list
                     hostileUnits.remove(target.id)
 
@@ -626,6 +687,27 @@ public final class Simulation: Sendable {
             if combatManager.shouldFlee(healthPercentage: unit.health.percentage, bravery: unit.personality.value(for: .bravery)) {
                 unit.transition(to: .fleeing)
                 moodManager.addThought(unitId: unit.id, type: .wasInjured, currentTick: world.currentTick)
+
+                // Record injury memory
+                if unit.creatureType == .orc {
+                    unit.memories.recordEvent(
+                        type: .wasInjured,
+                        tick: world.currentTick,
+                        entities: [target.id],
+                        names: [defenderName],
+                        location: unit.position,
+                        detail: "injured by \(defenderName)"
+                    )
+                    // Check for near-death
+                    if unit.health.percentage < 20 {
+                        unit.memories.recordEvent(
+                            type: .nearDeath,
+                            tick: world.currentTick,
+                            location: unit.position,
+                            detail: "nearly died in combat"
+                        )
+                    }
+                }
             }
         } else {
             // Move toward target
@@ -796,11 +878,17 @@ public final class Simulation: Sendable {
                 } else {
                     unit.transition(to: .sleeping)
                     moodManager.addThought(unitId: unit.id, type: .sleptOnGround, currentTick: world.currentTick)
+                    if unit.creatureType == .orc {
+                        unit.memories.recordEvent(type: .sleptOutside, tick: world.currentTick, location: unit.position)
+                    }
                     logEvent(.unitAction(unitId: unit.id, unitName: unit.name.firstName, action: "sleeping on ground"))
                 }
             } else {
                 unit.transition(to: .sleeping)
                 moodManager.addThought(unitId: unit.id, type: .sleptOnGround, currentTick: world.currentTick)
+                if unit.creatureType == .orc {
+                    unit.memories.recordEvent(type: .sleptOutside, tick: world.currentTick, location: unit.position)
+                }
                 logEvent(.unitAction(unitId: unit.id, unitName: unit.name.firstName, action: "sleeping on ground"))
             }
 
@@ -811,6 +899,13 @@ public final class Simulation: Sendable {
 
     /// Selects an idle activity based on personality using the IdleActivity enum
     private func selectIdleActivity(_ unit: inout Unit) {
+        // Periodic thinking every ~200 ticks for idle orcs
+        if unit.creatureType == .orc && world.currentTick % 200 == 0 {
+            if let thought = unit.memories.think(personality: unit.personality, currentTick: world.currentTick) {
+                moodManager.addThought(unitId: unit.id, type: thought, currentTick: world.currentTick, source: "memory")
+            }
+        }
+
         let activity = chooseIdleActivity(for: unit)
 
         switch activity {
@@ -863,6 +958,17 @@ public final class Simulation: Sendable {
                 moodManager.addThought(unitId: unit.id, type: .sawNature, currentTick: world.currentTick)
                 logEvent(.unitAction(unitId: unit.id, unitName: unit.name.firstName, action: "enjoying nature"))
             }
+
+        case .reminisce:
+            // Think about past memories (100-200 tick activity)
+            if let thought = unit.memories.think(personality: unit.personality, currentTick: world.currentTick) {
+                moodManager.addThought(unitId: unit.id, type: thought, currentTick: world.currentTick, source: "memory")
+            }
+            if let topMemory = unit.memories.topMemoryDescription {
+                logEvent(.unitAction(unitId: unit.id, unitName: unit.name.firstName, action: "reminiscing about \(topMemory)"))
+            } else {
+                logEvent(.unitAction(unitId: unit.id, unitName: unit.name.firstName, action: "lost in thought"))
+            }
         }
     }
 
@@ -872,6 +978,16 @@ public final class Simulation: Sendable {
         let activityLevel = unit.personality.value(for: .activityLevel)
         let curiosity = unit.personality.value(for: .curiosity)
         let perseverance = unit.personality.value(for: .perseverance)
+        let anxiety = unit.personality.value(for: .anxiety)
+
+        // Reminisce weight: curious orcs reminisce more, anxious orcs ruminate more
+        // Only if the unit actually has memories to think about
+        let reminisceWeight: Int
+        if unit.creatureType == .orc && unit.memories.totalEpisodicCount > 0 {
+            reminisceWeight = 5 + curiosity / 5 + anxiety / 5
+        } else {
+            reminisceWeight = 0
+        }
 
         // Build weighted choices based on personality
         var weights: [(IdleActivity, Int)] = [
@@ -881,6 +997,7 @@ public final class Simulation: Sendable {
             (.selfTrain, 5 + perseverance / 2),
             (.appreciateArt, 5 + curiosity / 3),
             (.contemplateNature, 5 + (100 - gregariousness) / 3),
+            (.reminisce, reminisceWeight),
         ]
 
         let total = weights.reduce(0) { $0 + $1.1 }
@@ -1001,14 +1118,90 @@ public final class Simulation: Sendable {
                 participants.append(ConversationParticipant(unitId: partner.id, name: partner.name.firstName, personality: partner.personality))
             }
 
+            // Capture pre-conversation friendship status for madeNewFriend detection
+            var preFriendPairs: Set<String> = []
+            for i in 0..<participants.count {
+                for j in (i+1)..<participants.count {
+                    let rel = socialManager.getRelationship(from: participants[i].unitId, to: participants[j].unitId, currentTick: world.currentTick)
+                    if rel.type == .friend || rel.type == .closeFriend {
+                        preFriendPairs.insert("\(participants[i].unitId)_\(participants[j].unitId)")
+                    }
+                }
+            }
+
             let plan = socialManager.haveGroupConversation(
                 participants: participants,
-                currentTick: world.currentTick
+                currentTick: world.currentTick,
+                initiatorMemories: unit.creatureType == .orc ? unit.memories : nil
             )
+
+            // Check for new friendships formed
+            for i in 0..<participants.count {
+                for j in (i+1)..<participants.count {
+                    let key = "\(participants[i].unitId)_\(participants[j].unitId)"
+                    if !preFriendPairs.contains(key) {
+                        let rel = socialManager.getRelationship(from: participants[i].unitId, to: participants[j].unitId, currentTick: world.currentTick)
+                        if rel.type == .friend || rel.type == .closeFriend {
+                            // New friendship! Record for both
+                            if var u1 = world.getUnit(id: participants[i].unitId), u1.creatureType == .orc {
+                                u1.memories.recordEvent(
+                                    type: .madeNewFriend, tick: world.currentTick,
+                                    entities: [participants[j].unitId], names: [participants[j].name],
+                                    location: u1.position, detail: "became friends with \(participants[j].name)"
+                                )
+                                world.updateUnit(u1)
+                            }
+                            if var u2 = world.getUnit(id: participants[j].unitId), u2.creatureType == .orc {
+                                u2.memories.recordEvent(
+                                    type: .madeNewFriend, tick: world.currentTick,
+                                    entities: [participants[i].unitId], names: [participants[i].name],
+                                    location: u2.position, detail: "became friends with \(participants[i].name)"
+                                )
+                                world.updateUnit(u2)
+                            }
+                        }
+                    }
+                }
+            }
 
             if plan.overallSuccess {
                 for p in participants {
                     moodManager.addThought(unitId: p.unitId, type: .talkedWithFriend, currentTick: world.currentTick)
+                }
+                // Record conversationWith memory for all participants
+                let partnerIds = participants.map { $0.unitId }
+                let partnerNames = participants.map { $0.name }
+                for p in participants {
+                    if var pUnit = world.getUnit(id: p.unitId), pUnit.creatureType == .orc {
+                        let others = partnerIds.filter { $0 != p.unitId }
+                        let otherNames = participants.filter { $0.unitId != p.unitId }.map { $0.name }
+                        pUnit.memories.recordEvent(
+                            type: .conversationWith,
+                            tick: world.currentTick,
+                            entities: others,
+                            names: otherNames,
+                            location: pUnit.position,
+                            detail: "talked about \(plan.topic.rawValue) with \(otherNames.joined(separator: ", "))"
+                        )
+                        world.updateUnit(pUnit)
+                    }
+                }
+            } else {
+                // Record argumentWith for failed conversations
+                for p in participants {
+                    if var pUnit = world.getUnit(id: p.unitId), pUnit.creatureType == .orc {
+                        let otherNames = participants.filter { $0.unitId != p.unitId }.map { $0.name }
+                        let others = participants.filter { $0.unitId != p.unitId }.map { $0.unitId }
+                        pUnit.memories.recordEvent(
+                            type: .argumentWith,
+                            tick: world.currentTick,
+                            entities: others,
+                            names: otherNames,
+                            location: pUnit.position,
+                            detail: "awkward talk about \(plan.topic.rawValue)"
+                        )
+                        world.updateUnit(pUnit)
+                    }
                 }
             }
 
@@ -1027,6 +1220,34 @@ public final class Simulation: Sendable {
                 : "Had an awkward conversation about \(plan.topic.rawValue)"
             logEvent(.social(unit1Name: nameList, unit2Name: "", message: description))
             stats.totalConversations += 1
+
+            // Gossip memory sharing: when topic is gossip and succeeds, spread a memory
+            if plan.topic == .gossip && plan.overallSuccess && unit.creatureType == .orc {
+                // Find initiator's most salient social memory to share
+                let socialMemories = unit.memories.recallRecent(limit: 5).filter {
+                    $0.eventType == .conversationWith || $0.eventType == .madeNewFriend ||
+                    $0.eventType == .argumentWith || $0.eventType == .marriedTo ||
+                    $0.eventType == .killedEnemy || $0.eventType == .witnessedDeath
+                }
+                if let gossipSource = socialMemories.first {
+                    // Non-initiator participants hear the gossip
+                    for partner in partners {
+                        if var partnerUnit = world.getUnit(id: partner.id), partnerUnit.creatureType == .orc {
+                            let gossipTargetNames = gossipSource.involvedNames
+                            let gossipTargetIds = gossipSource.involvedEntityIds
+                            partnerUnit.memories.recordEvent(
+                                type: .heardGossipAbout,
+                                tick: world.currentTick,
+                                entities: gossipTargetIds,
+                                names: gossipTargetNames,
+                                location: partnerUnit.position,
+                                detail: "heard that \(unit.name.firstName) says: \(gossipSource.detail)"
+                            )
+                            world.updateUnit(partnerUnit)
+                        }
+                    }
+                }
+            }
 
             // Detect eavesdroppers: orcs within radius 4 NOT in the conversation
             let conversationParticipantIds = Set(plan.participantIds)
@@ -1099,9 +1320,14 @@ public final class Simulation: Sendable {
 
     /// Processes a unit in sleeping state
     private func processSleepingState(_ unit: inout Unit) {
+        let prevDrowsiness = unit.drowsiness
         unit.processSleepRecovery()
 
         if unit.isFullyRested {
+            // Consolidate memories during sleep
+            print("[SLEEP] \(unit.name.firstName) fully rested at tick \(world.currentTick), drowsiness \(prevDrowsiness) → \(unit.drowsiness), buffer=\(unit.memories.shortTermBuffer.count)")
+            unit.memories.consolidate(personality: unit.personality, currentTick: world.currentTick)
+
             unit.transition(to: .idle)
             logEvent(.unitAction(unitId: unit.id, unitName: unit.name.firstName, action: "woke up rested"))
         }
@@ -1136,6 +1362,16 @@ public final class Simulation: Sendable {
                 // Good work thought
                 moodManager.addThought(unitId: unit.id, type: .didGoodWork, currentTick: world.currentTick)
                 stats.totalJobsCompleted += 1
+
+                // Record completedTask memory
+                if unit.creatureType == .orc {
+                    unit.memories.recordEvent(
+                        type: .completedTask,
+                        tick: world.currentTick,
+                        location: unit.position,
+                        detail: "completed \(job.type.rawValue)"
+                    )
+                }
 
                 // Give skill XP
                 if let skill = job.type.associatedSkill {
@@ -1643,6 +1879,25 @@ public final class Simulation: Sendable {
                         if socialManager.marry(unit1: unitId, unit2: friendId, currentTick: world.currentTick) {
                             logEvent(.social(unit1Name: unit.name.firstName, unit2Name: friend.name.firstName, message: "got married!"))
                             stats.totalMarriages += 1
+
+                            // Record marriedTo memory for both
+                            if var u1 = world.getUnit(id: unitId), u1.creatureType == .orc {
+                                u1.memories.recordEvent(
+                                    type: .marriedTo, tick: world.currentTick,
+                                    entities: [friendId], names: [friend.name.firstName],
+                                    location: u1.position, detail: "married \(friend.name.firstName)"
+                                )
+                                world.updateUnit(u1)
+                            }
+                            if var u2 = world.getUnit(id: friendId), u2.creatureType == .orc {
+                                u2.memories.recordEvent(
+                                    type: .marriedTo, tick: world.currentTick,
+                                    entities: [unitId], names: [unit.name.firstName],
+                                    location: u2.position, detail: "married \(unit.name.firstName)"
+                                )
+                                world.updateUnit(u2)
+                            }
+
                             return  // Only one marriage per check
                         }
                     }
@@ -1659,7 +1914,21 @@ public final class Simulation: Sendable {
         for (unitId, unit) in world.units {
             guard unit.creatureType == .orc && unit.isAlive else { continue }
             switch newSeason {
-            case .spring, .summer:
+            case .spring:
+                moodManager.addThought(unitId: unitId, type: .enjoyedSeason, currentTick: tick, source: newSeason.description)
+                // If transitioning from winter to spring, record survivedWinter
+                if var u = world.getUnit(id: unitId) {
+                    u.memories.recordEvent(
+                        type: .survivedWinter, tick: tick,
+                        location: u.position, detail: "survived the winter"
+                    )
+                    u.memories.recordEvent(
+                        type: .enjoyedSpring, tick: tick,
+                        location: u.position, detail: "enjoying spring"
+                    )
+                    world.updateUnit(u)
+                }
+            case .summer:
                 moodManager.addThought(unitId: unitId, type: .enjoyedSeason, currentTick: tick, source: newSeason.description)
             case .winter:
                 moodManager.addThought(unitId: unitId, type: .sufferedSeason, currentTick: tick, source: newSeason.description)

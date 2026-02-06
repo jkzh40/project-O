@@ -54,6 +54,10 @@ public struct Unit: Sendable, Identifiable {
 
     public var creatureType: CreatureType
 
+    // MARK: - Memory
+
+    public var memories: MemoryStore = MemoryStore()
+
     // MARK: - Initialization
 
     /// Creates a unit with default values and random personality
@@ -127,7 +131,10 @@ public struct Unit: Sendable, Identifiable {
         // Increment need counters (DF style - +1 per tick)
         hunger += 1
         thirst += 1
-        drowsiness += 1
+        // Don't accumulate drowsiness while sleeping (recovery handles it)
+        if state != .sleeping {
+            drowsiness += 1
+        }
 
         // Decrement action counter
         if actionCounter > 0 {
