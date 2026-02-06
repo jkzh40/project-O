@@ -58,17 +58,19 @@ public final class Renderer: Sendable {
     /// Renders the header with tick count
     private func renderHeader() -> String {
         let tick = simulation.world.currentTick
+        let cal = simulation.world.calendar
         let orcCount = simulation.world.units.values.filter { $0.creatureType == .orc }.count
         let aliveOrcs = simulation.world.units.values.filter { $0.isAlive && $0.creatureType == .orc }.count
         let hostileCount = simulation.world.units.values.filter { $0.isAlive && $0.creatureType != .orc }.count
 
         let stats = simulation.stats
         let statsLine = "Kills:\(stats.totalKills) Deaths:\(stats.totalDeaths) Jobs:\(stats.totalJobsCompleted)"
+        let dateLine = "\(cal.dateString) \(cal.timeString) (\(cal.timeOfDay.rawValue))"
 
         var header = "╔══════════════════════════════════════════════════════════════════╗\(ANSI.clearLine)\n"
         header += "║  🏰 ORC OUTPOST                                             ║\(ANSI.clearLine)\n"
-        header += "║  Tick: \(String(format: "%6d", tick)) │ Orcs: \(aliveOrcs)/\(orcCount) │ Hostiles: \(String(format: "%2d", hostileCount))           ║\(ANSI.clearLine)\n"
-        header += "║  \(statsLine.padding(toLength: 62, withPad: " ", startingAt: 0))  ║\(ANSI.clearLine)\n"
+        header += "║  \(dateLine.padding(toLength: 40, withPad: " ", startingAt: 0))│ Tick: \(String(format: "%6d", tick))     ║\(ANSI.clearLine)\n"
+        header += "║  Orcs: \(aliveOrcs)/\(orcCount) │ Hostiles: \(String(format: "%2d", hostileCount)) │ \(statsLine.padding(toLength: 34, withPad: " ", startingAt: 0))║\(ANSI.clearLine)\n"
         header += "╚══════════════════════════════════════════════════════════════════╝\(ANSI.clearLine)\n"
 
         return header

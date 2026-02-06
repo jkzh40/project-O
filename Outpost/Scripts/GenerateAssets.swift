@@ -1225,6 +1225,331 @@ func drawTerrainRampDown() -> PixelCanvas {
     return p
 }
 
+// MARK: - Seasonal Terrain Sprites
+
+// --- Spring variants ---
+
+func drawTerrainGrassSpring() -> PixelCanvas {
+    let p = PixelCanvas(fill: C(60, 150, 50))
+    var rng = SimpleRNG(seed: 43)
+    let dark = C(40, 120, 35)
+    let light = C(80, 170, 65)
+    let brightGreen = C(90, 180, 70)
+
+    for y in 0..<32 {
+        for x in 0..<32 {
+            let v = rng.nextInt(100)
+            if v < 15 { p.set(x, y, dark) }
+            else if v < 22 { p.set(x, y, light) }
+            else if v < 25 { p.set(x, y, brightGreen) }
+        }
+    }
+    // Yellow wildflowers
+    let flowerYellow = C(240, 220, 60)
+    let flowerWhite = C(240, 240, 220)
+    p.set(5, 8, flowerYellow); p.set(6, 8, flowerYellow)
+    p.set(14, 20, flowerYellow); p.set(15, 20, flowerYellow)
+    p.set(24, 12, flowerWhite); p.set(25, 12, flowerWhite)
+    p.set(10, 28, flowerWhite)
+    p.set(20, 4, flowerYellow)
+    p.set(28, 22, flowerWhite); p.set(29, 22, flowerWhite)
+    return p
+}
+
+func drawTerrainTreeSpring() -> PixelCanvas {
+    let p = PixelCanvas(fill: C(60, 150, 50))
+    var rng = SimpleRNG(seed: 78)
+    for y in 0..<32 {
+        for x in 0..<32 {
+            if rng.nextBool(chance: 15) { p.set(x, y, C(40, 120, 35)) }
+        }
+    }
+    let trunk = C(80, 50, 20)
+    let trunkDark = C(60, 35, 15)
+    let canopy = C(40, 120, 30)
+    let canopyLight = C(60, 145, 45)
+    let blossom = C(240, 180, 200)
+    let blossomDark = C(220, 150, 170)
+
+    for y in 16...28 {
+        for x in 14...17 { p.set(x, y, trunk) }
+    }
+    p.set(14, 17, trunkDark); p.set(14, 20, trunkDark)
+    for y in 4...18 {
+        let dy = y - 11
+        let halfW = Int(sqrt(max(0, Double(8 * 8 - dy * dy))) * 1.2)
+        for x in (16 - halfW)...(15 + halfW) { p.set(x, y, canopy) }
+    }
+    for y in 5...10 {
+        for x in 12...19 { if rng.nextBool(chance: 30) { p.set(x, y, canopyLight) } }
+    }
+    // Pink blossoms scattered on canopy
+    for y in 4...14 {
+        for x in 9...22 {
+            if rng.nextBool(chance: 18) {
+                let dy = y - 11
+                let halfW = Int(sqrt(max(0, Double(8 * 8 - dy * dy))) * 1.2)
+                if x >= (16 - halfW) && x <= (15 + halfW) {
+                    p.set(x, y, rng.nextBool(chance: 50) ? blossom : blossomDark)
+                }
+            }
+        }
+    }
+    return p
+}
+
+func drawTerrainShrubSpring() -> PixelCanvas {
+    let p = PixelCanvas(fill: C(60, 150, 50))
+    var rng = SimpleRNG(seed: 56)
+    for y in 0..<32 {
+        for x in 0..<32 {
+            if rng.nextBool(chance: 15) { p.set(x, y, C(40, 120, 35)) }
+        }
+    }
+    let bush = C(50, 110, 38)
+    let bushLight = C(65, 130, 50)
+    let bud = C(200, 220, 100)
+
+    for y in 14...26 {
+        let dy = y - 20
+        let halfW = Int(sqrt(max(0, Double(7 * 7 - dy * dy))) * 1.1)
+        for x in (16 - halfW)...(15 + halfW) { p.set(x, y, bush) }
+    }
+    for y in 15...19 {
+        for x in 12...20 { if rng.nextBool(chance: 35) { p.set(x, y, bushLight) } }
+    }
+    // Spring buds
+    p.set(13, 17, bud); p.set(17, 19, bud); p.set(15, 15, bud)
+    p.set(19, 18, bud); p.set(11, 20, bud)
+    return p
+}
+
+// --- Autumn variants ---
+
+func drawTerrainGrassAutumn() -> PixelCanvas {
+    let p = PixelCanvas(fill: C(140, 130, 60))
+    var rng = SimpleRNG(seed: 44)
+    let dark = C(120, 105, 45)
+    let light = C(160, 150, 75)
+    let orange = C(170, 120, 50)
+
+    for y in 0..<32 {
+        for x in 0..<32 {
+            let v = rng.nextInt(100)
+            if v < 15 { p.set(x, y, dark) }
+            else if v < 22 { p.set(x, y, light) }
+            else if v < 28 { p.set(x, y, orange) }
+        }
+    }
+    return p
+}
+
+func drawTerrainTreeAutumn() -> PixelCanvas {
+    let p = PixelCanvas(fill: C(140, 130, 60))
+    var rng = SimpleRNG(seed: 79)
+    for y in 0..<32 {
+        for x in 0..<32 {
+            if rng.nextBool(chance: 15) { p.set(x, y, C(120, 105, 45)) }
+        }
+    }
+    let trunk = C(80, 50, 20)
+    let trunkDark = C(60, 35, 15)
+    let canopyOrange = C(200, 100, 30)
+    let canopyRed = C(180, 50, 25)
+    let canopyYellow = C(210, 170, 40)
+
+    for y in 16...28 {
+        for x in 14...17 { p.set(x, y, trunk) }
+    }
+    p.set(14, 17, trunkDark); p.set(14, 20, trunkDark)
+    for y in 4...18 {
+        let dy = y - 11
+        let halfW = Int(sqrt(max(0, Double(8 * 8 - dy * dy))) * 1.2)
+        for x in (16 - halfW)...(15 + halfW) { p.set(x, y, canopyOrange) }
+    }
+    for y in 5...12 {
+        for x in 11...20 {
+            if rng.nextBool(chance: 35) { p.set(x, y, canopyYellow) }
+            if rng.nextBool(chance: 20) { p.set(x, y, canopyRed) }
+        }
+    }
+    return p
+}
+
+func drawTerrainShrubAutumn() -> PixelCanvas {
+    let p = PixelCanvas(fill: C(140, 130, 60))
+    var rng = SimpleRNG(seed: 57)
+    for y in 0..<32 {
+        for x in 0..<32 {
+            if rng.nextBool(chance: 15) { p.set(x, y, C(120, 105, 45)) }
+        }
+    }
+    let bush = C(120, 70, 30)
+    let bushBare = C(90, 55, 25)
+
+    for y in 14...26 {
+        let dy = y - 20
+        let halfW = Int(sqrt(max(0, Double(7 * 7 - dy * dy))) * 1.1)
+        for x in (16 - halfW)...(15 + halfW) {
+            p.set(x, y, rng.nextBool(chance: 40) ? bushBare : bush)
+        }
+    }
+    return p
+}
+
+func drawTerrainWaterAutumn(frameOffset: Int = 0) -> PixelCanvas {
+    let p = PixelCanvas(fill: C(35, 65, 130))
+    let dark = C(25, 50, 110)
+    let light = C(55, 90, 150)
+    let crest = C(120, 160, 190)
+
+    for y in 0..<32 {
+        let wavePhase = (y + frameOffset * 4) % 16
+        for x in 0..<32 {
+            let wx = (x + (y / 4) * 3 + frameOffset * 4) % 32
+            if wavePhase < 2 {
+                if wx % 8 < 3 { p.set(x, y, light) }
+            } else if wavePhase < 4 {
+                if wx % 8 < 2 { p.set(x, y, crest) }
+                else if wx % 8 < 3 { p.set(x, y, light) }
+            } else if wavePhase >= 12 && wavePhase < 14 {
+                if wx % 8 >= 4 && wx % 8 < 6 { p.set(x, y, dark) }
+            }
+        }
+    }
+    return p
+}
+
+// --- Winter variants ---
+
+func drawTerrainGrassWinter() -> PixelCanvas {
+    let p = PixelCanvas(fill: C(200, 210, 220))
+    var rng = SimpleRNG(seed: 45)
+    let dark = C(170, 180, 195)
+    let light = C(220, 225, 235)
+    let brown = C(140, 120, 90)
+
+    for y in 0..<32 {
+        for x in 0..<32 {
+            let v = rng.nextInt(100)
+            if v < 12 { p.set(x, y, dark) }
+            else if v < 18 { p.set(x, y, light) }
+            else if v < 22 { p.set(x, y, brown) }
+        }
+    }
+    return p
+}
+
+func drawTerrainTreeWinter() -> PixelCanvas {
+    let p = PixelCanvas(fill: C(200, 210, 220))
+    var rng = SimpleRNG(seed: 80)
+    for y in 0..<32 {
+        for x in 0..<32 {
+            if rng.nextBool(chance: 15) { p.set(x, y, C(170, 180, 195)) }
+        }
+    }
+    let trunk = C(70, 45, 20)
+    let trunkDark = C(55, 35, 15)
+    let branch = C(80, 55, 25)
+    let snow = C(230, 235, 240)
+
+    for y in 16...28 {
+        for x in 14...17 { p.set(x, y, trunk) }
+    }
+    p.set(14, 17, trunkDark); p.set(14, 20, trunkDark)
+    // Bare branches
+    p.drawLine(x0: 15, y0: 16, x1: 8, y1: 8, branch)
+    p.drawLine(x0: 16, y0: 16, x1: 23, y1: 8, branch)
+    p.drawLine(x0: 15, y0: 12, x1: 10, y1: 5, branch)
+    p.drawLine(x0: 16, y0: 12, x1: 21, y1: 5, branch)
+    p.drawLine(x0: 14, y0: 14, x1: 7, y1: 12, branch)
+    p.drawLine(x0: 17, y0: 14, x1: 24, y1: 12, branch)
+    // Snow on branches
+    p.set(8, 7, snow); p.set(9, 7, snow); p.set(10, 8, snow)
+    p.set(22, 7, snow); p.set(23, 7, snow); p.set(21, 8, snow)
+    p.set(10, 4, snow); p.set(11, 4, snow)
+    p.set(20, 4, snow); p.set(21, 4, snow)
+    p.set(7, 11, snow); p.set(8, 11, snow)
+    p.set(23, 11, snow); p.set(24, 11, snow)
+    return p
+}
+
+func drawTerrainShrubWinter() -> PixelCanvas {
+    let p = PixelCanvas(fill: C(200, 210, 220))
+    var rng = SimpleRNG(seed: 58)
+    for y in 0..<32 {
+        for x in 0..<32 {
+            if rng.nextBool(chance: 15) { p.set(x, y, C(170, 180, 195)) }
+        }
+    }
+    let snow = C(225, 230, 238)
+    let snowDark = C(190, 200, 215)
+    let twig = C(80, 55, 25)
+
+    // Snow mound shape
+    for y in 16...26 {
+        let dy = y - 21
+        let halfW = Int(sqrt(max(0, Double(6 * 6 - dy * dy))) * 1.2)
+        for x in (16 - halfW)...(15 + halfW) {
+            p.set(x, y, rng.nextBool(chance: 30) ? snowDark : snow)
+        }
+    }
+    // Twigs poking out
+    p.set(12, 17, twig); p.set(11, 16, twig)
+    p.set(19, 18, twig); p.set(20, 17, twig)
+    p.set(15, 16, twig); p.set(15, 15, twig)
+    return p
+}
+
+func drawTerrainDirtWinter() -> PixelCanvas {
+    let p = PixelCanvas(fill: C(160, 150, 130))
+    var rng = SimpleRNG(seed: 102)
+    let dark = C(140, 130, 110)
+    let frost = C(200, 210, 220)
+    let pebble = C(130, 120, 100)
+
+    for y in 0..<32 {
+        for x in 0..<32 {
+            let v = rng.nextInt(100)
+            if v < 12 { p.set(x, y, dark) }
+            else if v < 25 { p.set(x, y, frost) }
+        }
+    }
+    p.set(5, 10, pebble); p.set(6, 10, pebble)
+    p.set(20, 5, pebble); p.set(21, 5, pebble)
+    p.set(12, 25, pebble); p.set(13, 25, pebble)
+    return p
+}
+
+func drawTerrainWaterWinter(frameOffset: Int = 0) -> PixelCanvas {
+    // Frozen ice — mostly static regardless of frame
+    let p = PixelCanvas(fill: C(180, 210, 230))
+    var rng = SimpleRNG(seed: 300 + UInt64(frameOffset))
+    let iceDark = C(150, 190, 215)
+    let iceLight = C(210, 230, 245)
+    let crack = C(130, 170, 200)
+
+    for y in 0..<32 {
+        for x in 0..<32 {
+            let v = rng.nextInt(100)
+            if v < 10 { p.set(x, y, iceDark) }
+            else if v < 18 { p.set(x, y, iceLight) }
+        }
+    }
+    // Ice cracks
+    p.drawLine(x0: 4, y0: 10, x1: 15, y1: 14, crack)
+    p.drawLine(x0: 15, y0: 14, x1: 28, y1: 10, crack)
+    p.drawLine(x0: 8, y0: 22, x1: 20, y1: 26, crack)
+    // Slight shimmer variation per frame
+    let shimmerX = 10 + frameOffset * 7
+    let shimmerY = 5 + frameOffset * 5
+    if shimmerX < 32 && shimmerY < 32 {
+        p.set(shimmerX, shimmerY, iceLight)
+        p.set(shimmerX + 1, shimmerY, iceLight)
+    }
+    return p
+}
+
 // MARK: - Item Sprites
 
 func drawItemFood() -> PixelCanvas {
@@ -1935,6 +2260,23 @@ let newImagesets: [(String, URL)] = [
     ("terrain_water_2", terrainDir),
     ("ui_healthbar_bg", uiDir),
     ("ui_healthbar_fill", uiDir),
+    // Seasonal terrain
+    ("terrain_grass_spring", terrainDir),
+    ("terrain_grass_autumn", terrainDir),
+    ("terrain_grass_winter", terrainDir),
+    ("terrain_tree_spring", terrainDir),
+    ("terrain_tree_autumn", terrainDir),
+    ("terrain_tree_winter", terrainDir),
+    ("terrain_shrub_spring", terrainDir),
+    ("terrain_shrub_autumn", terrainDir),
+    ("terrain_shrub_winter", terrainDir),
+    ("terrain_dirt_winter", terrainDir),
+    ("terrain_water_autumn_0", terrainDir),
+    ("terrain_water_autumn_1", terrainDir),
+    ("terrain_water_autumn_2", terrainDir),
+    ("terrain_water_winter_0", terrainDir),
+    ("terrain_water_winter_1", terrainDir),
+    ("terrain_water_winter_2", terrainDir),
 ]
 print("Creating new imagesets...")
 for (name, dir) in newImagesets {
@@ -1974,6 +2316,29 @@ writeAllScales(canvas: drawTerrainStairsDown(), name: "terrain_stairs_down", dir
 writeAllScales(canvas: drawTerrainStairsUpDown(), name: "terrain_stairs_updown", dir: terrainDir)
 writeAllScales(canvas: drawTerrainRampUp(), name: "terrain_ramp_up", dir: terrainDir)
 writeAllScales(canvas: drawTerrainRampDown(), name: "terrain_ramp_down", dir: terrainDir)
+print("")
+
+// Generate Seasonal Terrain
+print("Generating Seasonal Terrain...")
+// Spring
+writeAllScales(canvas: drawTerrainGrassSpring(), name: "terrain_grass_spring", dir: terrainDir)
+writeAllScales(canvas: drawTerrainTreeSpring(), name: "terrain_tree_spring", dir: terrainDir)
+writeAllScales(canvas: drawTerrainShrubSpring(), name: "terrain_shrub_spring", dir: terrainDir)
+// Autumn
+writeAllScales(canvas: drawTerrainGrassAutumn(), name: "terrain_grass_autumn", dir: terrainDir)
+writeAllScales(canvas: drawTerrainTreeAutumn(), name: "terrain_tree_autumn", dir: terrainDir)
+writeAllScales(canvas: drawTerrainShrubAutumn(), name: "terrain_shrub_autumn", dir: terrainDir)
+writeAllScales(canvas: drawTerrainWaterAutumn(frameOffset: 0), name: "terrain_water_autumn_0", dir: terrainDir)
+writeAllScales(canvas: drawTerrainWaterAutumn(frameOffset: 1), name: "terrain_water_autumn_1", dir: terrainDir)
+writeAllScales(canvas: drawTerrainWaterAutumn(frameOffset: 2), name: "terrain_water_autumn_2", dir: terrainDir)
+// Winter
+writeAllScales(canvas: drawTerrainGrassWinter(), name: "terrain_grass_winter", dir: terrainDir)
+writeAllScales(canvas: drawTerrainTreeWinter(), name: "terrain_tree_winter", dir: terrainDir)
+writeAllScales(canvas: drawTerrainShrubWinter(), name: "terrain_shrub_winter", dir: terrainDir)
+writeAllScales(canvas: drawTerrainDirtWinter(), name: "terrain_dirt_winter", dir: terrainDir)
+writeAllScales(canvas: drawTerrainWaterWinter(frameOffset: 0), name: "terrain_water_winter_0", dir: terrainDir)
+writeAllScales(canvas: drawTerrainWaterWinter(frameOffset: 1), name: "terrain_water_winter_1", dir: terrainDir)
+writeAllScales(canvas: drawTerrainWaterWinter(frameOffset: 2), name: "terrain_water_winter_2", dir: terrainDir)
 print("")
 
 // Generate Items

@@ -10,6 +10,10 @@ struct WorldSnapshot: Sendable {
     let height: Int
     let depth: Int
     let currentZ: Int
+    let season: Season
+    let timeOfDay: TimeOfDay
+    let hour: Int
+    let calendarDescription: String
     let tiles: [[TileSnapshot]]
     let units: [UnitSnapshot]
     let items: [ItemSnapshot]
@@ -75,6 +79,7 @@ extension WorldSnapshot {
         let world = simulation.world
         let width = world.width
         let height = world.height
+        let cal = world.calendar
 
         // Build tile snapshots for current z-level
         var tiles: [[TileSnapshot]] = []
@@ -158,6 +163,10 @@ extension WorldSnapshot {
             height: height,
             depth: world.depth,
             currentZ: currentZ,
+            season: cal.season,
+            timeOfDay: cal.timeOfDay,
+            hour: cal.hour,
+            calendarDescription: "\(cal.dateString) \(cal.timeString)",
             tiles: tiles,
             units: units,
             items: items,

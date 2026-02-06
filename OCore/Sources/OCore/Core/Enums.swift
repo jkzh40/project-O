@@ -367,3 +367,39 @@ public enum IdleActivity: String, CaseIterable, Sendable {
     case appreciateArt
     case contemplateNature
 }
+
+// MARK: - Season
+
+/// Seasons of the in-game year (4 seasons, 3 months each)
+public enum Season: Int, CaseIterable, Sendable, CustomStringConvertible {
+    case spring = 0
+    case summer = 1
+    case autumn = 2
+    case winter = 3
+
+    public var description: String {
+        switch self {
+        case .spring: return "Spring"
+        case .summer: return "Summer"
+        case .autumn: return "Autumn"
+        case .winter: return "Winter"
+        }
+    }
+
+    /// The next season in the cycle
+    public var next: Season {
+        Season(rawValue: (rawValue + 1) % 4)!
+    }
+}
+
+// MARK: - Time of Day
+
+/// Periods within a day, derived from hour and seasonal daylight
+public enum TimeOfDay: String, Sendable {
+    case dawn = "dawn"
+    case morning = "morning"
+    case afternoon = "afternoon"
+    case dusk = "dusk"
+    case evening = "evening"
+    case night = "night"
+}

@@ -52,6 +52,7 @@ class GameScene: SKScene {
     private var previousUnitHealth: [UInt64: Int] = [:]
     private var waterAnimated: Set<Int> = [] // track which tile indices have water anim
     private var treeSwayApplied: Set<Int> = []
+    private var currentRenderedSeason: Season?
 
     // MARK: - Camera
 
@@ -203,7 +204,14 @@ class GameScene: SKScene {
             }
         }
 
-        let waterFrames = textureManager.waterAnimationTextures()
+        // Detect season change — force full texture refresh
+        let seasonChanged = currentRenderedSeason != snapshot.season
+        if seasonChanged {
+            currentRenderedSeason = snapshot.season
+            waterAnimated.removeAll()
+        }
+
+        let waterFrames = textureManager.waterAnimationTextures(for: snapshot.season)
 
         for y in 0..<snapshot.height {
             for x in 0..<snapshot.width {
@@ -212,9 +220,10 @@ class GameScene: SKScene {
                 let tileIndex = y * snapshot.width + x
 
                 if tile.terrain == .water && !waterFrames.isEmpty {
-                    // Animated water
-                    if !waterAnimated.contains(tileIndex) {
+                    // Animated water (seasonal)
+                    if !waterAnimated.contains(tileIndex) || seasonChanged {
                         waterAnimated.insert(tileIndex)
+                        sprite.removeAction(forKey: "waterAnim")
                         let anim = SKAction.animate(with: waterFrames, timePerFrame: 0.5)
                         sprite.run(SKAction.repeatForever(anim), withKey: "waterAnim")
                     }
@@ -223,7 +232,7 @@ class GameScene: SKScene {
                         sprite.removeAction(forKey: "waterAnim")
                         waterAnimated.remove(tileIndex)
                     }
-                    sprite.texture = textureManager.texture(for: tile.terrain)
+                    sprite.texture = textureManager.texture(for: tile.terrain, season: snapshot.season)
                 }
 
                 // Tree/shrub sway
@@ -596,35 +605,46 @@ class GameScene: SKScene {
         // Position overlay at camera center
         overlay.position = cameraNode?.position ?? .zero
 
-        let dayLength: UInt64 = 1200
-        let tickInDay = snapshot.tick % dayLength
+        // Use calendar for smooth fractional hour
+        let cal = WorldCalendar(tick: snapshot.tick)
+        let dl = cal.seasonalDaylightHours
+        let fractionalHour = CGFloat(cal.hour) + CGFloat(cal.minute) / 60.0
 
         let color: SKColor
         let alpha: CGFloat
 
-        switch tickInDay {
-        case 0..<200:
+        let dawnStart = CGFloat(dl.dawnStart)
+        let dawnEnd = CGFloat(dl.dawnEnd)
+        let duskStart = CGFloat(dl.duskStart)
+        let duskEnd = CGFloat(dl.duskEnd)
+
+        if fractionalHour >= dawnStart && fractionalHour < dawnEnd {
             // Dawn: orange tint fading out
-            let progress = CGFloat(tickInDay) / 200.0
+            let progress = (fractionalHour - dawnStart) / (dawnEnd - dawnStart)
             color = SKColor(red: 1.0, green: 0.7, blue: 0.3, alpha: 1)
             alpha = 0.05 * (1.0 - progress)
-        case 200..<800:
+        } else if fractionalHour >= dawnEnd && fractionalHour < duskStart {
             // Day: clear
             color = .clear
             alpha = 0
-        case 800..<1000:
+        } else if fractionalHour >= duskStart && fractionalHour < duskEnd {
             // Dusk: orange → purple
-            let progress = CGFloat(tickInDay - 800) / 200.0
+            let progress = (fractionalHour - duskStart) / (duskEnd - duskStart)
             let r = 1.0 - progress * 0.5
             let g = 0.5 - progress * 0.3
             let b = 0.3 + progress * 0.5
             color = SKColor(red: r, green: g, blue: b, alpha: 1)
             alpha = progress * 0.12
-        default:
-            // Night: dark blue tint
-            let progress = CGFloat(tickInDay - 1000) / 200.0
+        } else if fractionalHour >= duskEnd {
+            // Evening/night after dusk
+            let nightProgress = min((fractionalHour - duskEnd) / 2.0, 1.0)
             color = SKColor(red: 0.1, green: 0.1, blue: 0.3, alpha: 1)
-            alpha = 0.12 + min(progress, 1.0) * 0.03
+            alpha = 0.12 + nightProgress * 0.03
+        } else {
+            // Night before dawn
+            let nightProgress = min((dawnStart - fractionalHour) / 2.0, 1.0)
+            color = SKColor(red: 0.1, green: 0.1, blue: 0.3, alpha: 1)
+            alpha = 0.12 + nightProgress * 0.03
         }
 
         overlay.color = color

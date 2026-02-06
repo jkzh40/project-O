@@ -26,6 +26,10 @@ final class TextureManager {
     private var healthBarBgTex: SKTexture?
     private var healthBarFillTex: SKTexture?
 
+    /// Seasonal terrain textures
+    private var seasonalTerrainTextures: [TerrainType: [Season: SKTexture]] = [:]
+    private var seasonalWaterFrames: [Season: [SKTexture]] = [:]
+
     private init() {
         loadTerrainTextures()
         loadUnitTextures()
@@ -33,6 +37,8 @@ final class TextureManager {
         loadSelectionTexture()
         loadWaterAnimationFrames()
         loadHealthBarTextures()
+        loadSeasonalTerrainTextures()
+        loadSeasonalWaterFrames()
     }
 
     // MARK: - Texture Loading
@@ -125,10 +131,68 @@ final class TextureManager {
         healthBarFillTex?.filteringMode = .nearest
     }
 
+    private func loadSeasonalTerrainTextures() {
+        // Terrain types that have seasonal variants: grass, tree, shrub, dirt
+        // Summer uses the default (base) textures; spring/autumn/winter have their own.
+        let seasonalAssets: [(TerrainType, Season, String)] = [
+            (.grass, .spring, "Terrain/terrain_grass_spring"),
+            (.grass, .autumn, "Terrain/terrain_grass_autumn"),
+            (.grass, .winter, "Terrain/terrain_grass_winter"),
+            (.tree, .spring, "Terrain/terrain_tree_spring"),
+            (.tree, .autumn, "Terrain/terrain_tree_autumn"),
+            (.tree, .winter, "Terrain/terrain_tree_winter"),
+            (.shrub, .spring, "Terrain/terrain_shrub_spring"),
+            (.shrub, .autumn, "Terrain/terrain_shrub_autumn"),
+            (.shrub, .winter, "Terrain/terrain_shrub_winter"),
+            (.dirt, .winter, "Terrain/terrain_dirt_winter"),
+        ]
+
+        for (terrain, season, assetName) in seasonalAssets {
+            let tex = SKTexture(imageNamed: assetName)
+            tex.filteringMode = .nearest
+            if seasonalTerrainTextures[terrain] == nil {
+                seasonalTerrainTextures[terrain] = [:]
+            }
+            seasonalTerrainTextures[terrain]![season] = tex
+        }
+    }
+
+    private func loadSeasonalWaterFrames() {
+        for season in [Season.autumn, .winter] {
+            let seasonName: String
+            switch season {
+            case .autumn: seasonName = "autumn"
+            case .winter: seasonName = "winter"
+            default: continue
+            }
+            var frames: [SKTexture] = []
+            for i in 0...2 {
+                let tex = SKTexture(imageNamed: "Terrain/terrain_water_\(seasonName)_\(i)")
+                tex.filteringMode = .nearest
+                frames.append(tex)
+            }
+            seasonalWaterFrames[season] = frames
+        }
+    }
+
     // MARK: - Texture Access
 
     func texture(for terrain: TerrainType) -> SKTexture {
         terrainTextures[terrain] ?? terrainTextures[.grass]!
+    }
+
+    func texture(for terrain: TerrainType, season: Season) -> SKTexture {
+        // Summer uses the default base texture
+        if season == .summer {
+            return texture(for: terrain)
+        }
+        // Check for a seasonal variant
+        if let seasonVariants = seasonalTerrainTextures[terrain],
+           let tex = seasonVariants[season] {
+            return tex
+        }
+        // Fallback to default
+        return texture(for: terrain)
     }
 
     func texture(for creature: CreatureType) -> SKTexture {
@@ -145,6 +209,13 @@ final class TextureManager {
 
     func waterAnimationTextures() -> [SKTexture] {
         waterFrames
+    }
+
+    func waterAnimationTextures(for season: Season) -> [SKTexture] {
+        if let frames = seasonalWaterFrames[season], !frames.isEmpty {
+            return frames
+        }
+        return waterFrames
     }
 
     func healthBarBgTexture() -> SKTexture {

@@ -315,3 +315,92 @@ public enum TimeConstants {
     public static let ticksPerSeason = 100_800
     public static let ticksPerYear = 403_200
 }
+
+// MARK: - World Calendar
+
+/// A calendar representation derived from a simulation tick.
+/// Provides year, season, month, day, hour, minute and time-of-day.
+public struct WorldCalendar: Sendable {
+    public let year: Int
+    public let season: Season
+    public let month: Int      // 1-12
+    public let day: Int        // 1-28
+    public let hour: Int       // 0-23
+    public let minute: Int     // 0-59
+
+    /// Seasonal daylight hours: (dawnStart, dawnEnd, duskStart, duskEnd)
+    public var seasonalDaylightHours: (dawnStart: Int, dawnEnd: Int, duskStart: Int, duskEnd: Int) {
+        switch season {
+        case .spring: return (5, 7, 18, 20)
+        case .summer: return (4, 6, 20, 22)
+        case .autumn: return (6, 8, 17, 19)
+        case .winter: return (7, 9, 16, 18)
+        }
+    }
+
+    /// Time of day computed from hour and seasonal daylight variation
+    public var timeOfDay: TimeOfDay {
+        let dl = seasonalDaylightHours
+        if hour >= dl.dawnStart && hour < dl.dawnEnd { return .dawn }
+        if hour >= dl.dawnEnd && hour < 12 { return .morning }
+        if hour >= 12 && hour < dl.duskStart { return .afternoon }
+        if hour >= dl.duskStart && hour < dl.duskEnd { return .dusk }
+        if hour >= dl.duskEnd && hour < dl.duskEnd + 2 { return .evening }
+        return .night
+    }
+
+    /// Whether it is currently nighttime
+    public var isNight: Bool {
+        let dl = seasonalDaylightHours
+        return hour < dl.dawnStart || hour >= dl.duskEnd
+    }
+
+    /// Whether it is currently daytime (dawn through dusk)
+    public var isDaytime: Bool {
+        !isNight
+    }
+
+    /// Fractional progress through the current day (0.0 - 1.0)
+    public var dayProgress: Double {
+        Double(hour * 60 + minute) / (24.0 * 60.0)
+    }
+
+    /// Human-readable date string e.g. "Spring 5, Year 1"
+    public var dateString: String {
+        "\(season) \(day), Year \(year)"
+    }
+
+    /// Human-readable time string e.g. "14:30"
+    public var timeString: String {
+        String(format: "%02d:%02d", hour, minute)
+    }
+
+    /// Initialize from a simulation tick
+    public init(tick: UInt64) {
+        let t = Int(tick)
+
+        // Year (1-indexed)
+        self.year = t / TimeConstants.ticksPerYear + 1
+        let tickInYear = t % TimeConstants.ticksPerYear
+
+        // Season (0-3)
+        let seasonIndex = tickInYear / TimeConstants.ticksPerSeason
+        self.season = Season(rawValue: min(seasonIndex, 3)) ?? .spring
+
+        // Month (1-12): 3 months per season
+        let tickInSeason = tickInYear % TimeConstants.ticksPerSeason
+        let monthInSeason = tickInSeason / TimeConstants.ticksPerMonth
+        self.month = seasonIndex * 3 + min(monthInSeason, 2) + 1
+
+        // Day (1-28): each month is ticksPerMonth ticks
+        let tickInMonth = tickInSeason % TimeConstants.ticksPerMonth
+        self.day = tickInMonth / TimeConstants.ticksPerDay + 1
+
+        // Hour (0-23) and minute (0-59)
+        let tickInDay = tickInMonth % TimeConstants.ticksPerDay
+        self.hour = tickInDay / TimeConstants.ticksPerHour
+        let tickInHour = tickInDay % TimeConstants.ticksPerHour
+        // Each tick = 72 seconds; 50 ticks per hour → minute = tickInHour * 60 / 50
+        self.minute = tickInHour * 60 / TimeConstants.ticksPerHour
+    }
+}

@@ -56,6 +56,9 @@ public final class Simulation: Sendable {
     /// Hostile creatures in the world (non-orc units)
     public private(set) var hostileUnits: Set<UInt64> = []
 
+    /// Previously tracked season for change detection
+    private var previousSeason: Season?
+
     /// Statistics
     public private(set) var stats: SimulationStats = SimulationStats()
 
@@ -1283,15 +1286,32 @@ public final class Simulation: Sendable {
     /// Performs checks that happen every N ticks
     private func performPeriodicChecks() {
         let tick = world.currentTick
+        let cal = world.calendar
+
+        // Detect season change
+        if let prev = previousSeason, prev != cal.season {
+            logEvent(.seasonChanged(season: cal.season, year: cal.year))
+            applySeasonalMoodThoughts(newSeason: cal.season)
+        }
+        previousSeason = cal.season
 
         // Log milestone every in-game day
         if tick % UInt64(TimeConstants.ticksPerDay) == 0 && tick > 0 {
-            logEvent(.milestone(tick: tick, message: "Day \(tick / UInt64(TimeConstants.ticksPerDay)) - \(world.units.count) units"))
+            logEvent(.milestone(tick: tick, message: "\(cal.dateString) - \(world.units.count) units"))
         }
 
-        // Spawn hostile creature (configurable interval and chance)
-        if tick % UInt64(hostileSpawnInterval) == 0 && tick > 0 && Int.random(in: 0...100) < hostileSpawnChance {
-            spawnHostileCreature()
+        // Spawn hostile creature (configurable interval and chance, modulated by season)
+        if tick % UInt64(hostileSpawnInterval) == 0 && tick > 0 {
+            let seasonMultiplier: Double
+            switch cal.season {
+            case .winter: seasonMultiplier = 1.5
+            case .summer: seasonMultiplier = 0.7
+            case .spring, .autumn: seasonMultiplier = 1.0
+            }
+            let effectiveChance = Int(Double(hostileSpawnChance) * seasonMultiplier)
+            if Int.random(in: 0...100) < effectiveChance {
+                spawnHostileCreature()
+            }
         }
 
         // Check for potential marriages every in-game day
@@ -1544,6 +1564,24 @@ public final class Simulation: Sendable {
         }
     }
 
+    // MARK: - Seasonal Effects
+
+    /// Apply mood thoughts when a new season begins
+    private func applySeasonalMoodThoughts(newSeason: Season) {
+        let tick = world.currentTick
+        for (unitId, unit) in world.units {
+            guard unit.creatureType == .orc && unit.isAlive else { continue }
+            switch newSeason {
+            case .spring, .summer:
+                moodManager.addThought(unitId: unitId, type: .enjoyedSeason, currentTick: tick, source: newSeason.description)
+            case .winter:
+                moodManager.addThought(unitId: unitId, type: .sufferedSeason, currentTick: tick, source: newSeason.description)
+            case .autumn:
+                break
+            }
+        }
+    }
+
     // MARK: - Event Logging
 
     /// Logs a simulation event
@@ -1684,6 +1722,7 @@ public enum SimulationEvent: Sendable, CustomStringConvertible {
     case combat(attackerName: String, defenderName: String, damage: Int, damageType: String, weapon: String, critical: Bool, killed: Bool)
     case social(unit1Name: String, unit2Name: String, message: String)
     case milestone(tick: UInt64, message: String)
+    case seasonChanged(season: Season, year: Int)
 
     public var description: String {
         switch self {
@@ -1712,13 +1751,15 @@ public enum SimulationEvent: Sendable, CustomStringConvertible {
             return "\(unit1Name) & \(unit2Name): \(message)"
         case .milestone(_, let message):
             return message
+        case .seasonChanged(let season, let year):
+            return "\(season) of Year \(year) has begun"
         }
     }
 
     /// Whether this is an important event (for highlighting)
     public var isImportant: Bool {
         switch self {
-        case .unitDied, .milestone:
+        case .unitDied, .milestone, .seasonChanged:
             return true
         case .combat(_, _, _, _, _, _, let killed) where killed:
             return true

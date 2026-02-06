@@ -36,6 +36,10 @@ public enum ThoughtType: String, Sendable, CaseIterable {
     case wasLonely = "felt lonely"
     case smelledRot = "smelled something rotting"
 
+    // Seasonal thoughts
+    case enjoyedSeason = "enjoyed the season"
+    case sufferedSeason = "suffering from the season"
+
     /// Base happiness modifier for this thought
     public var happinessModifier: Int {
         switch self {
@@ -65,6 +69,8 @@ public enum ThoughtType: String, Sendable, CaseIterable {
         case .workedTooLong: return -15
         case .wasLonely: return -20
         case .smelledRot: return -5
+        case .enjoyedSeason: return 10
+        case .sufferedSeason: return -10
         }
     }
 
@@ -77,6 +83,8 @@ public enum ThoughtType: String, Sendable, CaseIterable {
             return 5000   // Memorable positive events
         case .wasAttacked, .wasInjured:
             return 3000   // Lasting negative effects
+        case .enjoyedSeason, .sufferedSeason:
+            return 5000   // Seasonal effects
         default:
             return 1000   // Normal thoughts
         }

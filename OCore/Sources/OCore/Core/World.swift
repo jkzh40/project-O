@@ -26,6 +26,9 @@ public final class World: Sendable {
     /// Current simulation tick
     public private(set) var currentTick: UInt64
 
+    /// Calendar derived from current tick
+    public var calendar: WorldCalendar { WorldCalendar(tick: currentTick) }
+
     /// Creates a new world with the specified dimensions
     /// Generates a flat grass world with some terrain variation
     /// - Parameters:
