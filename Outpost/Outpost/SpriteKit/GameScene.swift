@@ -1,5 +1,5 @@
 import SpriteKit
-import OCore
+import OutpostCore
 
 #if os(iOS)
 import UIKit

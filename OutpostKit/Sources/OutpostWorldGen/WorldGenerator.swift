@@ -24,11 +24,26 @@ public enum WorldGenPhase: String, Sendable {
     case complete = "Generation Complete"
 }
 
+/// Result of world generation containing the tile grid
+public struct WorldGenerationResult: Sendable {
+    public let tiles: [[[Tile]]]
+    public let width: Int
+    public let height: Int
+    public let depth: Int
+
+    public init(tiles: [[[Tile]]], width: Int, height: Int, depth: Int) {
+        self.tiles = tiles
+        self.width = width
+        self.height = height
+        self.depth = depth
+    }
+}
+
 /// Generates a world with history
 @MainActor
 public final class WorldGenerator: Sendable {
-    /// The world being generated
-    public private(set) var world: World
+    /// The result of terrain generation
+    public private(set) var result: WorldGenerationResult?
 
     /// The large-scale world map (kept for potential world map display)
     public private(set) var worldMap: WorldMap?
@@ -45,6 +60,11 @@ public final class WorldGenerator: Sendable {
     /// World generation parameters
     public let genParams: WorldGenParameters
 
+    /// World dimensions
+    private let width: Int
+    private let height: Int
+    private let depth: Int
+
     /// Callback for progress updates
     public var onProgress: WorldGenCallback?
 
@@ -60,6 +80,7 @@ public final class WorldGenerator: Sendable {
     public init(
         worldWidth: Int = 50,
         worldHeight: Int = 25,
+        worldDepth: Int = 1,
         historyYears: Int = 250,
         seed: WorldSeed? = nil
     ) {
@@ -71,7 +92,9 @@ public final class WorldGenerator: Sendable {
             erosionDroplets: 500_000,
             embarkSize: worldWidth
         )
-        self.world = World(width: worldWidth, height: worldHeight)
+        self.width = worldWidth
+        self.height = worldHeight
+        self.depth = worldDepth
         self.history = WorldHistory(worldName: WorldNameGenerator.generate())
         self.historyYears = historyYears
     }
@@ -107,7 +130,7 @@ public final class WorldGenerator: Sendable {
 
     private func phaseProceduralTerrain() async {
         let params = genParams
-        let depth = world.depth
+        let depth = self.depth
 
         let phases: [(WorldGenPhase, String)] = [
             (.tectonics, "Simulating tectonic plates..."),
@@ -192,12 +215,12 @@ public final class WorldGenerator: Sendable {
 
         self.worldMap = map
 
-        // Replace the world with the procedurally generated one
-        self.world = World(
+        // Store the generation result
+        self.result = WorldGenerationResult(
+            tiles: tiles,
             width: region.width,
             height: region.height,
-            depth: depth,
-            tiles: tiles
+            depth: depth
         )
 
         emitProgress("Terrain generated: \(region.width)x\(region.height) embark site ready")

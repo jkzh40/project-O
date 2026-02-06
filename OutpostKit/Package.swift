@@ -4,15 +4,19 @@
 import PackageDescription
 
 let package = Package(
-    name: "OCore",
+    name: "OutpostKit",
     platforms: [
         .macOS(.v13),
         .iOS(.v17)
     ],
     products: [
         .library(
-            name: "OCore",
-            targets: ["OCore"]
+            name: "OutpostCore",
+            targets: ["OutpostCore"]
+        ),
+        .library(
+            name: "OutpostWorldGen",
+            targets: ["OutpostWorldGen"]
         ),
     ],
     dependencies: [
@@ -20,8 +24,11 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "OCore",
-            dependencies: ["Yams"],
+            name: "OutpostWorldGen"
+        ),
+        .target(
+            name: "OutpostCore",
+            dependencies: ["OutpostWorldGen", "Yams"],
             resources: [
                 .copy("Resources/outpost.yaml"),
                 .copy("Resources/creatures.yaml"),
@@ -29,8 +36,8 @@ let package = Package(
             ]
         ),
         .testTarget(
-            name: "OCoreTests",
-            dependencies: ["OCore"]
+            name: "OutpostCoreTests",
+            dependencies: ["OutpostCore"]
         ),
     ]
 )

@@ -2,19 +2,22 @@
 
 ## Project Layout
 
-- **OCore/** — Game engine library (Swift Package)
-  - `Sources/OCore/Core/` — Data model: `Unit`, `World`, `Tile`, `Item`, `Enums`
-  - `Sources/OCore/Systems/` — Simulation systems: Combat, Job, Mood, Social, Construction, Crafting, Stockpile, AutonomousWork, Memory
-  - `Sources/OCore/WorldGen/` — World generation + history (`WorldGenerator.swift`, `History.swift`)
-  - `Sources/OCore/WorldGen/Terrain/` — 7-stage procedural terrain pipeline (13 files)
-  - `Sources/OCore/Config/` — YAML config loading (`ConfigurationLoader`, registries)
-  - `Sources/OCore/Resources/` — Default YAML configs (`outpost.yaml`, `creatures.yaml`, `items.yaml`)
+- **OutpostKit/** — Game engine library (Swift Package)
+  - `Sources/OutpostWorldGen/` — World generation module (separate target, re-exported by OutpostCore)
+    - `Types/` — Shared types: `BiomeType`, `TerrainType`, `Tile`, `UnitName`/`NameGenerator`
+    - `Terrain/` — 7-stage procedural terrain pipeline (13 files)
+    - `WorldGenerator.swift` — World generator with history simulation
+    - `History.swift` — Historical events, figures, civilizations
+  - `Sources/OutpostCore/Core/` — Data model: `Unit`, `World`, `Item`, `Enums`
+  - `Sources/OutpostCore/Systems/` — Simulation systems: Combat, Job, Mood, Social, Construction, Crafting, Stockpile, AutonomousWork, Memory
+  - `Sources/OutpostCore/Config/` — YAML config loading (`ConfigurationLoader`, registries)
+  - `Sources/OutpostCore/Resources/` — Default YAML configs (`outpost.yaml`, `creatures.yaml`, `items.yaml`)
   - `Tests/` — Unit tests
-- **OutpostSim/** — Terminal CLI app (Swift Package, depends on OCore)
+- **OutpostSim/** — Terminal CLI app (Swift Package, depends on OutpostKit)
   - `Sources/OutpostSim/` — CLI runner, ANSI renderers
 - **Outpost/** — macOS/iOS SpriteKit app (Xcode project)
   - `Outpost/SpriteKit/` — `GameScene` (rendering), `TextureManager` (sprite loading)
-  - `Outpost/ViewModels/` — `SimulationViewModel` (bridges OCore → SwiftUI)
+  - `Outpost/ViewModels/` — `SimulationViewModel` (bridges OutpostCore → SwiftUI)
   - `Outpost/Views/` — SwiftUI views including `UnitDetailPanel`
   - `Outpost/Models/` — `WorldSnapshot` DTOs for render layer
   - `Scripts/` — `GenerateAssets.swift` (pixel art generator)
@@ -23,7 +26,7 @@
 ## Architecture
 
 - `Simulation` is the core orchestrator (`@MainActor`), processes each tick sequentially through all systems
-- OCore is a pure Swift library with no UI dependencies — consumed by both OutpostSim (terminal) and Outpost (SpriteKit)
+- OutpostCore is a pure Swift library with no UI dependencies — consumed by both OutpostSim (terminal) and Outpost (SpriteKit)
 - Configuration is YAML-based, loaded at startup with fallback chain: `./outpost.yaml` → `~/.config/outpost/` → bundled defaults
 - World generation is a 7-stage pipeline: Tectonics → Heightmap → Erosion → Climate → Hydrology → Biomes → Detail
 - All randomness flows through `SeededRNG` (Xoshiro256**) for deterministic replay from a `WorldSeed`
@@ -31,12 +34,12 @@
 ## Build & Test
 
 ```bash
-cd OCore && swift build                 # Build OCore
-cd OCore && swift test                  # Unit tests
-cd OutpostSim && swift build            # Build OutpostSim
-cd OutpostSim && swift run OutpostSim -t 100  # Smoke test (100 ticks)
+cd OutpostKit && swift build                 # Build OutpostKit
+cd OutpostKit && swift test                  # Unit tests
+cd OutpostSim && swift build                 # Build OutpostSim
+cd OutpostSim && swift run OutpostSim -t 100 # Smoke test (100 ticks)
 xcodebuild -scheme Outpost -destination 'platform=macOS' build  # Build Outpost
-swift Outpost/Scripts/GenerateAssets.swift     # Asset generation
+swift Outpost/Scripts/GenerateAssets.swift    # Asset generation
 ```
 
 For full E2E testing, run OutpostSim. Use turbo + headless mode for long-running tests. For interactive/short tests, enable terminal rendering with the fastest tick rate.

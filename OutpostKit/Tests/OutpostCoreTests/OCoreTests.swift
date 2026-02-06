@@ -1,5 +1,6 @@
 import Testing
-@testable import OCore
+
+@testable import OutpostCore
 
 // MARK: - Calendar System Tests
 
@@ -112,7 +113,7 @@ struct PositionTests {
         #expect(center.isAdjacent(to: adjacent))
         #expect(center.isAdjacent(to: diagonal))
         #expect(!center.isAdjacent(to: far))
-        #expect(!center.isAdjacent(to: sameSpot)) // Same position is not adjacent
+        #expect(!center.isAdjacent(to: sameSpot))  // Same position is not adjacent
     }
 
     @Test("Neighbors returns 8 positions")
@@ -288,7 +289,7 @@ struct HealthTests {
         var health = Health(maxHP: 100)
         health.takeDamage(80)
         let dealt = health.takeDamage(50)
-        #expect(dealt == 20) // Only 20 HP left
+        #expect(dealt == 20)  // Only 20 HP left
         #expect(health.currentHP == 0)
         #expect(!health.isAlive)
     }
@@ -557,8 +558,9 @@ struct SimulationIntegrationTests {
         sim.run(ticks: 200)
 
         for unit in sim.world.units.values {
-            #expect(validStates.contains(unit.state),
-                    "Unit \(unit.name) in unexpected state: \(unit.state)")
+            #expect(
+                validStates.contains(unit.state),
+                "Unit \(unit.name) in unexpected state: \(unit.state)")
         }
     }
 
@@ -603,8 +605,9 @@ struct SimulationIntegrationTests {
 
         for unit in sim.world.units.values {
             #expect(unit.health.currentHP >= 0, "Unit \(unit.name) has negative HP")
-            #expect(unit.health.currentHP <= unit.health.maxHP,
-                    "Unit \(unit.name) has HP above max")
+            #expect(
+                unit.health.currentHP <= unit.health.maxHP,
+                "Unit \(unit.name) has HP above max")
             if unit.isAlive {
                 #expect(unit.health.isAlive, "Living unit has 0 HP")
             }
@@ -703,10 +706,12 @@ struct SimulationIntegrationTests {
         sim.run(ticks: 500)
 
         for unit in sim.world.units.values where unit.isAlive {
-            #expect(unit.position.x >= 0 && unit.position.x < 30,
-                    "Unit \(unit.name) x=\(unit.position.x) out of bounds")
-            #expect(unit.position.y >= 0 && unit.position.y < 20,
-                    "Unit \(unit.name) y=\(unit.position.y) out of bounds")
+            #expect(
+                unit.position.x >= 0 && unit.position.x < 30,
+                "Unit \(unit.name) x=\(unit.position.x) out of bounds")
+            #expect(
+                unit.position.y >= 0 && unit.position.y < 20,
+                "Unit \(unit.name) y=\(unit.position.y) out of bounds")
         }
     }
 }
@@ -730,7 +735,7 @@ struct ModelTests {
     func skillEntry() {
         var skill = SkillEntry(skillType: .mining, rating: 0)
         #expect(skill.levelName == "Not")
-        #expect(skill.xpForNextLevel == 500) // 400 + 100*(0+1)
+        #expect(skill.xpForNextLevel == 500)  // 400 + 100*(0+1)
 
         skill.addExperience(500)
         #expect(skill.rating == 1)

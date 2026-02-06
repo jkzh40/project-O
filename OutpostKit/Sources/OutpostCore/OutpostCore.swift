@@ -1,10 +1,11 @@
-// OCore - Orc Outpost Simulation Engine
+// OutpostCore - Orc Outpost Simulation Engine
 //
 // A watch-only simulation featuring autonomous orcs with emergent behavior
 // driven by needs, personality, and environment.
 
 /// Re-export all public types for convenient access
 @_exported import Foundation
+@_exported import OutpostWorldGen
 
 // All types are already public in their respective files:
 // - Enums.swift: UnitState, NeedType, TerrainType, ItemType, etc.

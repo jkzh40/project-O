@@ -2,7 +2,7 @@
 // Renders the simulation state to the terminal for observation
 
 import Foundation
-import OCore
+import OutpostCore
 
 /// Renders the simulation to the terminal
 @MainActor

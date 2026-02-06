@@ -1,5 +1,5 @@
 import Foundation
-import OCore
+import OutpostCore
 import Observation
 
 /// Main ViewModel that owns the simulation and runs the tick loop

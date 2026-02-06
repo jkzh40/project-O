@@ -112,7 +112,7 @@
 			);
 			name = Outpost;
 			packageProductDependencies = (
-				04C81DD62F34500000E4B335 /* OCore */,
+				04C81DD62F34500000E4B335 /* OutpostCore */,
 			);
 			productName = Outpost;
 			productReference = 04C81DAB2F34497800E4B335 /* Outpost.app */;
@@ -197,7 +197,7 @@
 			mainGroup = 04C81DA22F34497800E4B335;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				04C81DD52F34500000E4B335 /* XCLocalSwiftPackageReference "../OCore" */,
+				04C81DD52F34500000E4B335 /* XCLocalSwiftPackageReference "../OutpostKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 04C81DAC2F34497800E4B335 /* Products */;
@@ -621,16 +621,16 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		04C81DD52F34500000E4B335 /* XCLocalSwiftPackageReference "../OCore" */ = {
+		04C81DD52F34500000E4B335 /* XCLocalSwiftPackageReference "../OutpostKit" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../OCore;
+			relativePath = ../OutpostKit;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		04C81DD62F34500000E4B335 /* OCore */ = {
+		04C81DD62F34500000E4B335 /* OutpostCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = OCore;
+			productName = OutpostCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

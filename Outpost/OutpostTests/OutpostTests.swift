@@ -1,6 +1,6 @@
 import Testing
 import SpriteKit
-@testable import OCore
+@testable import OutpostCore
 @testable import Outpost
 
 // MARK: - WorldSnapshot Tests

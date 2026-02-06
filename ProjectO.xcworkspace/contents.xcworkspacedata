@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:Outpost/Outpost.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:OutpostKit">
+   </FileRef>
+   <FileRef
+      location = "group:OutpostSim">
+   </FileRef>
+   <FileRef
+      location = "group:docs">
+   </FileRef>
+</Workspace>

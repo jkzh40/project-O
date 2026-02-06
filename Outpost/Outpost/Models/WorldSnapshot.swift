@@ -1,5 +1,5 @@
 import Foundation
-import OCore
+import OutpostCore
 
 // MARK: - World Snapshot DTOs
 
