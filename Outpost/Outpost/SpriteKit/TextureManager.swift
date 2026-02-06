@@ -15,19 +15,24 @@ final class TextureManager {
     static let shared = TextureManager()
 
     /// Tile size in points
-    let tileSize: CGFloat = 16.0
+    let tileSize: CGFloat = 32.0
 
     /// Cached textures
     private var terrainTextures: [TerrainType: SKTexture] = [:]
     private var unitTextures: [CreatureType: SKTexture] = [:]
     private var itemTextures: [ItemType: SKTexture] = [:]
     private var selectionTexture: SKTexture?
+    private var waterFrames: [SKTexture] = []
+    private var healthBarBgTex: SKTexture?
+    private var healthBarFillTex: SKTexture?
 
     private init() {
         loadTerrainTextures()
         loadUnitTextures()
         loadItemTextures()
         loadSelectionTexture()
+        loadWaterAnimationFrames()
+        loadHealthBarTextures()
     }
 
     // MARK: - Texture Loading
@@ -105,6 +110,21 @@ final class TextureManager {
         selectionTexture?.filteringMode = .nearest
     }
 
+    private func loadWaterAnimationFrames() {
+        for i in 0...2 {
+            let tex = SKTexture(imageNamed: "Terrain/terrain_water_\(i)")
+            tex.filteringMode = .nearest
+            waterFrames.append(tex)
+        }
+    }
+
+    private func loadHealthBarTextures() {
+        healthBarBgTex = SKTexture(imageNamed: "UI/ui_healthbar_bg")
+        healthBarBgTex?.filteringMode = .nearest
+        healthBarFillTex = SKTexture(imageNamed: "UI/ui_healthbar_fill")
+        healthBarFillTex?.filteringMode = .nearest
+    }
+
     // MARK: - Texture Access
 
     func texture(for terrain: TerrainType) -> SKTexture {
@@ -121,6 +141,18 @@ final class TextureManager {
 
     func selectionRingTexture() -> SKTexture {
         selectionTexture!
+    }
+
+    func waterAnimationTextures() -> [SKTexture] {
+        waterFrames
+    }
+
+    func healthBarBgTexture() -> SKTexture {
+        healthBarBgTex ?? SKTexture()
+    }
+
+    func healthBarFillTexture() -> SKTexture {
+        healthBarFillTex ?? SKTexture()
     }
 
     // MARK: - State Colors

@@ -2,6 +2,7 @@
 // Displays the world generation process in the terminal
 
 import Foundation
+import OCore
 
 /// Renders world generation progress to the terminal
 @MainActor
@@ -28,34 +29,6 @@ public final class WorldGenRenderer: Sendable {
         var figures: Int = 0
         var regions: Int = 0
         var artifacts: Int = 0
-    }
-
-    // MARK: - ANSI Codes
-
-    private enum ANSI {
-        static let reset = "\u{001B}[0m"
-        static let clear = "\u{001B}[2J"
-        static let home = "\u{001B}[H"
-        static let hideCursor = "\u{001B}[?25l"
-        static let showCursor = "\u{001B}[?25h"
-
-        // Colors
-        static let green = "\u{001B}[32m"
-        static let blue = "\u{001B}[34m"
-        static let yellow = "\u{001B}[33m"
-        static let red = "\u{001B}[31m"
-        static let cyan = "\u{001B}[36m"
-        static let magenta = "\u{001B}[35m"
-        static let white = "\u{001B}[37m"
-        static let gray = "\u{001B}[90m"
-        static let brightGreen = "\u{001B}[92m"
-        static let brightYellow = "\u{001B}[93m"
-        static let brightCyan = "\u{001B}[96m"
-        static let brightWhite = "\u{001B}[97m"
-
-        // Styles
-        static let bold = "\u{001B}[1m"
-        static let dim = "\u{001B}[2m"
     }
 
     public init() {}

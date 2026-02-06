@@ -46,10 +46,6 @@ public struct Unit: Sendable, Identifiable {
 
     public var health: Health
 
-    // MARK: - Mood & Happiness
-
-    public var mood: MoodTracker
-
     // MARK: - Labor Preferences
 
     public var laborPreferences: LaborPreferences
@@ -105,10 +101,6 @@ public struct Unit: Sendable, Identifiable {
         let toughness = self.physicalAttributes[.toughness]?.base ?? 1000
         let maxHP = 50 + (toughness / 20)  // 100 HP at 1000 toughness
         self.health = Health(maxHP: maxHP)
-
-        // Initialize mood based on cheerfulness
-        let cheerfulness = self.personality.value(for: .cheerfulness)
-        self.mood = MoodTracker(baseHappiness: 40 + cheerfulness / 2)
 
         // Default labor preferences (all enabled)
         self.laborPreferences = LaborPreferences()

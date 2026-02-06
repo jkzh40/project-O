@@ -256,28 +256,6 @@ public final class CombatManager: Sendable {
         return dx <= 1 && dy <= 1 && (dx + dy) > 0
     }
 
-    /// Find nearest hostile unit within range
-    public func findNearestHostile(
-        from position: Position,
-        hostileIds: Set<UInt64>,
-        positions: [UInt64: Position],
-        maxRange: Int = 10
-    ) -> UInt64? {
-        var nearest: UInt64?
-        var nearestDist = Int.max
-
-        for hostileId in hostileIds {
-            guard let hostilePos = positions[hostileId] else { continue }
-            let dist = position.distance(to: hostilePos)
-            if dist <= maxRange && dist < nearestDist {
-                nearestDist = dist
-                nearest = hostileId
-            }
-        }
-
-        return nearest
-    }
-
     /// Clear combat history
     public func clearHistory() {
         recentCombat.removeAll()

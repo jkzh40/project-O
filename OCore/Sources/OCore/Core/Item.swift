@@ -73,17 +73,9 @@ public struct Item: Sendable, Identifiable {
         self.quantity = quantity
     }
 
-    /// Resets the ID counter (useful for testing or new games)
-    /// - Parameter startId: The ID to start from
-    public static func resetIdCounter(startId: UInt64 = 1) {
-        idLock.lock()
-        defer { idLock.unlock() }
-        nextId = startId
-    }
-
-    /// Sets the next ID value (for loading saved games)
-    /// - Parameter id: The next ID to use
-    public static func setNextId(_ id: UInt64) {
+    /// Sets the next ID value (useful for testing, new games, or loading saved games)
+    /// - Parameter id: The next ID to use (defaults to 1 for a reset)
+    public static func setNextId(_ id: UInt64 = 1) {
         idLock.lock()
         defer { idLock.unlock() }
         nextId = id

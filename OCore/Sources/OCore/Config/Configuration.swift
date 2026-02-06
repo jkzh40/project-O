@@ -304,3 +304,105 @@ public struct ItemDefinition: Codable, Sendable {
     }
 
 }
+
+// MARK: - Runtime Config
+
+/// Resolved runtime configuration used to drive the simulation.
+/// Built from YAML config with optional CLI overrides.
+public struct RuntimeConfig: Sendable {
+    public var worldWidth: Int
+    public var worldHeight: Int
+    public var unitCount: Int
+    public var ticksPerSecond: Double
+    public var foodCount: Int
+    public var drinkCount: Int
+    public var bedCount: Int
+    public var maxPopulation: Int
+
+    // Speed/testing options
+    public var turboMode: Bool
+    public var renderEvery: Int
+    public var maxTicks: Int?
+    public var headlessMode: Bool
+
+    // Difficulty/starting conditions
+    public var hardMode: Bool
+
+    // World generation options
+    public var enableWorldGen: Bool
+    public var historyYears: Int
+    public var genSpeed: Double
+
+    // Event intervals and chances
+    public var hostileSpawnInterval: Int
+    public var hostileSpawnChance: Int
+    public var migrantWaveInterval: Int
+    public var birthCheckInterval: Int
+    public var birthChancePercent: Int
+
+    public init(
+        worldWidth: Int = 50,
+        worldHeight: Int = 20,
+        unitCount: Int = 8,
+        ticksPerSecond: Double = 5.0,
+        foodCount: Int = 15,
+        drinkCount: Int = 15,
+        bedCount: Int = 5,
+        maxPopulation: Int = 50,
+        turboMode: Bool = false,
+        renderEvery: Int = 1,
+        maxTicks: Int? = nil,
+        headlessMode: Bool = false,
+        hardMode: Bool = false,
+        enableWorldGen: Bool = false,
+        historyYears: Int = 250,
+        genSpeed: Double = 15.0,
+        hostileSpawnInterval: Int = 500,
+        hostileSpawnChance: Int = 50,
+        migrantWaveInterval: Int = 10000,
+        birthCheckInterval: Int = 5000,
+        birthChancePercent: Int = 5
+    ) {
+        self.worldWidth = worldWidth
+        self.worldHeight = worldHeight
+        self.unitCount = unitCount
+        self.ticksPerSecond = ticksPerSecond
+        self.foodCount = foodCount
+        self.drinkCount = drinkCount
+        self.bedCount = bedCount
+        self.maxPopulation = maxPopulation
+        self.turboMode = turboMode
+        self.renderEvery = renderEvery
+        self.maxTicks = maxTicks
+        self.headlessMode = headlessMode
+        self.hardMode = hardMode
+        self.enableWorldGen = enableWorldGen
+        self.historyYears = historyYears
+        self.genSpeed = genSpeed
+        self.hostileSpawnInterval = hostileSpawnInterval
+        self.hostileSpawnChance = hostileSpawnChance
+        self.migrantWaveInterval = migrantWaveInterval
+        self.birthCheckInterval = birthCheckInterval
+        self.birthChancePercent = birthChancePercent
+    }
+
+    /// Initialize from YAML configuration
+    public static func fromYAMLConfig(_ yamlConfig: OutpostConfig) -> RuntimeConfig {
+        RuntimeConfig(
+            worldWidth: yamlConfig.simulation.world.width,
+            worldHeight: yamlConfig.simulation.world.height,
+            unitCount: yamlConfig.simulation.units.initialCount,
+            ticksPerSecond: yamlConfig.simulation.speed.ticksPerSecond,
+            foodCount: yamlConfig.simulation.resources.foodCount,
+            drinkCount: yamlConfig.simulation.resources.drinkCount,
+            bedCount: yamlConfig.simulation.resources.bedCount,
+            maxPopulation: yamlConfig.simulation.units.maxPopulation,
+            hardMode: yamlConfig.simulation.difficulty.hardMode,
+            hostileSpawnInterval: yamlConfig.events.hostileSpawn.intervalTicks,
+            hostileSpawnChance: yamlConfig.events.hostileSpawn.chancePercent,
+            migrantWaveInterval: yamlConfig.events.migrantWave.intervalTicks,
+            birthCheckInterval: yamlConfig.events.birthCheck.intervalTicks,
+            birthChancePercent: yamlConfig.events.birthCheck.chancePercent
+        )
+    }
+}

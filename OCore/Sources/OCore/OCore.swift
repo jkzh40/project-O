@@ -14,4 +14,4 @@
 // - Tile.swift: Tile struct
 // - World.swift: World class
 // - Simulation.swift: Simulation class, SimulationEvent enum
-// - Renderer.swift: Renderer class, runWatchSimulation()
+// - Renderer is in OutpostSim (terminal frontend)

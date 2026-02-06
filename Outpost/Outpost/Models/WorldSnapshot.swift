@@ -46,6 +46,8 @@ struct UnitSnapshot: Sendable, Identifiable {
     let state: UnitState
     let creatureType: CreatureType
     let healthPercent: Int
+    let healthCurrent: Int
+    let healthMax: Int
     let hungerPercent: Int
     let thirstPercent: Int
     let drowsinessPercent: Int
@@ -112,6 +114,8 @@ extension WorldSnapshot {
                 state: unit.state,
                 creatureType: unit.creatureType,
                 healthPercent: unit.health.percentage,
+                healthCurrent: unit.health.currentHP,
+                healthMax: unit.health.maxHP,
                 hungerPercent: min(100, (unit.hunger * 100) / NeedThresholds.hungerDeath),
                 thirstPercent: min(100, (unit.thirst * 100) / NeedThresholds.thirstDeath),
                 drowsinessPercent: min(100, (unit.drowsiness * 100) / NeedThresholds.drowsyInsane),

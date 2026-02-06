@@ -95,6 +95,17 @@ public final class WorldGenerator: Sendable {
     private func phaseTerrain() async {
         currentPhase = .terrain
 
+        // Continents
+        let continentCount = Int.random(in: 1...3)
+        for i in 1...continentCount {
+            let continentName = ["The Great Continent", "The Eastern Landmass", "The Western Reach",
+                                "The Northern Expanse", "The Southern Cradle", "The Shattered Isles"].randomElement()!
+            emitProgress("\(continentName) rises from the sea... (\(i)/\(continentCount))")
+            addEvent(year: 0, type: .continentFormed,
+                    description: "\(continentName) formed from the primordial waters")
+            await delay(short: true)
+        }
+
         // Mountains
         let mountainCount = Int.random(in: 3...6)
         for i in 1...mountainCount {
@@ -258,6 +269,24 @@ public final class WorldGenerator: Sendable {
             await generateDisaster(year: year, civs: activeCivs, type: eventType)
         case .figureBorn:
             await generateNotableBirth(year: year, civs: activeCivs)
+        case .cityFounded:
+            await generateCityFounded(year: year, civs: activeCivs)
+        case .warEnded:
+            await generateWarEnded(year: year, civs: activeCivs)
+        case .treatySigned:
+            await generateTreatySigned(year: year, civs: activeCivs)
+        case .figureDied:
+            await generateFigureDeath(year: year)
+        case .discovery:
+            await generateDiscovery(year: year, civs: activeCivs)
+        case .betrayal:
+            await generateBetrayal(year: year, civs: activeCivs)
+        case .naturalDisaster:
+            await generateNaturalDisaster(year: year, civs: activeCivs)
+        case .monsterAttack:
+            await generateMonsterAttack(year: year, civs: activeCivs)
+        case .cityDestroyed:
+            await generateCityDestroyed(year: year, civs: activeCivs)
         default:
             break
         }
@@ -265,15 +294,24 @@ public final class WorldGenerator: Sendable {
 
     private func weightedRandomEvent() -> HistoricalEventType {
         let weights: [(HistoricalEventType, Int)] = [
-            (.figureBorn, 25),
-            (.heroicDeed, 15),
-            (.civExpanded, 15),
-            (.leaderDied, 10),
-            (.warDeclared, 10),
-            (.allianceFormed, 8),
-            (.artifactCreated, 7),
-            (.plague, 5),
-            (.famine, 5),
+            (.figureBorn, 20),
+            (.heroicDeed, 12),
+            (.civExpanded, 10),
+            (.leaderDied, 8),
+            (.warDeclared, 8),
+            (.allianceFormed, 6),
+            (.artifactCreated, 5),
+            (.plague, 4),
+            (.famine, 4),
+            (.cityFounded, 5),
+            (.warEnded, 4),
+            (.treatySigned, 3),
+            (.figureDied, 3),
+            (.discovery, 3),
+            (.betrayal, 2),
+            (.naturalDisaster, 2),
+            (.monsterAttack, 1),
+            (.cityDestroyed, 2),
         ]
 
         let total = weights.reduce(0) { $0 + $1.1 }
@@ -485,6 +523,218 @@ public final class WorldGenerator: Sendable {
                     description: "\(name.firstName) was born in \(civ.name)",
                     involvedFigures: [figure.id], involvedCivs: [civ.id])
         }
+    }
+
+    private func generateCityFounded(year: Int, civs: [Civilization]) async {
+        guard let civ = civs.randomElement() else { return }
+
+        let cityName = RegionNameGenerator.generate() + " Settlement"
+        if let territory = civ.territories.randomElement() {
+            emitProgress("Year \(year): \(civ.name) founded \(cityName) in the \(territory)")
+            addEvent(year: year, type: .cityFounded,
+                    description: "\(civ.name) founded \(cityName) in the \(territory)",
+                    involvedCivs: [civ.id])
+        }
+        history.civilizations[civ.id]?.population += Int.random(in: 20...80)
+        await delay(short: true)
+    }
+
+    private func generateWarEnded(year: Int, civs: [Civilization]) async {
+        // Find two civs currently at war
+        for civ1 in civs {
+            for (otherId, relation) in civ1.relations {
+                guard relation == .atWar, let civ2 = history.civilizations[otherId], civ2.isActive else { continue }
+
+                // End the war — settle to tense relations
+                history.civilizations[civ1.id]?.relations[otherId] = .tense
+                history.civilizations[otherId]?.relations[civ1.id] = .tense
+
+                emitProgress("Year \(year): The war between \(civ1.name) and \(civ2.name) has ended")
+                addEvent(year: year, type: .warEnded,
+                        description: "The war between \(civ1.name) and \(civ2.name) ended in an uneasy peace",
+                        involvedCivs: [civ1.id, otherId])
+                await delay(short: true)
+                return
+            }
+        }
+    }
+
+    private func generateTreatySigned(year: Int, civs: [Civilization]) async {
+        guard civs.count >= 2 else { return }
+        let shuffled = civs.shuffled()
+        let civ1 = shuffled[0]
+        let civ2 = shuffled[1]
+
+        // Treaties improve relations
+        let currentRelation = civ1.relations[civ2.id] ?? .neutral
+        let newRelation: CivRelation
+        switch currentRelation {
+        case .hostile, .tense: newRelation = .neutral
+        case .neutral: newRelation = .friendly
+        case .friendly: newRelation = .allied
+        default: return  // Already allied or at war
+        }
+
+        history.civilizations[civ1.id]?.relations[civ2.id] = newRelation
+        history.civilizations[civ2.id]?.relations[civ1.id] = newRelation
+
+        let treatyType = ["trade", "non-aggression", "mutual defense", "cultural exchange"].randomElement()!
+        emitProgress("Year \(year): \(civ1.name) and \(civ2.name) signed a \(treatyType) treaty")
+        addEvent(year: year, type: .treatySigned,
+                description: "\(civ1.name) and \(civ2.name) signed a \(treatyType) treaty",
+                involvedCivs: [civ1.id, civ2.id])
+        await delay(short: true)
+    }
+
+    private func generateFigureDeath(year: Int) async {
+        // Kill off an aging living figure (non-leader)
+        let living = history.figures.values.filter { $0.isAlive && (year - $0.birthYear) > 60 }
+        guard var figure = living.randomElement() else { return }
+
+        figure.deathYear = year
+        history.figures[figure.id] = figure
+
+        let cause = ["old age", "illness", "a quiet passing", "wounds from years past"].randomElement()!
+        emitProgress("Year \(year): \(figure.title ?? "Notable") \(figure.name.firstName) died of \(cause)")
+        addEvent(year: year, type: .figureDied,
+                description: "\(figure.title ?? "Notable") \(figure.name.firstName) died of \(cause)",
+                involvedFigures: [figure.id],
+                involvedCivs: figure.civilizationId.map { [$0] } ?? [])
+        await delay(short: true)
+    }
+
+    private func generateDiscovery(year: Int, civs: [Civilization]) async {
+        guard let civ = civs.randomElement() else { return }
+
+        let discovererName = NameGenerator.generate()
+        var discoverer = HistoricalFigure(
+            id: nextFigureId,
+            name: discovererName,
+            birthYear: year - Int.random(in: 25...50),
+            civilizationId: civ.id
+        )
+        discoverer.title = ["Scholar", "Explorer", "Sage", "Naturalist"].randomElement()!
+        nextFigureId += 1
+
+        let discovery = [
+            "a new metal alloy", "ancient ruins beneath the mountains",
+            "a faster method of smelting ore", "medicinal herbs in the deep forest",
+            "star charts predicting the seasons", "underground rivers flowing with pure water",
+            "a lost language carved in stone"
+        ].randomElement()!
+
+        discoverer.notableDeeds.append("discovered \(discovery)")
+        history.figures[discoverer.id] = discoverer
+
+        emitProgress("Year \(year): \(discoverer.title!) \(discovererName.firstName) of \(civ.name) discovered \(discovery)")
+        addEvent(year: year, type: .discovery,
+                description: "\(discoverer.title!) \(discovererName.firstName) of \(civ.name) discovered \(discovery)",
+                involvedFigures: [discoverer.id], involvedCivs: [civ.id])
+        await delay(short: true)
+    }
+
+    private func generateBetrayal(year: Int, civs: [Civilization]) async {
+        guard let civ = civs.randomElement(),
+              let leaderId = civ.leader,
+              let leader = history.figures[leaderId],
+              leader.isAlive else { return }
+
+        let betrayerName = NameGenerator.generate()
+        var betrayer = HistoricalFigure(
+            id: nextFigureId,
+            name: betrayerName,
+            birthYear: year - Int.random(in: 25...45),
+            civilizationId: civ.id
+        )
+        betrayer.title = ["Usurper", "Traitor", "Pretender"].randomElement()!
+        betrayer.notableDeeds.append("betrayed \(leader.title ?? "the leader") of \(civ.name)")
+        nextFigureId += 1
+        history.figures[betrayer.id] = betrayer
+
+        // The betrayal may dethrone the leader
+        if Bool.random() {
+            var deadLeader = leader
+            deadLeader.deathYear = year
+            history.figures[leaderId] = deadLeader
+            history.civilizations[civ.id]?.leader = betrayer.id
+            betrayer.title = leader.title
+            history.figures[betrayer.id] = betrayer
+
+            emitProgress("Year \(year): \(betrayerName.firstName) betrayed and slew \(leader.name.firstName) of \(civ.name)!")
+            addEvent(year: year, type: .betrayal,
+                    description: "\(betrayerName.firstName) betrayed and killed \(leader.name.firstName), seizing control of \(civ.name)",
+                    involvedFigures: [betrayer.id, leaderId], involvedCivs: [civ.id])
+        } else {
+            emitProgress("Year \(year): \(betrayerName.firstName) attempted to betray \(civ.name) but was thwarted")
+            addEvent(year: year, type: .betrayal,
+                    description: "\(betrayerName.firstName) attempted to betray \(civ.name) but failed",
+                    involvedFigures: [betrayer.id], involvedCivs: [civ.id])
+        }
+        await delay()
+    }
+
+    private func generateNaturalDisaster(year: Int, civs: [Civilization]) async {
+        guard let civ = civs.randomElement() else { return }
+
+        let disaster = [
+            ("A great earthquake", 15...40),
+            ("A devastating flood", 10...30),
+            ("A volcanic eruption", 20...50),
+            ("A terrible wildfire", 5...25),
+            ("A fierce hurricane", 10...35),
+        ].randomElement()!
+
+        let casualties = Int.random(in: disaster.1)
+        let currentPopulation = history.civilizations[civ.id]?.population ?? 100
+        history.civilizations[civ.id]?.population = max(10, currentPopulation - casualties)
+
+        let region = civ.territories.randomElement() ?? "their homeland"
+        emitProgress("Year \(year): \(disaster.0) struck the \(region) of \(civ.name)! (\(casualties) perished)")
+        addEvent(year: year, type: .naturalDisaster,
+                description: "\(disaster.0) devastated the \(region) of \(civ.name), claiming \(casualties) lives",
+                involvedCivs: [civ.id])
+        await delay()
+    }
+
+    private func generateCityDestroyed(year: Int, civs: [Civilization]) async {
+        // Find a civ at war — the enemy destroys one of its settlements
+        for civ in civs {
+            for (otherId, relation) in civ.relations {
+                guard relation == .atWar, let enemy = history.civilizations[otherId], enemy.isActive else { continue }
+                guard let region = civ.territories.randomElement() else { continue }
+
+                let casualties = Int.random(in: 10...40)
+                let currentPopulation = history.civilizations[civ.id]?.population ?? 100
+                history.civilizations[civ.id]?.population = max(10, currentPopulation - casualties)
+
+                emitProgress("Year \(year): \(enemy.name) razed a settlement in the \(region) of \(civ.name)!")
+                addEvent(year: year, type: .cityDestroyed,
+                        description: "\(enemy.name) destroyed a settlement in the \(region) of \(civ.name)",
+                        involvedCivs: [civ.id, otherId])
+                await delay()
+                return
+            }
+        }
+    }
+
+    private func generateMonsterAttack(year: Int, civs: [Civilization]) async {
+        guard let civ = civs.randomElement() else { return }
+
+        let monster = [
+            "a great dragon", "a horde of trolls", "a titan from the deep",
+            "a pack of dire wolves", "an ancient wyrm", "a demon from the underworld"
+        ].randomElement()!
+
+        let casualties = Int.random(in: 5...30)
+        let currentPopulation = history.civilizations[civ.id]?.population ?? 100
+        history.civilizations[civ.id]?.population = max(10, currentPopulation - casualties)
+
+        let region = civ.territories.randomElement() ?? "their lands"
+        emitProgress("Year \(year): \(civ.name) was attacked by \(monster) in the \(region)!")
+        addEvent(year: year, type: .monsterAttack,
+                description: "\(monster) attacked \(civ.name) in the \(region), slaying \(casualties)",
+                involvedCivs: [civ.id])
+        await delay()
     }
 
     // MARK: - Helpers

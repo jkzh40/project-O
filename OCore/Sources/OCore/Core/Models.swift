@@ -21,11 +21,6 @@ public struct Position: Hashable, Sendable, CustomStringConvertible {
         abs(x - other.x) + abs(y - other.y) + abs(z - other.z)
     }
 
-    /// Alias for distance - Manhattan distance
-    public func manhattanDistance(to other: Position) -> Int {
-        distance(to: other)
-    }
-
     /// Euclidean distance to another position
     public func euclideanDistance(to other: Position) -> Double {
         let dx = Double(x - other.x)
@@ -308,12 +303,6 @@ public enum NameGenerator {
 public enum SpeedConstants {
     public static let defaultSpeed = 900
     public static let movementBaseTicks = 8
-
-    // Terrain costs
-    public static let terrainFloor = 1.0
-    public static let terrainStairs = 2.0
-    public static let terrainWater = 5.0
-    public static let terrainDifficult = 3.0
 }
 
 // MARK: - Time Constants

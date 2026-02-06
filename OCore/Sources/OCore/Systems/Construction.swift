@@ -34,15 +34,8 @@ public enum WorkshopType: String, Sendable, CaseIterable {
         }
     }
 
-    /// Size of the workshop (width x height)
-    public var size: (width: Int, height: Int) {
-        switch self {
-        case .forge, .smelter:
-            return (3, 3)
-        default:
-            return (3, 3)  // Standard 3x3
-        }
-    }
+    /// Size of the workshop (width x height) — all workshops are standard 3x3
+    public var size: (width: Int, height: Int) { (3, 3) }
 
     /// Materials required to build
     public var buildRequirements: [ItemType: Int] {

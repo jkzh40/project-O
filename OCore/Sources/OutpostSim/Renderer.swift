@@ -2,6 +2,7 @@
 // Renders the simulation state to the terminal for observation
 
 import Foundation
+import OCore
 
 /// Renders the simulation to the terminal
 @MainActor
@@ -18,35 +19,6 @@ public final class Renderer: Sendable {
     /// Creates a renderer for a simulation
     public init(simulation: Simulation) {
         self.simulation = simulation
-    }
-
-    // MARK: - ANSI Escape Codes
-
-    private enum ANSI {
-        static let reset = "\u{001B}[0m"
-        static let clear = "\u{001B}[2J"
-        static let home = "\u{001B}[H"
-        static let clearLine = "\u{001B}[K"  // Clear from cursor to end of line
-        static let hideCursor = "\u{001B}[?25l"
-        static let showCursor = "\u{001B}[?25h"
-
-        // Colors
-        static let green = "\u{001B}[32m"
-        static let blue = "\u{001B}[34m"
-        static let yellow = "\u{001B}[33m"
-        static let red = "\u{001B}[31m"
-        static let cyan = "\u{001B}[36m"
-        static let magenta = "\u{001B}[35m"
-        static let white = "\u{001B}[37m"
-        static let gray = "\u{001B}[90m"
-        static let brightGreen = "\u{001B}[92m"
-        static let brightYellow = "\u{001B}[93m"
-        static let brightCyan = "\u{001B}[96m"
-        static let brightWhite = "\u{001B}[97m"
-
-        // Background colors
-        static let bgBlue = "\u{001B}[44m"
-        static let bgGreen = "\u{001B}[42m"
     }
 
     // MARK: - Rendering
@@ -138,7 +110,7 @@ public final class Renderer: Sendable {
         // Unit display (with state color and creature type)
         if let unitId = tile.unitId, let unit = simulation.world.getUnit(id: unitId) {
             let stateColor = colorForState(unit.state)
-            let char = characterForCreature(unit.creatureType)
+            let char = unit.creatureType.displayChar
             return "\(stateColor)\(char)\(ANSI.reset)"
         }
 
@@ -195,24 +167,6 @@ public final class Renderer: Sendable {
         }
     }
 
-    /// Returns display character for creature type
-    private func characterForCreature(_ type: CreatureType) -> Character {
-        switch type {
-        case .orc:
-            return "@"
-        case .goblin:
-            return "g"
-        case .wolf:
-            return "w"
-        case .bear:
-            return "B"
-        case .giant:
-            return "H"
-        case .undead:
-            return "Z"
-        }
-    }
-
     /// Renders the unit status panel
     private func renderUnitPanel() -> String {
         var panel = "── Unit Status ────────────────────────────────────────────────────\(ANSI.clearLine)\n"
@@ -231,7 +185,8 @@ public final class Renderer: Sendable {
 
             // Health and mood bars
             let healthBar = healthMoodBar(value: unit.health.currentHP, max: unit.health.maxHP, label: "♥", goodColor: ANSI.green, badColor: ANSI.red)
-            let moodBar = healthMoodBar(value: unit.mood.happiness, max: 100, label: "☺", goodColor: ANSI.green, badColor: ANSI.red)
+            let happiness = simulation.moodManager.getHappiness(unitId: unit.id) ?? 50
+            let moodBar = healthMoodBar(value: happiness, max: 100, label: "☺", goodColor: ANSI.green, badColor: ANSI.red)
 
             // Need bars
             let hungerBar = needBar(value: unit.hunger, max: NeedThresholds.hungerDeath, label: "H")
@@ -355,51 +310,4 @@ public final class Renderer: Sendable {
     public func showCursor() {
         print(ANSI.showCursor, terminator: "")
     }
-}
-
-// MARK: - Simple Runner
-
-/// Runs the simulation in watch mode
-@MainActor
-public func runWatchSimulation(
-    worldWidth: Int = 50,
-    worldHeight: Int = 20,
-    unitCount: Int = 8,
-    ticksPerSecond: Double = 5.0,
-    maxTicks: Int? = nil
-) async {
-    // Create simulation
-    let simulation = Simulation(worldWidth: worldWidth, worldHeight: worldHeight)
-
-    // Spawn units and resources
-    simulation.spawnUnits(count: unitCount)
-    simulation.spawnResources(foodCount: 15, drinkCount: 15, bedCount: 5)
-
-    // Create renderer
-    let renderer = Renderer(simulation: simulation)
-
-    // Calculate tick interval
-    let tickInterval = 1.0 / ticksPerSecond
-
-    // Hide cursor and clear screen
-    renderer.hideCursor()
-    renderer.clearScreen()
-
-    var tickCount = 0
-
-    // Main loop
-    while maxTicks == nil || tickCount < maxTicks! {
-        // Process simulation tick
-        simulation.tick()
-        tickCount += 1
-
-        // Render
-        renderer.render()
-
-        // Wait for next tick
-        try? await Task.sleep(nanoseconds: UInt64(tickInterval * 1_000_000_000))
-    }
-
-    // Show cursor when done
-    renderer.showCursor()
 }

@@ -244,33 +244,6 @@ public final class World: Sendable {
         units[unit.id] = unit
     }
 
-    /// Moves a unit to a new position
-    /// - Parameters:
-    ///   - unitId: The ID of the unit to move
-    ///   - newPosition: The destination position
-    /// - Returns: True if the move was successful
-    @discardableResult
-    public func moveUnit(_ unitId: UInt64, to newPosition: Position) -> Bool {
-        guard var unit = units[unitId] else { return false }
-        guard isPassable(newPosition) else { return false }
-
-        let oldPosition = unit.position
-
-        // Clear old tile
-        if isValidPosition(oldPosition) {
-            tiles[oldPosition.z][oldPosition.y][oldPosition.x].unitId = nil
-        }
-
-        // Update unit position
-        unit.position = newPosition
-        units[unitId] = unit
-
-        // Mark new tile
-        tiles[newPosition.z][newPosition.y][newPosition.x].unitId = unitId
-
-        return true
-    }
-
     // MARK: - Item Management
 
     /// Adds an item to the world
@@ -306,33 +279,6 @@ public final class World: Sendable {
     /// - Returns: The item, or nil if not found
     public func getItem(id: UInt64) -> Item? {
         items[id]
-    }
-
-    /// Moves an item to a new position
-    /// - Parameters:
-    ///   - itemId: The ID of the item to move
-    ///   - newPosition: The destination position
-    /// - Returns: True if the move was successful
-    @discardableResult
-    public func moveItem(_ itemId: UInt64, to newPosition: Position) -> Bool {
-        guard var item = items[itemId] else { return false }
-        guard isValidPosition(newPosition) else { return false }
-
-        let oldPosition = item.position
-
-        // Remove from old tile
-        if isValidPosition(oldPosition) {
-            tiles[oldPosition.z][oldPosition.y][oldPosition.x].removeItem(itemId)
-        }
-
-        // Update item position
-        item.position = newPosition
-        items[itemId] = item
-
-        // Add to new tile
-        tiles[newPosition.z][newPosition.y][newPosition.x].addItem(itemId)
-
-        return true
     }
 
     // MARK: - Queries

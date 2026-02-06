@@ -216,8 +216,8 @@ public final class Simulation: Sendable {
             oreCount: oreCount
         )
 
-        // Log needs assessment periodically
-        if world.currentTick % 1000 == 0 {
+        // Log needs assessment every in-game day
+        if world.currentTick % UInt64(TimeConstants.ticksPerDay) == 0 {
             logEvent(.milestone(tick: world.currentTick, message: "Needs: food=\(needs.foodNeed) drink=\(needs.drinkNeed) wood=\(needs.woodNeed) stone=\(needs.stoneNeed)"))
         }
 
@@ -234,13 +234,8 @@ public final class Simulation: Sendable {
             logEvent(.milestone(tick: world.currentTick, message: "Auto-generated \(jobsCreated) work jobs (pending: \(jobManager.pendingCount))"))
         }
 
-        // Debug: count items for debugging
-        if world.currentTick % 2000 == 0 {
-            let rawMeatCount = world.items.values.filter { $0.itemType == .rawMeat }.count
-            let plantCount = world.items.values.filter { $0.itemType == .plant }.count
-            let foodCount = world.items.values.filter { $0.itemType == .food }.count
-            let drinkCount = world.items.values.filter { $0.itemType == .drink }.count
-            let logCount = world.items.values.filter { $0.itemType == .log }.count
+        // Item inventory log every 2 in-game days
+        if world.currentTick % UInt64(TimeConstants.ticksPerDay * 2) == 0 {
             logEvent(.milestone(tick: world.currentTick, message: "Items: \(rawMeatCount) meat, \(plantCount) plants, \(foodCount) food, \(drinkCount) drinks, \(logCount) logs"))
         }
     }
@@ -366,11 +361,38 @@ public final class Simulation: Sendable {
             moodManager.addThought(unitId: unit.id, type: .wasTired, currentTick: currentTick)
         }
 
-        // Check for loneliness (no social interactions recently)
-        if world.currentTick % 500 == 0 {
+        // Higher-level need checks (every half in-game day)
+        if world.currentTick % UInt64(TimeConstants.ticksPerDay / 2) == 0 {
+            // Social need: gregarious orcs become lonely without friends
             let friends = socialManager.getFriends(of: unit.id)
             if friends.isEmpty && unit.personality.value(for: .gregariousness) > 50 {
                 moodManager.addThought(unitId: unit.id, type: .wasLonely, currentTick: currentTick)
+            }
+
+            // Occupation need: hard-working orcs get restless without jobs
+            if unit.state == .idle && unit.personality.value(for: .perseverance) > 60 {
+                if jobManager.getJobsForUnit(unit.id).isEmpty {
+                    moodManager.addThought(unitId: unit.id, type: .workedTooLong, currentTick: currentTick)
+                }
+            }
+
+            // Creativity need: curious orcs want to see workshops or nature
+            if unit.personality.value(for: .curiosity) > 65 {
+                let nearbyWorkshops = constructionManager.workshops.values.filter {
+                    $0.status == .complete && $0.position.distance(to: unit.position) <= 8
+                }
+                if !nearbyWorkshops.isEmpty {
+                    moodManager.addThought(unitId: unit.id, type: .admiredRoom, currentTick: currentTick)
+                }
+            }
+
+            // Martial need: brave orcs feel good after combat
+            if unit.personality.value(for: .bravery) > 70 && unit.state == .idle {
+                let recentCombat = combatManager.recentCombat.suffix(10)
+                let wasInCombat = recentCombat.contains { $0.attacker == unit.id }
+                if wasInCombat {
+                    moodManager.addThought(unitId: unit.id, type: .didGoodWork, currentTick: currentTick)
+                }
             }
         }
     }
@@ -680,7 +702,7 @@ public final class Simulation: Sendable {
 
         // Priority 3: Check soft needs (when idle)
         if let softNeed = unit.checkNeedConsideration() {
-            handleSoftNeed(&unit, need: softNeed)
+            handleCriticalNeed(&unit, need: softNeed)
             return
         }
 
@@ -779,35 +801,88 @@ public final class Simulation: Sendable {
         }
     }
 
-    /// Handles a soft need (when idle, not critical)
-    private func handleSoftNeed(_ unit: inout Unit, need: NeedType) {
-        handleCriticalNeed(&unit, need: need)
-    }
-
-    /// Selects an idle activity based on personality
+    /// Selects an idle activity based on personality using the IdleActivity enum
     private func selectIdleActivity(_ unit: inout Unit) {
-        let gregariousness = unit.personality.value(for: .gregariousness)
-        let activityLevel = unit.personality.value(for: .activityLevel)
+        let activity = chooseIdleActivity(for: unit)
 
-        // Higher gregariousness = more likely to seek social interaction
-        if gregariousness > 60 && Int.random(in: 0...100) < gregariousness {
+        switch activity {
+        case .socialize:
             let nearbyUnits = world.getUnitsInRange(of: unit.position, radius: 10)
                 .filter { $0.id != unit.id && $0.state == .idle && $0.creatureType == .orc }
+            if let target = nearbyUnits.randomElement(),
+               let path = world.findPath(from: unit.position, to: target.position) {
+                unit.setPath(Array(path.dropFirst()))
+                unit.transition(to: .moving)
+                logEvent(.unitSeeking(unitId: unit.id, unitName: unit.name.firstName, target: "friend"))
+                return
+            }
+            // Fallback to wandering if no one to talk to
+            wanderRandomly(&unit)
 
-            if let target = nearbyUnits.randomElement() {
-                if let path = world.findPath(from: unit.position, to: target.position) {
-                    unit.setPath(Array(path.dropFirst()))
-                    unit.transition(to: .moving)
-                    logEvent(.unitSeeking(unitId: unit.id, unitName: unit.name.firstName, target: "friend"))
-                    return
-                }
+        case .wander:
+            wanderRandomly(&unit)
+
+        case .rest:
+            // Stay put and recover — do nothing this tick
+            break
+
+        case .selfTrain:
+            // Practice a random enabled labor skill
+            let trainableSkills: [SkillType] = [.mining, .woodcutting, .carpentry, .masonry, .cooking]
+            if let skill = trainableSkills.randomElement() {
+                unit.addSkillExperience(skill, amount: 2)
+                logEvent(.unitAction(unitId: unit.id, unitName: unit.name.firstName, action: "practicing \(skill.rawValue)"))
+            }
+
+        case .appreciateArt:
+            // Admire a nearby workshop or building — small mood boost
+            let nearbyWorkshops = constructionManager.workshops.values.filter {
+                $0.status == .complete && $0.position.distance(to: unit.position) <= 10
+            }
+            if !nearbyWorkshops.isEmpty {
+                moodManager.addThought(unitId: unit.id, type: .admiredRoom, currentTick: world.currentTick)
+                logEvent(.unitAction(unitId: unit.id, unitName: unit.name.firstName, action: "admiring craftsmanship"))
+            }
+
+        case .contemplateNature:
+            // Enjoy nearby trees/water — small mood boost
+            let neighbors = unit.position.neighbors()
+            let hasNature = neighbors.contains { pos in
+                guard let tile = world.getTile(at: pos) else { return false }
+                return tile.terrain == .tree || tile.terrain == .water || tile.terrain == .shrub
+            }
+            if hasNature {
+                moodManager.addThought(unitId: unit.id, type: .sawNature, currentTick: world.currentTick)
+                logEvent(.unitAction(unitId: unit.id, unitName: unit.name.firstName, action: "enjoying nature"))
             }
         }
+    }
 
-        // Otherwise, wander if active enough
-        if activityLevel > 30 || Int.random(in: 0...100) < activityLevel {
-            wanderRandomly(&unit)
+    /// Chooses an idle activity weighted by personality
+    private func chooseIdleActivity(for unit: Unit) -> IdleActivity {
+        let gregariousness = unit.personality.value(for: .gregariousness)
+        let activityLevel = unit.personality.value(for: .activityLevel)
+        let curiosity = unit.personality.value(for: .curiosity)
+        let perseverance = unit.personality.value(for: .perseverance)
+
+        // Build weighted choices based on personality
+        var weights: [(IdleActivity, Int)] = [
+            (.wander, 20 + activityLevel / 2),
+            (.socialize, 10 + gregariousness),
+            (.rest, 30 + (100 - activityLevel) / 2),
+            (.selfTrain, 5 + perseverance / 2),
+            (.appreciateArt, 5 + curiosity / 3),
+            (.contemplateNature, 5 + (100 - gregariousness) / 3),
+        ]
+
+        let total = weights.reduce(0) { $0 + $1.1 }
+        var roll = Int.random(in: 1...total)
+
+        for (activity, weight) in weights {
+            roll -= weight
+            if roll <= 0 { return activity }
         }
+        return .rest
     }
 
     /// Makes a unit wander to a random nearby passable tile
@@ -1209,9 +1284,9 @@ public final class Simulation: Sendable {
     private func performPeriodicChecks() {
         let tick = world.currentTick
 
-        // Log milestone every 1000 ticks
-        if tick % 1000 == 0 && tick > 0 {
-            logEvent(.milestone(tick: tick, message: "Tick \(tick) - \(world.units.count) units"))
+        // Log milestone every in-game day
+        if tick % UInt64(TimeConstants.ticksPerDay) == 0 && tick > 0 {
+            logEvent(.milestone(tick: tick, message: "Day \(tick / UInt64(TimeConstants.ticksPerDay)) - \(world.units.count) units"))
         }
 
         // Spawn hostile creature (configurable interval and chance)
@@ -1219,8 +1294,8 @@ public final class Simulation: Sendable {
             spawnHostileCreature()
         }
 
-        // Check for potential marriages (every 1000 ticks)
-        if tick % 1000 == 0 {
+        // Check for potential marriages every in-game day
+        if tick % UInt64(TimeConstants.ticksPerDay) == 0 {
             checkForMarriages()
         }
 
@@ -1344,6 +1419,11 @@ public final class Simulation: Sendable {
             if let position = findRandomPassablePosition() {
                 var migrant = Unit.create(at: position)
                 migrant.creatureType = .orc
+                moodManager.initializeMood(
+                    unitId: migrant.id,
+                    cheerfulness: migrant.personality.value(for: .cheerfulness),
+                    stressVulnerability: migrant.personality.value(for: .stressVulnerability)
+                )
                 world.addUnit(migrant)
                 logEvent(.unitSpawned(unitId: migrant.id, name: "\(migrant.name.firstName) migrated to the outpost"))
                 stats.migrants += 1
@@ -1375,6 +1455,13 @@ public final class Simulation: Sendable {
                 if let position = findRandomPassablePosition() {
                     var baby = Unit.create(at: position)
                     baby.creatureType = .orc
+
+                    // Initialize mood
+                    moodManager.initializeMood(
+                        unitId: baby.id,
+                        cheerfulness: baby.personality.value(for: .cheerfulness),
+                        stressVulnerability: baby.personality.value(for: .stressVulnerability)
+                    )
 
                     // Set family relationships
                     socialManager.setFamilyRelationship(parent: unitId, child: baby.id, currentTick: world.currentTick)
