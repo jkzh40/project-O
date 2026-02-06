@@ -4,10 +4,10 @@
 import Foundation
 
 /// Classifies biomes based on temperature, moisture, elevation, and hydrology
-public struct BiomeClassifier: Sendable {
+struct BiomeClassifier: Sendable {
 
     /// Classify biomes for all cells in the world map
-    public static func classify(map: inout WorldMap) {
+    static func classify(map: inout WorldMap) {
         let size = map.size
         let seaLevel: Float = 0.3
 

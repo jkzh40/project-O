@@ -4,14 +4,14 @@
 import Foundation
 
 /// Adds final detail: vegetation, ore deposits, soil depth based on biome and geology
-public struct DetailPass: Sendable {
+struct DetailPass: Sendable {
 
     /// Run detail pass over the world map
     /// - Parameters:
     ///   - map: World map with biome classification
     ///   - noise: Noise generator for variation
     ///   - rng: Seeded RNG
-    public static func apply(map: inout WorldMap, noise: SimplexNoise, rng: inout SeededRNG) {
+    static func apply(map: inout WorldMap, noise: SimplexNoise, rng: inout SeededRNG) {
         let size = map.size
         let invSize = 1.0 / Double(size)
 

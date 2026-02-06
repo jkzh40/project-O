@@ -4,7 +4,7 @@
 import Foundation
 
 /// OpenSimplex2-style noise generator — deterministic from seed
-public struct SimplexNoise: Sendable {
+struct SimplexNoise: Sendable {
     private let perm: [Int]
     private let permGrad2: [(Double, Double)]
     private let permGrad3: [(Double, Double, Double)]
@@ -43,7 +43,7 @@ public struct SimplexNoise: Sendable {
         (-1, -1, 0), (-1, 1, 0), (1, -1, 0), (1, 1, 0),
     ]
 
-    public init(seed: UInt64) {
+    init(seed: UInt64) {
         var rng = SeededRNG(seed: seed)
 
         // Build permutation table
@@ -63,7 +63,7 @@ public struct SimplexNoise: Sendable {
     // MARK: - 2D Noise
 
     /// Returns noise value in approximately [-1, 1] for 2D coordinates
-    public func noise2D(x: Double, y: Double) -> Double {
+    func noise2D(x: Double, y: Double) -> Double {
         // Skew to simplex space
         let F2 = 0.5 * (sqrt(3.0) - 1.0)
         let G2 = (3.0 - sqrt(3.0)) / 6.0
@@ -117,7 +117,7 @@ public struct SimplexNoise: Sendable {
     // MARK: - 3D Noise
 
     /// Returns noise value in approximately [-1, 1] for 3D coordinates
-    public func noise3D(x: Double, y: Double, z: Double) -> Double {
+    func noise3D(x: Double, y: Double, z: Double) -> Double {
         let F3 = 1.0 / 3.0
         let G3 = 1.0 / 6.0
 

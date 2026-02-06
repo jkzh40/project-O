@@ -4,7 +4,7 @@
 import Foundation
 
 /// Converts a region of the world map into the detailed 3D tile grid used by the World
-public struct LocalTerrainGenerator: Sendable {
+struct LocalTerrainGenerator: Sendable {
 
     /// Generate a 3D tile grid from a world map region
     /// - Parameters:
@@ -13,7 +13,7 @@ public struct LocalTerrainGenerator: Sendable {
     ///   - depth: Number of z-levels to generate
     ///   - rng: Seeded RNG for detail variation
     /// - Returns: 3D tile array [z][y][x]
-    public static func generate(
+    static func generate(
         from worldMap: WorldMap,
         region: EmbarkRegion,
         depth: Int = 1,

@@ -4,14 +4,14 @@
 import Foundation
 
 /// Generates tectonic plates using Voronoi tessellation with drift vectors
-public struct TectonicSimulator: Sendable {
+struct TectonicSimulator: Sendable {
 
     /// Run tectonic simulation on a world map
     /// - Parameters:
     ///   - map: The world map to modify (plates + coarse elevation + boundary data)
     ///   - params: World generation parameters
     ///   - rng: Seeded RNG (will be mutated)
-    public static func simulate(map: inout WorldMap, params: WorldGenParameters, rng: inout SeededRNG) {
+    static func simulate(map: inout WorldMap, params: WorldGenParameters, rng: inout SeededRNG) {
         let size = map.size
         let plateCount = params.plateCount
 

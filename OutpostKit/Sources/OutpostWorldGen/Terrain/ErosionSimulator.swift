@@ -4,7 +4,7 @@
 import Foundation
 
 /// Simulates hydraulic and thermal erosion on the heightmap
-public struct ErosionSimulator: Sendable {
+struct ErosionSimulator: Sendable {
 
     // MARK: - Hydraulic Erosion Parameters
 
@@ -25,7 +25,7 @@ public struct ErosionSimulator: Sendable {
     ///   - map: World map with elevation data
     ///   - params: Generation parameters (controls droplet count)
     ///   - rng: Seeded RNG
-    public static func simulate(map: inout WorldMap, params: WorldGenParameters, rng: inout SeededRNG) {
+    static func simulate(map: inout WorldMap, params: WorldGenParameters, rng: inout SeededRNG) {
         let size = map.size
 
         // Extract elevation to a flat Float array for performance

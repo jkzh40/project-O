@@ -4,7 +4,7 @@
 import Foundation
 
 /// Utility functions for combining and transforming noise
-public enum NoiseUtilities {
+enum NoiseUtilities {
 
     // MARK: - Fractal Brownian Motion (fBm)
 
@@ -18,7 +18,7 @@ public enum NoiseUtilities {
     ///   - lacunarity: Frequency multiplier per octave (typically 2.0)
     ///   - persistence: Amplitude multiplier per octave (typically 0.5)
     /// - Returns: Noise value (range depends on octaves, roughly [-1, 1])
-    public static func fbm(
+    static func fbm(
         noise: SimplexNoise,
         x: Double, y: Double,
         octaves: Int = 6,
@@ -44,7 +44,7 @@ public enum NoiseUtilities {
     // MARK: - Ridged Multifractal
 
     /// Ridged multifractal noise — creates sharp ridges like mountain ranges
-    public static func ridgedMultifractal(
+    static func ridgedMultifractal(
         noise: SimplexNoise,
         x: Double, y: Double,
         octaves: Int = 6,
@@ -74,7 +74,7 @@ public enum NoiseUtilities {
 
     /// Applies domain warping: distorts coordinates using noise before sampling
     /// Creates organic, flowing patterns
-    public static func domainWarp(
+    static func domainWarp(
         noise: SimplexNoise,
         x: Double, y: Double,
         frequency: Double = 1.0,
@@ -105,7 +105,7 @@ public enum NoiseUtilities {
     // MARK: - Utility
 
     /// Remaps a value from one range to another
-    public static func remap(
+    static func remap(
         _ value: Double,
         from fromRange: ClosedRange<Double>,
         to toRange: ClosedRange<Double>
@@ -115,18 +115,18 @@ public enum NoiseUtilities {
     }
 
     /// Clamps a value to [0, 1]
-    public static func saturate(_ value: Double) -> Double {
+    static func saturate(_ value: Double) -> Double {
         min(max(value, 0.0), 1.0)
     }
 
     /// Smooth hermite interpolation (smoothstep)
-    public static func smoothstep(_ edge0: Double, _ edge1: Double, _ x: Double) -> Double {
+    static func smoothstep(_ edge0: Double, _ edge1: Double, _ x: Double) -> Double {
         let t = saturate((x - edge0) / (edge1 - edge0))
         return t * t * (3.0 - 2.0 * t)
     }
 
     /// Applies a gaussian-like falloff around a center point
-    public static func falloff(
+    static func falloff(
         x: Double, y: Double,
         centerX: Double, centerY: Double,
         radius: Double
@@ -138,7 +138,7 @@ public enum NoiseUtilities {
     }
 
     /// 2D distance
-    public static func distance(_ x1: Double, _ y1: Double, _ x2: Double, _ y2: Double) -> Double {
+    static func distance(_ x1: Double, _ y1: Double, _ x2: Double, _ y2: Double) -> Double {
         let dx = x1 - x2
         let dy = y1 - y2
         return sqrt(dx * dx + dy * dy)

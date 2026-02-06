@@ -4,17 +4,17 @@
 import Foundation
 
 /// Progress callback for world map generation
-public typealias WorldMapProgressCallback = (String) -> Void
+typealias WorldMapProgressCallback = (String) -> Void
 
 /// Orchestrates the 7-stage world map generation pipeline
-public struct WorldMapGenerator: Sendable {
+struct WorldMapGenerator: Sendable {
 
     /// Generate a complete world map from parameters
     /// - Parameters:
     ///   - params: World generation parameters
     ///   - progress: Optional progress callback
     /// - Returns: Complete world map with all data
-    public static func generate(
+    static func generate(
         params: WorldGenParameters,
         progress: WorldMapProgressCallback? = nil
     ) -> WorldMap {
@@ -67,7 +67,7 @@ public struct WorldMapGenerator: Sendable {
     ///   - size: Embark region size
     ///   - rng: Seeded RNG
     /// - Returns: Embark region
-    public static func findEmbarkSite(
+    static func findEmbarkSite(
         map: WorldMap,
         size embarkSize: Int,
         rng: inout SeededRNG

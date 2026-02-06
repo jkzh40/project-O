@@ -4,14 +4,14 @@
 import Foundation
 
 /// Generates detailed heightmap by blending tectonic coarse elevation with multi-octave noise
-public struct HeightmapGenerator: Sendable {
+struct HeightmapGenerator: Sendable {
 
     /// Generate the detailed heightmap
     /// - Parameters:
     ///   - map: World map with tectonic data already computed
     ///   - noise: Simplex noise generator
     ///   - rng: Seeded RNG
-    public static func generate(map: inout WorldMap, noise: SimplexNoise, rng: inout SeededRNG) {
+    static func generate(map: inout WorldMap, noise: SimplexNoise, rng: inout SeededRNG) {
         let size = map.size
         let invSize = 1.0 / Double(size)
 

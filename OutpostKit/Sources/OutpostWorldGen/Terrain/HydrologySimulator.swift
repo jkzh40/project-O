@@ -4,13 +4,13 @@
 import Foundation
 
 /// Simulates water flow: direction fields, river paths, and lake formation
-public struct HydrologySimulator: Sendable {
+struct HydrologySimulator: Sendable {
 
     /// Run hydrology simulation
     /// - Parameters:
     ///   - map: World map with elevation and climate data
     ///   - rng: Seeded RNG
-    public static func simulate(map: inout WorldMap, rng: inout SeededRNG) {
+    static func simulate(map: inout WorldMap, rng: inout SeededRNG) {
         let size = map.size
 
         // Step 1: Fill sinks (depressionless elevation)

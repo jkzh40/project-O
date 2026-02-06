@@ -5,11 +5,11 @@ import Foundation
 
 /// A deterministic random number generator using the xoshiro256** algorithm.
 /// Fork-able: create independent child generators from a parent seed.
-public struct SeededRNG: Sendable {
+struct SeededRNG: Sendable {
     private var state: (UInt64, UInt64, UInt64, UInt64)
 
     /// Creates an RNG seeded with the given value
-    public init(seed: UInt64) {
+    init(seed: UInt64) {
         // Use SplitMix64 to expand the seed into 4 state words
         var s = seed
         func splitmix() -> UInt64 {
@@ -23,7 +23,7 @@ public struct SeededRNG: Sendable {
     }
 
     /// Fork a child RNG for a named stage, producing an independent stream
-    public func fork(_ label: String) -> SeededRNG {
+    func fork(_ label: String) -> SeededRNG {
         // Hash the label to produce a deterministic child seed
         var hash: UInt64 = 0xcbf29ce484222325 // FNV offset basis
         for byte in label.utf8 {
@@ -36,7 +36,7 @@ public struct SeededRNG: Sendable {
     }
 
     /// Returns the next UInt64 in the sequence
-    public mutating func nextUInt64() -> UInt64 {
+    mutating func nextUInt64() -> UInt64 {
         let result = rotl(state.1 &* 5, 7) &* 9
         let t = state.1 << 17
         state.2 ^= state.0
@@ -49,28 +49,28 @@ public struct SeededRNG: Sendable {
     }
 
     /// Returns a Double in [0, 1)
-    public mutating func nextDouble() -> Double {
+    mutating func nextDouble() -> Double {
         Double(nextUInt64() >> 11) * 0x1.0p-53
     }
 
     /// Returns a Double in the specified range
-    public mutating func nextDouble(in range: ClosedRange<Double>) -> Double {
+    mutating func nextDouble(in range: ClosedRange<Double>) -> Double {
         range.lowerBound + nextDouble() * (range.upperBound - range.lowerBound)
     }
 
     /// Returns an Int in the specified range
-    public mutating func nextInt(in range: ClosedRange<Int>) -> Int {
+    mutating func nextInt(in range: ClosedRange<Int>) -> Int {
         let span = UInt64(range.upperBound - range.lowerBound + 1)
         return range.lowerBound + Int(nextUInt64() % span)
     }
 
     /// Returns a Bool with the given probability of being true
-    public mutating func nextBool(probability: Double = 0.5) -> Bool {
+    mutating func nextBool(probability: Double = 0.5) -> Bool {
         nextDouble() < probability
     }
 
     /// Shuffles an array in place
-    public mutating func shuffle<T>(_ array: inout [T]) {
+    mutating func shuffle<T>(_ array: inout [T]) {
         for i in stride(from: array.count - 1, through: 1, by: -1) {
             let j = Int(nextUInt64() % UInt64(i + 1))
             array.swapAt(i, j)
@@ -78,7 +78,7 @@ public struct SeededRNG: Sendable {
     }
 
     /// Returns a shuffled copy of an array
-    public mutating func shuffled<T>(_ array: [T]) -> [T] {
+    mutating func shuffled<T>(_ array: [T]) -> [T] {
         var copy = array
         shuffle(&copy)
         return copy

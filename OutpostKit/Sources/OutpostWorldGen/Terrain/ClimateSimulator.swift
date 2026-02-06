@@ -4,14 +4,14 @@
 import Foundation
 
 /// Simulates climate: temperature, wind, moisture, and rainfall
-public struct ClimateSimulator: Sendable {
+struct ClimateSimulator: Sendable {
 
     /// Run climate simulation
     /// - Parameters:
     ///   - map: World map with elevation data
     ///   - noise: Noise generator for variation
     ///   - rng: Seeded RNG
-    public static func simulate(map: inout WorldMap, noise: SimplexNoise, rng: inout SeededRNG) {
+    static func simulate(map: inout WorldMap, noise: SimplexNoise, rng: inout SeededRNG) {
         let size = map.size
 
         // Pass 1: Base temperature from latitude and elevation
