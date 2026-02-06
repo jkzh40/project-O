@@ -20,12 +20,18 @@ struct WorldSnapshot: Sendable {
     let activeConversations: [ConversationSnapshot]
 }
 
+/// Snapshot of a single participant in a conversation
+struct ConversationParticipantSnapshot: Sendable {
+    let unitId: UInt64
+    let name: String
+    let line: String
+    let isSpeaking: Bool
+}
+
 /// Snapshot of an active conversation for speech bubble display
 struct ConversationSnapshot: Sendable {
-    let participant1Id: UInt64
-    let participant2Id: UInt64
-    let participant1Name: String
-    let participant2Name: String
+    let participants: [ConversationParticipantSnapshot]
+    let eavesdropperIds: Set<UInt64>
     let topic: String
     let isSuccess: Bool
 }
@@ -146,12 +152,19 @@ extension WorldSnapshot {
         }
 
         // Build conversation snapshots
+        let currentTick = world.currentTick
         let conversations: [ConversationSnapshot] = simulation.activeConversations.map { conv in
-            ConversationSnapshot(
-                participant1Id: conv.participant1Id,
-                participant2Id: conv.participant2Id,
-                participant1Name: conv.participant1Name,
-                participant2Name: conv.participant2Name,
+            let participantSnapshots = conv.participantIds.map { pid in
+                ConversationParticipantSnapshot(
+                    unitId: pid,
+                    name: conv.participantNames[pid] ?? "",
+                    line: conv.lineForParticipant(pid, at: currentTick),
+                    isSpeaking: conv.isSpeaking(pid, at: currentTick)
+                )
+            }
+            return ConversationSnapshot(
+                participants: participantSnapshots,
+                eavesdropperIds: conv.eavesdropperIds,
                 topic: conv.topic,
                 isSuccess: conv.isSuccess
             )

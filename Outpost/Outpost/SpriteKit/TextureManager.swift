@@ -30,6 +30,14 @@ final class TextureManager {
     private var seasonalTerrainTextures: [TerrainType: [Season: SKTexture]] = [:]
     private var seasonalWaterFrames: [Season: [SKTexture]] = [:]
 
+    /// Animation frame textures
+    private var unitWalkFrames: [CreatureType: [SKTexture]] = [:]
+    private var unitAttackFrames: [CreatureType: [SKTexture]] = [:]
+    private var unitIdleFrames: [CreatureType: [SKTexture]] = [:]
+    private var unitDeathFrames: [CreatureType: [SKTexture]] = [:]
+    private var shadowTex: SKTexture?
+    private var terrainVariantTextures: [TerrainType: [SKTexture]] = [:]
+
     private init() {
         loadTerrainTextures()
         loadUnitTextures()
@@ -39,6 +47,9 @@ final class TextureManager {
         loadHealthBarTextures()
         loadSeasonalTerrainTextures()
         loadSeasonalWaterFrames()
+        loadUnitAnimationFrames()
+        loadShadowTexture()
+        loadTerrainVariants()
     }
 
     // MARK: - Texture Loading
@@ -175,6 +186,69 @@ final class TextureManager {
         }
     }
 
+    private func loadUnitAnimationFrames() {
+        let creatureMap: [CreatureType: String] = [
+            .orc: "orc", .goblin: "goblin", .wolf: "wolf",
+            .bear: "bear", .giant: "giant", .undead: "undead",
+        ]
+        for (creature, name) in creatureMap {
+            // Walk (0-3)
+            var walk: [SKTexture] = []
+            for f in 0...3 {
+                let tex = SKTexture(imageNamed: "Creatures/creature_\(name)_walk_\(f)")
+                tex.filteringMode = .nearest
+                walk.append(tex)
+            }
+            unitWalkFrames[creature] = walk
+
+            // Attack (0-2)
+            var attack: [SKTexture] = []
+            for f in 0...2 {
+                let tex = SKTexture(imageNamed: "Creatures/creature_\(name)_attack_\(f)")
+                tex.filteringMode = .nearest
+                attack.append(tex)
+            }
+            unitAttackFrames[creature] = attack
+
+            // Idle (0-1)
+            var idle: [SKTexture] = []
+            for f in 0...1 {
+                let tex = SKTexture(imageNamed: "Creatures/creature_\(name)_idle_\(f)")
+                tex.filteringMode = .nearest
+                idle.append(tex)
+            }
+            unitIdleFrames[creature] = idle
+
+            // Death (0-2)
+            var death: [SKTexture] = []
+            for f in 0...2 {
+                let tex = SKTexture(imageNamed: "Creatures/creature_\(name)_death_\(f)")
+                tex.filteringMode = .nearest
+                death.append(tex)
+            }
+            unitDeathFrames[creature] = death
+        }
+    }
+
+    private func loadShadowTexture() {
+        shadowTex = SKTexture(imageNamed: "UI/ui_unit_shadow")
+        shadowTex?.filteringMode = .nearest
+    }
+
+    private func loadTerrainVariants() {
+        // Grass variants: base (index 0) + v1, v2
+        let grassBase = terrainTextures[.grass]!
+        let gv1 = SKTexture(imageNamed: "Terrain/terrain_grass_v1"); gv1.filteringMode = .nearest
+        let gv2 = SKTexture(imageNamed: "Terrain/terrain_grass_v2"); gv2.filteringMode = .nearest
+        terrainVariantTextures[.grass] = [grassBase, gv1, gv2]
+
+        // Dirt variants: base (index 0) + v1, v2
+        let dirtBase = terrainTextures[.dirt]!
+        let dv1 = SKTexture(imageNamed: "Terrain/terrain_dirt_v1"); dv1.filteringMode = .nearest
+        let dv2 = SKTexture(imageNamed: "Terrain/terrain_dirt_v2"); dv2.filteringMode = .nearest
+        terrainVariantTextures[.dirt] = [dirtBase, dv1, dv2]
+    }
+
     // MARK: - Texture Access
 
     func texture(for terrain: TerrainType) -> SKTexture {
@@ -224,6 +298,40 @@ final class TextureManager {
 
     func healthBarFillTexture() -> SKTexture {
         healthBarFillTex ?? SKTexture()
+    }
+
+    // MARK: - Animation Frame Access
+
+    func walkTextures(for creature: CreatureType) -> [SKTexture] {
+        unitWalkFrames[creature] ?? []
+    }
+
+    func attackTextures(for creature: CreatureType) -> [SKTexture] {
+        unitAttackFrames[creature] ?? []
+    }
+
+    func idleTextures(for creature: CreatureType) -> [SKTexture] {
+        unitIdleFrames[creature] ?? []
+    }
+
+    func deathTextures(for creature: CreatureType) -> [SKTexture] {
+        unitDeathFrames[creature] ?? []
+    }
+
+    func unitShadowTexture() -> SKTexture {
+        shadowTex ?? SKTexture()
+    }
+
+    func terrainTexture(for terrain: TerrainType, season: Season, variant: Int) -> SKTexture {
+        // Try variant first (only for grass and dirt)
+        if variant > 0, let variants = terrainVariantTextures[terrain], variant < variants.count {
+            // For non-summer seasons, we still use the seasonal texture (variants are summer-only visual variety)
+            if season != .summer {
+                return texture(for: terrain, season: season)
+            }
+            return variants[variant]
+        }
+        return texture(for: terrain, season: season)
     }
 
     // MARK: - State Colors

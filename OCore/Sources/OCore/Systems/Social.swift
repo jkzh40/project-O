@@ -71,6 +71,9 @@ public struct Relationship: Sendable {
     /// Number of interactions
     public var interactionCount: Int
 
+    /// Recent conversation topics (capped at 5, oldest dropped first)
+    public var conversationHistory: [ConversationTopic] = []
+
     public init(targetId: UInt64, type: RelationshipType = .stranger, formedAt: UInt64) {
         self.targetId = targetId
         self.type = type
@@ -78,6 +81,14 @@ public struct Relationship: Sendable {
         self.formedAt = formedAt
         self.lastInteraction = formedAt
         self.interactionCount = 0
+    }
+
+    /// Record a conversation topic, keeping the last 5
+    public mutating func recordConversation(topic: ConversationTopic) {
+        conversationHistory.append(topic)
+        if conversationHistory.count > 5 {
+            conversationHistory.removeFirst()
+        }
     }
 
     /// Update relationship type based on strength
@@ -175,6 +186,137 @@ public struct ConversationResult: Sendable {
         self.success = success
         self.relationshipChange = relationshipChange
         self.description = description
+    }
+}
+
+// MARK: - Multi-Turn Conversation
+
+/// A participant in a conversation (used to build group conversations)
+public struct ConversationParticipant: Sendable {
+    public let unitId: UInt64
+    public let name: String
+    public let personality: Personality
+}
+
+/// A single exchange (turn) in a conversation
+public struct ConversationExchange: Sendable {
+    public let speakerId: UInt64
+    public let line: String
+    public let turnIndex: Int
+}
+
+/// A planned multi-turn conversation
+public struct ConversationPlan: Sendable {
+    public let participantIds: [UInt64]
+    public let exchanges: [ConversationExchange]
+    public let topic: ConversationTopic
+    public let overallSuccess: Bool
+    public let relationshipChange: Int
+}
+
+// MARK: - Dialogue Banks
+
+/// Short dialogue lines organized by topic and role
+private enum DialogueBank {
+    enum Role { case opener, response, closer, failOpener, failResponse }
+
+    static func lines(for topic: ConversationTopic, role: Role) -> [String] {
+        switch (topic, role) {
+        case (.weather, .opener):    return ["Nice day", "Windy today", "Looks like rain"]
+        case (.weather, .response):  return ["Aye", "Sure is", "Could be worse"]
+        case (.weather, .closer):    return ["Stay dry", "Enjoy it"]
+        case (.weather, .failOpener):  return ["Awful weather", "Ugh, this air"]
+        case (.weather, .failResponse): return ["Hmph", "Whatever"]
+
+        case (.work, .opener):    return ["Busy day...", "Much to do", "The mines need work"]
+        case (.work, .response):  return ["Tell me about it", "Could be worse", "Aye, always"]
+        case (.work, .closer):    return ["Back to it", "Good luck"]
+        case (.work, .failOpener):  return ["Too much work", "I'm exhausted"]
+        case (.work, .failResponse): return ["Not now", "Leave me be"]
+
+        case (.food, .opener):    return ["Hungry?", "Smells good", "Had a fine meal"]
+        case (.food, .response):  return ["Starving!", "Mmm indeed", "Could eat"]
+        case (.food, .closer):    return ["Eat well", "Save me some"]
+        case (.food, .failOpener):  return ["Tastes awful", "Nothing to eat"]
+        case (.food, .failResponse): return ["Gross", "Don't remind me"]
+
+        case (.hobby, .opener):    return ["Been crafting?", "Try anything new?"]
+        case (.hobby, .response):  return ["A little", "Not lately", "Always!"]
+        case (.hobby, .closer):    return ["Show me sometime", "Nice"]
+        case (.hobby, .failOpener):  return ["So bored", "Nothing to do"]
+        case (.hobby, .failResponse): return ["Yep", "Meh"]
+
+        case (.family, .opener):    return ["How's family?", "Miss the old days"]
+        case (.family, .response):  return ["They're well", "Same here", "Growing fast"]
+        case (.family, .closer):    return ["Give them my best", "Good to hear"]
+        case (.family, .failOpener):  return ["Family troubles", "Don't ask"]
+        case (.family, .failResponse): return ["Sorry to hear", "Oh..."]
+
+        case (.stories, .opener):    return ["Heard a tale", "Listen to this...", "Remember when..."]
+        case (.stories, .response):  return ["Go on!", "Tell me more", "Ha!"]
+        case (.stories, .closer):    return ["Good story", "I'll remember that"]
+        case (.stories, .failOpener):  return ["Boring tale...", "Forget it"]
+        case (.stories, .failResponse): return ["Hmm", "Heard it before"]
+
+        case (.gossip, .opener):    return ["Did you hear?", "Guess what...", "Don't tell anyone"]
+        case (.gossip, .response):  return ["No way!", "Really?!", "Who?!"]
+        case (.gossip, .closer):    return ["Keep it quiet", "Interesting..."]
+        case (.gossip, .failOpener):  return ["Heard a rumor", "They said..."]
+        case (.gossip, .failResponse): return ["Don't care", "That's mean"]
+
+        case (.philosophy, .opener):    return ["Ever wonder...", "What if...", "Think about it"]
+        case (.philosophy, .response):  return ["Hmm, perhaps", "Deep thought", "Interesting"]
+        case (.philosophy, .closer):    return ["Food for thought", "Makes you think"]
+        case (.philosophy, .failOpener):  return ["Life is strange", "Nothing matters"]
+        case (.philosophy, .failResponse): return ["Too deep", "My head hurts"]
+
+        case (.art, .opener):    return ["See that carving?", "Beautiful work"]
+        case (.art, .response):  return ["Lovely indeed", "Fine craft", "I see it"]
+        case (.art, .closer):    return ["Inspiring", "Well made"]
+        case (.art, .failOpener):  return ["Ugly piece", "Who made that"]
+        case (.art, .failResponse): return ["Hmph", "Not my taste"]
+
+        case (.nature, .opener):    return ["Hear the birds?", "Fine forest", "Look at that"]
+        case (.nature, .response):  return ["Beautiful", "Peaceful", "I see"]
+        case (.nature, .closer):    return ["Good spot", "Nature provides"]
+        case (.nature, .failOpener):  return ["Wild beasts...", "Dangerous out"]
+        case (.nature, .failResponse): return ["Stay safe", "Scary"]
+
+        case (.memories, .opener):    return ["Remember when...", "Long time ago...", "Old times"]
+        case (.memories, .response):  return ["Those were the days", "I remember", "Ha, yes!"]
+        case (.memories, .closer):    return ["Good times", "We've come far"]
+        case (.memories, .failOpener):  return ["Bad memories", "Rather forget"]
+        case (.memories, .failResponse): return ["Sorry", "Let it go"]
+
+        case (.complaint, .opener):    return ["Can you believe...", "So annoying", "Ugh"]
+        case (.complaint, .response):  return ["I know, right?", "Terrible", "Yeah..."]
+        case (.complaint, .closer):    return ["Had to vent", "Thanks for listening"]
+        case (.complaint, .failOpener):  return ["Everything's wrong", "I hate this"]
+        case (.complaint, .failResponse): return ["Stop whining", "Enough"]
+
+        case (.joke, .opener):    return ["Ha, listen...", "Heard this one?", "Why did the..."]
+        case (.joke, .response):  return ["Hah!", "Good one!", "Ha ha ha!"]
+        case (.joke, .closer):    return ["Classic!", "Tell another"]
+        case (.joke, .failOpener):  return ["Wanna hear one?", "So, uh..."]
+        case (.joke, .failResponse): return ["Ugh...", "Not funny", "Really?"]
+
+        case (.praise, .opener):    return ["Nice work!", "Well done", "You're great"]
+        case (.praise, .response):  return ["Thanks!", "Means a lot", "You too!"]
+        case (.praise, .closer):    return ["Keep it up", "Proud of you"]
+        case (.praise, .failOpener):  return ["You tried", "Not bad I guess"]
+        case (.praise, .failResponse): return ["Sure...", "Thanks I guess"]
+        }
+    }
+
+    static func callbackLine(for topic: ConversationTopic) -> String {
+        switch topic {
+        case .joke:    return "Like that joke before"
+        case .gossip:  return "More gossip, huh?"
+        case .work:    return "Work talk again"
+        case .stories: return "Another tale?"
+        case .food:    return "Food talk again"
+        default:       return "Like last time"
+        }
     }
 }
 
@@ -300,25 +442,44 @@ public final class SocialManager: Sendable {
 
     // MARK: - Conversations
 
-    /// Have two units converse
+    /// Have two units converse — delegates to group conversation
     public func haveConversation(
         participant1: UInt64,
         participant2: UInt64,
         personality1: Personality,
         personality2: Personality,
         currentTick: UInt64
-    ) -> ConversationResult {
-        // Select a topic based on personalities
-        let topic = selectTopic(personality1: personality1, personality2: personality2)
+    ) -> ConversationPlan {
+        let participants = [
+            ConversationParticipant(unitId: participant1, name: "", personality: personality1),
+            ConversationParticipant(unitId: participant2, name: "", personality: personality2),
+        ]
+        return haveGroupConversation(participants: participants, currentTick: currentTick)
+    }
 
-        // Calculate success chance
+    /// Have a group of units converse (2-5 participants) — returns a multi-turn plan
+    public func haveGroupConversation(
+        participants: [ConversationParticipant],
+        currentTick: UInt64
+    ) -> ConversationPlan {
+        guard participants.count >= 2 else {
+            return ConversationPlan(participantIds: [], exchanges: [], topic: .weather, overallSuccess: false, relationshipChange: 0)
+        }
+
+        let initiator = participants[0]
+        let second = participants[1]
+
+        // Get conversation history from initiator <-> second relationship
+        let relation = getRelationship(from: initiator.unitId, to: second.unitId, currentTick: currentTick)
+        let history = relation.conversationHistory
+
+        // Select topic based on initiator + second's personalities/history
+        let topic = selectTopic(personality1: initiator.personality, personality2: second.personality, history: history)
+
+        // Success chance uses average gregariousness of all participants
         let baseChance = 60
-
-        // Gregariousness helps conversations
-        let socialBonus = (personality1.value(for: .gregariousness) + personality2.value(for: .gregariousness)) / 4
-
-        // Existing relationship helps
-        let relation = getRelationship(from: participant1, to: participant2, currentTick: currentTick)
+        let avgGregariousness = participants.reduce(0) { $0 + $1.personality.value(for: .gregariousness) } / participants.count
+        let socialBonus = avgGregariousness / 2
         let relationBonus = relation.strength / 5
 
         let successChance = baseChance + socialBonus + relationBonus
@@ -332,10 +493,51 @@ public final class SocialManager: Sendable {
             change = -Int.random(in: 1...2)
         }
 
-        // Apply relationship change
-        modifyRelationship(from: participant1, to: participant2, amount: change, currentTick: currentTick)
+        // Turn count = base (2-4 by relationship) + (participantCount - 2) for groups
+        let baseTurnCount: Int
+        switch relation.type {
+        case .closeFriend, .lover, .spouse, .parent, .child, .sibling:
+            baseTurnCount = Int.random(in: 3...4)
+        case .friend:
+            baseTurnCount = Int.random(in: 2...3)
+        default:
+            baseTurnCount = 2
+        }
+        let turnCount = baseTurnCount + (participants.count - 2)
 
-        // Create result
+        // Check if this topic was discussed before
+        let isCallback = history.contains(topic)
+
+        // Generate exchanges with round-robin speakers
+        let exchanges = generateGroupExchanges(
+            participants: participants,
+            topic: topic,
+            turnCount: turnCount,
+            success: success,
+            isCallback: isCallback
+        )
+
+        // Apply relationship changes between ALL pairs
+        let participantIds = participants.map { $0.unitId }
+        for i in 0..<participants.count {
+            for j in (i + 1)..<participants.count {
+                let a = participants[i].unitId
+                let b = participants[j].unitId
+                // Initiator pair (i==0) gets full effect, non-initiator pairs get 2/3
+                let pairChange = (i == 0) ? change : (change * 2 / 3)
+                modifyRelationship(from: a, to: b, amount: pairChange, currentTick: currentTick)
+
+                // Record topic in conversation history for both directions
+                updateRelationship(from: a, to: b) { rel in
+                    rel.recordConversation(topic: topic)
+                }
+                updateRelationship(from: b, to: a) { rel in
+                    rel.recordConversation(topic: topic)
+                }
+            }
+        }
+
+        // Create legacy result for logging (uses initiator + second)
         let description: String
         if success {
             description = "Had a pleasant conversation about \(topic.rawValue)"
@@ -344,27 +546,80 @@ public final class SocialManager: Sendable {
         }
 
         let result = ConversationResult(
-            participant1: participant1,
-            participant2: participant2,
+            participant1: initiator.unitId,
+            participant2: second.unitId,
             topic: topic,
             success: success,
             relationshipChange: change,
             description: description
         )
 
-        // Store in history
         recentConversations.append(result)
         if recentConversations.count > maxConversationHistory {
             recentConversations.removeFirst()
         }
 
-        return result
+        return ConversationPlan(
+            participantIds: participantIds,
+            exchanges: exchanges,
+            topic: topic,
+            overallSuccess: success,
+            relationshipChange: change
+        )
     }
 
-    /// Select a conversation topic based on personalities
-    private func selectTopic(personality1: Personality, personality2: Personality) -> ConversationTopic {
+    /// Generate dialogue exchanges with round-robin speaker selection
+    private func generateGroupExchanges(
+        participants: [ConversationParticipant],
+        topic: ConversationTopic,
+        turnCount: Int,
+        success: Bool,
+        isCallback: Bool
+    ) -> [ConversationExchange] {
+        var exchanges: [ConversationExchange] = []
+
+        for i in 0..<turnCount {
+            let speakerId = participants[i % participants.count].unitId
+            let line: String
+
+            if i == 0 {
+                // First turn: opener (with possible callback)
+                if isCallback && Bool.random() {
+                    line = DialogueBank.callbackLine(for: topic)
+                } else if success {
+                    line = DialogueBank.lines(for: topic, role: .opener).randomElement() ?? "..."
+                } else {
+                    line = DialogueBank.lines(for: topic, role: .failOpener).randomElement() ?? "..."
+                }
+            } else if i == turnCount - 1 {
+                // Last turn: closer
+                if success {
+                    line = DialogueBank.lines(for: topic, role: .closer).randomElement() ?? "..."
+                } else {
+                    line = DialogueBank.lines(for: topic, role: .failResponse).randomElement() ?? "..."
+                }
+            } else {
+                // Middle turn: response
+                if success {
+                    line = DialogueBank.lines(for: topic, role: .response).randomElement() ?? "..."
+                } else {
+                    line = DialogueBank.lines(for: topic, role: .failResponse).randomElement() ?? "..."
+                }
+            }
+
+            exchanges.append(ConversationExchange(speakerId: speakerId, line: line, turnIndex: i))
+        }
+
+        return exchanges
+    }
+
+    /// Select a conversation topic based on personalities and history
+    private func selectTopic(personality1: Personality, personality2: Personality, history: [ConversationTopic] = []) -> ConversationTopic {
         // Weight topics by personality
         var weights: [ConversationTopic: Int] = [:]
+
+        // Recent topics (last 3) get halved weight
+        let recentTopics = Array(history.suffix(3))
 
         for topic in ConversationTopic.allCases {
             var weight = 10  // Base weight
@@ -387,6 +642,11 @@ public final class SocialManager: Sendable {
                 weight += personality1.value(for: .altruism) / 10
             default:
                 break
+            }
+
+            // Halve weight for recently discussed topics
+            if recentTopics.contains(topic) {
+                weight /= 2
             }
 
             weights[topic] = max(1, weight)

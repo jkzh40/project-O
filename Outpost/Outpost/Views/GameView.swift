@@ -73,7 +73,7 @@ struct GameView: View {
 
     private func updateScene() {
         guard let snapshot = viewModel.worldSnapshot else { return }
-        scene?.updateWorld(with: snapshot, selectedUnitId: viewModel.selectedUnitId)
+        scene?.updateWorld(with: snapshot, selectedUnitId: viewModel.selectedUnitId, enhancedAnimations: viewModel.enhancedAnimations)
     }
 }
 

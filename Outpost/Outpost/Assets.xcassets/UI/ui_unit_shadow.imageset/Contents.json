@@ -1,0 +1,8 @@
+{
+  "images": [
+    { "filename": "ui_unit_shadow.png", "idiom": "universal", "scale": "1x" },
+    { "filename": "ui_unit_shadow@2x.png", "idiom": "universal", "scale": "2x" },
+    { "filename": "ui_unit_shadow@3x.png", "idiom": "universal", "scale": "3x" }
+  ],
+  "info": { "author": "xcode", "version": 1 }
+}

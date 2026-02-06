@@ -32,6 +32,7 @@ class GameScene: SKScene {
     private let tileLayer = SKNode()         // z: 0
     private let ambientLayer = SKNode()      // z: 1
     private let itemLayer = SKNode()         // z: 2
+    private let shadowLayer = SKNode()       // z: 9
     private let unitLayer = SKNode()         // z: 10
     private let healthBarLayer = SKNode()    // z: 15
     private let selectionLayer = SKNode()    // z: 20
@@ -44,15 +45,31 @@ class GameScene: SKScene {
     private var tileSprites: [[SKSpriteNode]] = []
     private var unitSprites: [UInt64: SKSpriteNode] = [:]
     private var itemSprites: [UInt64: SKSpriteNode] = [:]
+    private var shadowSprites: [UInt64: SKSpriteNode] = [:]
     private var selectionSprite: SKSpriteNode?
 
     // MARK: - Animation Tracking
 
     private var unitAnimationStates: [UInt64: UnitState] = [:]
+    private var unitCreatureTypes: [UInt64: CreatureType] = [:]
     private var previousUnitHealth: [UInt64: Int] = [:]
     private var waterAnimated: Set<Int> = [] // track which tile indices have water anim
     private var treeSwayApplied: Set<Int> = []
     private var currentRenderedSeason: Season?
+
+    /// Tile variation map (deterministic per-tile variant index)
+    private var tileVariantMap: [[Int]] = []
+
+    /// Movement tracking for footstep particles
+    private var unitWasMoving: [UInt64: Bool] = [:]
+
+    /// Seasonal particle emitter
+    private var currentSeasonalEmitter: SKEmitterNode?
+    private var currentParticleSeason: Season?
+
+    /// Whether enhanced rendering is enabled
+    private var enhancedAnimations: Bool = true
+    private var previousEnhancedAnimations: Bool = true
 
     // MARK: - Camera
 
@@ -78,6 +95,7 @@ class GameScene: SKScene {
         tileLayer.zPosition = 0
         ambientLayer.zPosition = 1
         itemLayer.zPosition = 2
+        shadowLayer.zPosition = 9
         unitLayer.zPosition = 10
         healthBarLayer.zPosition = 15
         selectionLayer.zPosition = 20
@@ -87,6 +105,7 @@ class GameScene: SKScene {
         addChild(tileLayer)
         addChild(ambientLayer)
         addChild(itemLayer)
+        addChild(shadowLayer)
         addChild(unitLayer)
         addChild(healthBarLayer)
         addChild(selectionLayer)
@@ -160,9 +179,21 @@ class GameScene: SKScene {
 
     // MARK: - Update World
 
-    func updateWorld(with snapshot: WorldSnapshot, selectedUnitId: UInt64?) {
+    func updateWorld(with snapshot: WorldSnapshot, selectedUnitId: UInt64?, enhancedAnimations: Bool) {
         self.worldSnapshot = snapshot
         self.selectedUnitId = selectedUnitId
+        self.enhancedAnimations = enhancedAnimations
+
+        // Detect enhanced animations toggle transitions
+        let transitionedOff = previousEnhancedAnimations && !enhancedAnimations
+        let transitionedOn = !previousEnhancedAnimations && enhancedAnimations
+
+        if transitionedOff {
+            handleEnhancedOff()
+        } else if transitionedOn {
+            handleEnhancedOn(snapshot: snapshot)
+        }
+        previousEnhancedAnimations = enhancedAnimations
 
         updateTiles(snapshot)
         updateItems(snapshot)
@@ -174,6 +205,62 @@ class GameScene: SKScene {
 
         // Keep ambient particles centered on camera
         ambientLayer.position = cameraNode?.position ?? .zero
+
+        // Seasonal ambient particles
+        let cal = WorldCalendar(tick: snapshot.tick)
+        updateSeasonalParticles(season: snapshot.season, hour: cal.hour)
+    }
+
+    // MARK: - Enhanced Animation Transitions
+
+    private func handleEnhancedOff() {
+        // Hide shadows
+        shadowLayer.isHidden = true
+
+        // Remove seasonal emitter
+        currentSeasonalEmitter?.removeFromParent()
+        currentSeasonalEmitter = nil
+        currentParticleSeason = nil
+
+        // Strip item bob actions and glow children
+        for (_, sprite) in itemSprites {
+            sprite.removeAction(forKey: "itemBob")
+            for child in sprite.children {
+                if let spriteChild = child as? SKSpriteNode, spriteChild.blendMode == .add {
+                    spriteChild.removeFromParent()
+                }
+            }
+        }
+
+        // Re-apply all unit state animations with basic versions
+        for (id, state) in unitAnimationStates {
+            if let sprite = unitSprites[id], let creatureType = unitCreatureTypes[id] {
+                applyStateAnimation(sprite: sprite, state: state, creatureType: creatureType)
+            }
+        }
+
+        // Snap all unit positions to current target (cancel smooth moves)
+        for (_, sprite) in unitSprites {
+            sprite.removeAction(forKey: "unitMove")
+        }
+        for (_, shadow) in shadowSprites {
+            shadow.removeAction(forKey: "shadowMove")
+        }
+    }
+
+    private func handleEnhancedOn(snapshot: WorldSnapshot) {
+        // Show shadows
+        shadowLayer.isHidden = false
+
+        // Re-apply all unit state animations with enhanced versions
+        for (id, state) in unitAnimationStates {
+            if let sprite = unitSprites[id], let creatureType = unitCreatureTypes[id] {
+                applyStateAnimation(sprite: sprite, state: state, creatureType: creatureType)
+            }
+        }
+
+        // Force seasonal particles to re-create
+        currentParticleSeason = nil
     }
 
     // MARK: - Tile Rendering
@@ -185,6 +272,11 @@ class GameScene: SKScene {
             tileSprites.removeAll()
             waterAnimated.removeAll()
             treeSwayApplied.removeAll()
+
+            // Initialize tile variant map
+            tileVariantMap = (0..<snapshot.height).map { y in
+                (0..<snapshot.width).map { x in (x * 7919 + y * 104729) % 3 }
+            }
 
             for y in 0..<snapshot.height {
                 var row: [SKSpriteNode] = []
@@ -232,7 +324,12 @@ class GameScene: SKScene {
                         sprite.removeAction(forKey: "waterAnim")
                         waterAnimated.remove(tileIndex)
                     }
-                    sprite.texture = textureManager.texture(for: tile.terrain, season: snapshot.season)
+                    if enhancedAnimations {
+                        let variant = (y < tileVariantMap.count && x < tileVariantMap[y].count) ? tileVariantMap[y][x] : 0
+                        sprite.texture = textureManager.terrainTexture(for: tile.terrain, season: snapshot.season, variant: variant)
+                    } else {
+                        sprite.texture = textureManager.texture(for: tile.terrain, season: snapshot.season)
+                    }
                 }
 
                 // Tree/shrub sway
@@ -282,6 +379,30 @@ class GameScene: SKScene {
                 sprite.zPosition = 1
                 itemLayer.addChild(sprite)
                 itemSprites[item.id] = sprite
+
+                if enhancedAnimations {
+                    // Hover bob animation with random phase offset
+                    let phaseDelay = Double(item.id % 100) / 100.0 * 0.8
+                    let bobUp = SKAction.moveBy(x: 0, y: 2, duration: 0.4)
+                    let bobDown = SKAction.moveBy(x: 0, y: -2, duration: 0.4)
+                    bobUp.timingMode = .easeInEaseOut
+                    bobDown.timingMode = .easeInEaseOut
+                    let bob = SKAction.sequence([bobUp, bobDown])
+                    let delay = SKAction.wait(forDuration: phaseDelay)
+                    sprite.run(SKAction.sequence([delay, SKAction.repeatForever(bob)]), withKey: "itemBob")
+
+                    // Glow child sprite
+                    let glow = SKSpriteNode(color: SKColor(red: 1.0, green: 0.9, blue: 0.6, alpha: 0.25), size: CGSize(width: tileSize * 0.3, height: tileSize * 0.15))
+                    glow.position = CGPoint(x: 0, y: -tileSize * 0.15)
+                    glow.blendMode = .add
+                    glow.zPosition = -1
+                    let pulseUp = SKAction.fadeAlpha(to: 0.35, duration: 0.6)
+                    let pulseDown = SKAction.fadeAlpha(to: 0.15, duration: 0.6)
+                    pulseUp.timingMode = .easeInEaseOut
+                    pulseDown.timingMode = .easeInEaseOut
+                    glow.run(SKAction.repeatForever(SKAction.sequence([pulseUp, pulseDown])))
+                    sprite.addChild(glow)
+                }
             }
         }
 
@@ -307,31 +428,74 @@ class GameScene: SKScene {
                 tileSize: tileSize
             )
 
+            let isMoving = unit.state == .moving || unit.state == .fleeing
+
             if let sprite = unitSprites[unit.id] {
-                // Smooth move if position changed
+                // Movement
                 if sprite.position.distance(to: newPosition) > 1 {
-                    sprite.run(SKAction.move(to: newPosition, duration: 0.08))
+                    if enhancedAnimations {
+                        let moveAction = SKAction.move(to: newPosition, duration: 0.3)
+                        moveAction.timingMode = .easeInEaseOut
+                        sprite.run(moveAction, withKey: "unitMove")
+                    } else {
+                        sprite.removeAction(forKey: "unitMove")
+                        sprite.position = newPosition
+                    }
                 }
 
-                sprite.texture = textureManager.texture(for: unit.creatureType)
+                // Only set base texture when not playing frame animation
+                if unitAnimationStates[unit.id] == nil || unitAnimationStates[unit.id] == .idle {
+                    sprite.texture = textureManager.texture(for: unit.creatureType)
+                }
 
                 // Facing direction
                 applyFacing(sprite: sprite, facing: unit.facing)
 
-                // State-driven animation
+                // State-driven animation (with creature type for frame-based anims)
                 let previousState = unitAnimationStates[unit.id]
                 if previousState != unit.state {
                     unitAnimationStates[unit.id] = unit.state
-                    applyStateAnimation(sprite: sprite, state: unit.state)
+                    unitCreatureTypes[unit.id] = unit.creatureType
+                    applyStateAnimation(sprite: sprite, state: unit.state, creatureType: unit.creatureType)
                 }
+
+                // Shadow tracking
+                if enhancedAnimations, let shadow = shadowSprites[unit.id] {
+                    let shadowPos = CGPoint(x: newPosition.x, y: newPosition.y - tileSize * 0.3)
+                    if shadow.position.distance(to: shadowPos) > 1 {
+                        let moveShadow = SKAction.move(to: shadowPos, duration: 0.3)
+                        moveShadow.timingMode = .easeInEaseOut
+                        shadow.run(moveShadow, withKey: "shadowMove")
+                    }
+                    // Fade shadow on death
+                    if unit.state == .dead {
+                        shadow.alpha = 0.1
+                    }
+                }
+
+                // Footstep particles
+                if enhancedAnimations {
+                    let wasMoving = unitWasMoving[unit.id] ?? false
+                    if isMoving && !wasMoving {
+                        spawnFootstepDust(at: sprite.position, count: 3)
+                    } else if !isMoving && wasMoving {
+                        spawnFootstepDust(at: sprite.position, count: 2)
+                    }
+                }
+                unitWasMoving[unit.id] = isMoving
 
                 // Combat FX: damage detection
                 let prevHP = previousUnitHealth[unit.id] ?? unit.healthCurrent
                 if unit.healthCurrent < prevHP {
                     let damage = prevHP - unit.healthCurrent
+                    let maxHP = max(unit.healthMax, 1)
                     spawnDamageNumber(damage: damage, at: newPosition)
                     applyHitFlash(sprite: sprite)
-                    spawnImpactParticles(at: newPosition)
+                    spawnImpactParticles(at: newPosition, facing: unit.facing)
+                    // Camera shake for big hits (>20% HP) — only when enhanced
+                    if enhancedAnimations && damage * 100 / maxHP > 20 {
+                        applyCameraShake()
+                    }
                 }
                 previousUnitHealth[unit.id] = unit.healthCurrent
 
@@ -345,10 +509,23 @@ class GameScene: SKScene {
                 unitLayer.addChild(sprite)
                 unitSprites[unit.id] = sprite
 
+                // Create shadow (only when enhanced)
+                if enhancedAnimations {
+                    let shadow = SKSpriteNode(texture: textureManager.unitShadowTexture())
+                    shadow.size = CGSize(width: tileSize * 0.65, height: tileSize * 0.2)
+                    shadow.position = CGPoint(x: newPosition.x, y: newPosition.y - tileSize * 0.3)
+                    shadow.alpha = 0.3
+                    shadow.zPosition = 0
+                    shadowLayer.addChild(shadow)
+                    shadowSprites[unit.id] = shadow
+                }
+
                 applyFacing(sprite: sprite, facing: unit.facing)
                 unitAnimationStates[unit.id] = unit.state
-                applyStateAnimation(sprite: sprite, state: unit.state)
+                unitCreatureTypes[unit.id] = unit.creatureType
+                applyStateAnimation(sprite: sprite, state: unit.state, creatureType: unit.creatureType)
                 previousUnitHealth[unit.id] = unit.healthCurrent
+                unitWasMoving[unit.id] = isMoving
             }
         }
 
@@ -358,7 +535,13 @@ class GameScene: SKScene {
                 sprite.removeFromParent()
                 unitSprites.removeValue(forKey: id)
                 unitAnimationStates.removeValue(forKey: id)
+                unitCreatureTypes.removeValue(forKey: id)
                 previousUnitHealth.removeValue(forKey: id)
+                unitWasMoving.removeValue(forKey: id)
+                // Remove shadow
+                if let shadow = shadowSprites.removeValue(forKey: id) {
+                    shadow.removeFromParent()
+                }
             }
         }
     }
@@ -378,7 +561,7 @@ class GameScene: SKScene {
 
     // MARK: - State Animations
 
-    private func applyStateAnimation(sprite: SKSpriteNode, state: UnitState) {
+    private func applyStateAnimation(sprite: SKSpriteNode, state: UnitState, creatureType: CreatureType) {
         sprite.removeAction(forKey: "stateAnim")
         sprite.removeAction(forKey: "sleepZzz")
         // Reset transforms that states might have set
@@ -391,24 +574,53 @@ class GameScene: SKScene {
 
         switch state {
         case .idle:
-            // Gentle Y bob
-            let up = SKAction.moveBy(x: 0, y: 1, duration: 0.6)
-            let down = SKAction.moveBy(x: 0, y: -1, duration: 0.6)
-            up.timingMode = .easeInEaseOut
-            down.timingMode = .easeInEaseOut
-            sprite.run(SKAction.repeatForever(SKAction.sequence([up, down])), withKey: "stateAnim")
+            if enhancedAnimations {
+                // Multi-frame idle breathing
+                let idleFrames = textureManager.idleTextures(for: creatureType)
+                if idleFrames.count >= 2 {
+                    let anim = SKAction.animate(with: [idleFrames[0], idleFrames[1], idleFrames[0]], timePerFrame: 0.5)
+                    sprite.run(SKAction.repeatForever(anim), withKey: "stateAnim")
+                } else {
+                    let up = SKAction.moveBy(x: 0, y: 1, duration: 0.6)
+                    let down = SKAction.moveBy(x: 0, y: -1, duration: 0.6)
+                    up.timingMode = .easeInEaseOut
+                    down.timingMode = .easeInEaseOut
+                    sprite.run(SKAction.repeatForever(SKAction.sequence([up, down])), withKey: "stateAnim")
+                }
+            } else {
+                // Basic: gentle Y bob
+                let up = SKAction.moveBy(x: 0, y: 1, duration: 0.6)
+                let down = SKAction.moveBy(x: 0, y: -1, duration: 0.6)
+                up.timingMode = .easeInEaseOut
+                down.timingMode = .easeInEaseOut
+                sprite.run(SKAction.repeatForever(SKAction.sequence([up, down])), withKey: "stateAnim")
+            }
 
         case .moving:
-            // Bounce
-            let up = SKAction.moveBy(x: 0, y: 2, duration: 0.15)
-            let down = SKAction.moveBy(x: 0, y: -2, duration: 0.15)
-            up.timingMode = .easeOut
-            down.timingMode = .easeIn
-            sprite.run(SKAction.repeatForever(SKAction.sequence([up, down])), withKey: "stateAnim")
+            if enhancedAnimations {
+                // Multi-frame walk cycle
+                let walkFrames = textureManager.walkTextures(for: creatureType)
+                if walkFrames.count >= 4 {
+                    let anim = SKAction.animate(with: walkFrames, timePerFrame: 0.075)
+                    sprite.run(SKAction.repeatForever(anim), withKey: "stateAnim")
+                } else {
+                    let up = SKAction.moveBy(x: 0, y: 2, duration: 0.15)
+                    let down = SKAction.moveBy(x: 0, y: -2, duration: 0.15)
+                    up.timingMode = .easeOut
+                    down.timingMode = .easeIn
+                    sprite.run(SKAction.repeatForever(SKAction.sequence([up, down])), withKey: "stateAnim")
+                }
+            } else {
+                // Basic: bounce
+                let up = SKAction.moveBy(x: 0, y: 2, duration: 0.15)
+                let down = SKAction.moveBy(x: 0, y: -2, duration: 0.15)
+                up.timingMode = .easeOut
+                down.timingMode = .easeIn
+                sprite.run(SKAction.repeatForever(SKAction.sequence([up, down])), withKey: "stateAnim")
+            }
 
         case .sleeping:
             sprite.alpha = 0.6
-            // Zzz particles
             let spawnZ = SKAction.run { [weak self, weak sprite] in
                 guard let self, let sprite else { return }
                 self.spawnSleepZ(at: sprite.position)
@@ -417,13 +629,11 @@ class GameScene: SKScene {
             sprite.run(SKAction.repeatForever(SKAction.sequence([spawnZ, wait])), withKey: "sleepZzz")
 
         case .eating:
-            // Scale pulse
             let scaleUp = SKAction.scaleX(to: spriteXSign * baseScale * 1.05, y: baseScale * 1.05, duration: 0.2)
             let scaleDown = SKAction.scaleX(to: spriteXSign * baseScale, y: baseScale, duration: 0.2)
             sprite.run(SKAction.repeatForever(SKAction.sequence([scaleUp, scaleDown])), withKey: "stateAnim")
 
         case .drinking:
-            // Scale pulse + blue tint flash
             let scaleUp = SKAction.scaleX(to: spriteXSign * baseScale * 1.05, y: baseScale * 1.05, duration: 0.2)
             let scaleDown = SKAction.scaleX(to: spriteXSign * baseScale, y: baseScale, duration: 0.2)
             let tintOn = SKAction.colorize(with: SKColor(red: 0.3, green: 0.5, blue: 0.9, alpha: 1), colorBlendFactor: 0.3, duration: 0.1)
@@ -433,26 +643,47 @@ class GameScene: SKScene {
             sprite.run(SKAction.repeatForever(SKAction.group([pulse, tint])), withKey: "stateAnim")
 
         case .working:
-            // Rotation wobble
             let angle: CGFloat = 3.0 * .pi / 180.0
             let left = SKAction.rotate(toAngle: -angle, duration: 0.15)
             let right = SKAction.rotate(toAngle: angle, duration: 0.15)
             sprite.run(SKAction.repeatForever(SKAction.sequence([left, right])), withKey: "stateAnim")
 
         case .fighting:
-            // Red tint flash + shake
-            sprite.color = .red
-            let tintOn = SKAction.colorize(with: .red, colorBlendFactor: 0.5, duration: 0.075)
-            let tintOff = SKAction.colorize(withColorBlendFactor: 0, duration: 0.075)
-            let shakeL = SKAction.moveBy(x: -1, y: 0, duration: 0.05)
-            let shakeR = SKAction.moveBy(x: 2, y: 0, duration: 0.05)
-            let shakeBack = SKAction.moveBy(x: -1, y: 0, duration: 0.05)
-            let flash = SKAction.sequence([tintOn, tintOff])
-            let shake = SKAction.sequence([shakeL, shakeR, shakeBack])
-            sprite.run(SKAction.repeatForever(SKAction.group([flash, shake])), withKey: "stateAnim")
+            if enhancedAnimations {
+                // Multi-frame attack animation
+                let attackFrames = textureManager.attackTextures(for: creatureType)
+                if attackFrames.count >= 3 {
+                    let anim = SKAction.animate(with: attackFrames, timePerFrame: 0.1)
+                    let tintOn = SKAction.colorize(with: .red, colorBlendFactor: 0.3, duration: 0.05)
+                    let tintOff = SKAction.colorize(withColorBlendFactor: 0, duration: 0.1)
+                    let pause = SKAction.wait(forDuration: 0.15)
+                    let cycle = SKAction.sequence([anim, tintOn, pause, tintOff])
+                    sprite.run(SKAction.repeatForever(cycle), withKey: "stateAnim")
+                } else {
+                    sprite.color = .red
+                    let tintOn = SKAction.colorize(with: .red, colorBlendFactor: 0.5, duration: 0.075)
+                    let tintOff = SKAction.colorize(withColorBlendFactor: 0, duration: 0.075)
+                    let shakeL = SKAction.moveBy(x: -1, y: 0, duration: 0.05)
+                    let shakeR = SKAction.moveBy(x: 2, y: 0, duration: 0.05)
+                    let shakeBack = SKAction.moveBy(x: -1, y: 0, duration: 0.05)
+                    let flash = SKAction.sequence([tintOn, tintOff])
+                    let shake = SKAction.sequence([shakeL, shakeR, shakeBack])
+                    sprite.run(SKAction.repeatForever(SKAction.group([flash, shake])), withKey: "stateAnim")
+                }
+            } else {
+                // Basic: red flash + shake
+                sprite.color = .red
+                let tintOn = SKAction.colorize(with: .red, colorBlendFactor: 0.5, duration: 0.075)
+                let tintOff = SKAction.colorize(withColorBlendFactor: 0, duration: 0.075)
+                let shakeL = SKAction.moveBy(x: -1, y: 0, duration: 0.05)
+                let shakeR = SKAction.moveBy(x: 2, y: 0, duration: 0.05)
+                let shakeBack = SKAction.moveBy(x: -1, y: 0, duration: 0.05)
+                let flash = SKAction.sequence([tintOn, tintOff])
+                let shake = SKAction.sequence([shakeL, shakeR, shakeBack])
+                sprite.run(SKAction.repeatForever(SKAction.group([flash, shake])), withKey: "stateAnim")
+            }
 
         case .fleeing:
-            // Fast bounce + stretched
             sprite.xScale = spriteXSign * baseScale * 1.1
             let up = SKAction.moveBy(x: 0, y: 2, duration: 0.075)
             let down = SKAction.moveBy(x: 0, y: -2, duration: 0.075)
@@ -461,7 +692,6 @@ class GameScene: SKScene {
             sprite.run(SKAction.repeatForever(SKAction.sequence([up, down])), withKey: "stateAnim")
 
         case .socializing:
-            // Gentle lean
             let angle: CGFloat = 2.0 * .pi / 180.0
             let left = SKAction.rotate(toAngle: -angle, duration: 0.4)
             let right = SKAction.rotate(toAngle: angle, duration: 0.4)
@@ -474,10 +704,36 @@ class GameScene: SKScene {
             sprite.alpha = 0.5
 
         case .dead:
-            sprite.zRotation = .pi / 2
-            sprite.alpha = 0.3
-            sprite.color = .gray
-            sprite.colorBlendFactor = 0.5
+            if enhancedAnimations {
+                // Multi-frame death animation
+                let deathFrames = textureManager.deathTextures(for: creatureType)
+                if deathFrames.count >= 3 {
+                    let anim = SKAction.animate(with: deathFrames, timePerFrame: 0.2)
+                    let holdCorpse = SKAction.setTexture(deathFrames[2])
+                    let fadeToCorpse = SKAction.fadeAlpha(to: 0.5, duration: 0.3)
+                    let lowerZ = SKAction.run { sprite.zPosition = 3 }
+                    let deathSequence = SKAction.sequence([anim, holdCorpse, SKAction.group([fadeToCorpse, lowerZ])])
+                    sprite.run(deathSequence, withKey: "stateAnim")
+
+                    // Corpse fade-out after 30 seconds
+                    let waitThenFade = SKAction.sequence([
+                        SKAction.wait(forDuration: 30.0),
+                        SKAction.fadeOut(withDuration: 2.0)
+                    ])
+                    sprite.run(waitThenFade, withKey: "corpseFade")
+                } else {
+                    sprite.zRotation = .pi / 2
+                    sprite.alpha = 0.3
+                    sprite.color = .gray
+                    sprite.colorBlendFactor = 0.5
+                }
+            } else {
+                // Basic: instant corpse
+                sprite.zRotation = .pi / 2
+                sprite.alpha = 0.3
+                sprite.color = .gray
+                sprite.colorBlendFactor = 0.5
+            }
         }
     }
 
@@ -530,23 +786,198 @@ class GameScene: SKScene {
         sprite.run(SKAction.sequence([flashOn, flashOff]), withKey: "hitFlash")
     }
 
-    private func spawnImpactParticles(at position: CGPoint) {
-        let count = Int.random(in: 3...5)
-        for _ in 0..<count {
-            let particle = SKSpriteNode(color: .red, size: CGSize(width: 2, height: 2))
-            particle.position = position
-            particle.zPosition = 41
+    private func spawnImpactParticles(at position: CGPoint, facing: Direction = .east) {
+        if enhancedAnimations {
+            // Directional bias based on facing
+            let dirBias: CGFloat
+            switch facing {
+            case .east, .northeast, .southeast: dirBias = 1.0
+            case .west, .northwest, .southwest: dirBias = -1.0
+            default: dirBias = 0.0
+            }
 
-            let dx = CGFloat.random(in: -12...12)
-            let dy = CGFloat.random(in: -4...16)
-            let move = SKAction.moveBy(x: dx, y: dy, duration: 0.3)
-            let fade = SKAction.fadeOut(withDuration: 0.3)
-            let group = SKAction.group([move, fade])
-            let remove = SKAction.removeFromParent()
+            // White additive spark
+            let spark = SKSpriteNode(color: .white, size: CGSize(width: 4, height: 4))
+            spark.position = position
+            spark.zPosition = 42
+            spark.blendMode = .add
+            let sparkGrow = SKAction.scale(to: 2.0, duration: 0.04)
+            let sparkFade = SKAction.group([SKAction.scale(to: 0.1, duration: 0.04), SKAction.fadeOut(withDuration: 0.04)])
+            effectsLayer.addChild(spark)
+            spark.run(SKAction.sequence([sparkGrow, sparkFade, SKAction.removeFromParent()]))
 
-            effectsLayer.addChild(particle)
-            particle.run(SKAction.sequence([group, remove]))
+            // Red particles with directional velocity
+            let count = Int.random(in: 4...7)
+            for _ in 0..<count {
+                let particle = SKSpriteNode(color: .red, size: CGSize(width: 2, height: 2))
+                particle.position = position
+                particle.zPosition = 41
+
+                let dx = CGFloat.random(in: -8...8) + dirBias * 6
+                let dy = CGFloat.random(in: 2...14)
+                let gravity = CGFloat.random(in: -6...(-2))
+                let movePath = CGMutablePath()
+                movePath.move(to: .zero)
+                movePath.addQuadCurve(to: CGPoint(x: dx, y: dy + gravity), control: CGPoint(x: dx * 0.5, y: dy))
+                let followPath = SKAction.follow(movePath, asOffset: true, orientToPath: false, duration: 0.3)
+                let fade = SKAction.fadeOut(withDuration: 0.3)
+                let group = SKAction.group([followPath, fade])
+
+                effectsLayer.addChild(particle)
+                particle.run(SKAction.sequence([group, SKAction.removeFromParent()]))
+            }
+        } else {
+            // Basic: simple random particles
+            let count = Int.random(in: 3...5)
+            for _ in 0..<count {
+                let particle = SKSpriteNode(color: .red, size: CGSize(width: 2, height: 2))
+                particle.position = position
+                particle.zPosition = 41
+
+                let dx = CGFloat.random(in: -8...8)
+                let dy = CGFloat.random(in: 2...10)
+                let moveUp = SKAction.moveBy(x: dx, y: dy, duration: 0.3)
+                let fade = SKAction.fadeOut(withDuration: 0.3)
+                let group = SKAction.group([moveUp, fade])
+
+                effectsLayer.addChild(particle)
+                particle.run(SKAction.sequence([group, SKAction.removeFromParent()]))
+            }
         }
+    }
+
+    private func applyCameraShake() {
+        guard let cam = cameraNode else { return }
+        cam.removeAction(forKey: "cameraShake")
+        let step: CGFloat = 2.0
+        let dur: TimeInterval = 0.03
+        let shake = SKAction.sequence([
+            SKAction.moveBy(x: -step, y: step, duration: dur),
+            SKAction.moveBy(x: step * 2, y: -step, duration: dur),
+            SKAction.moveBy(x: -step, y: 0, duration: dur),
+        ])
+        cam.run(shake, withKey: "cameraShake")
+    }
+
+    // MARK: - Footstep Dust
+
+    private func spawnFootstepDust(at position: CGPoint, count: Int) {
+        for _ in 0..<count {
+            let dust = SKSpriteNode(color: SKColor(white: 0.7, alpha: 0.6), size: CGSize(width: 2, height: 2))
+            dust.position = CGPoint(
+                x: position.x + CGFloat.random(in: -4...4),
+                y: position.y - tileSize * 0.25
+            )
+            dust.zPosition = 11
+            let floatUp = SKAction.moveBy(x: CGFloat.random(in: -2...2), y: 6, duration: 0.4)
+            let fade = SKAction.fadeOut(withDuration: 0.4)
+            let scale = SKAction.scale(to: 0.3, duration: 0.4)
+            effectsLayer.addChild(dust)
+            dust.run(SKAction.sequence([SKAction.group([floatUp, fade, scale]), SKAction.removeFromParent()]))
+        }
+    }
+
+    // MARK: - Seasonal Ambient Particles
+
+    private func updateSeasonalParticles(season: Season, hour: Int) {
+        if !enhancedAnimations {
+            // Remove emitter and skip
+            currentSeasonalEmitter?.removeFromParent()
+            currentSeasonalEmitter = nil
+            currentParticleSeason = nil
+            return
+        }
+
+        // Only update if season changed
+        if currentParticleSeason == season { return }
+        currentParticleSeason = season
+
+        // Remove existing seasonal emitter
+        currentSeasonalEmitter?.removeFromParent()
+        currentSeasonalEmitter = nil
+
+        let emitter = SKEmitterNode()
+        emitter.particlePositionRange = CGVector(dx: 2000, dy: 2000)
+        emitter.particleColorBlendFactor = 1.0
+        emitter.particleSize = CGSize(width: 3, height: 3)
+        emitter.targetNode = self
+
+        switch season {
+        case .spring:
+            // Pink/white pollen dots drifting diagonally
+            emitter.particleBirthRate = 3
+            emitter.particleLifetime = 6
+            emitter.particleLifetimeRange = 2
+            emitter.particleSpeed = 8
+            emitter.particleSpeedRange = 4
+            emitter.emissionAngle = .pi * 0.75
+            emitter.emissionAngleRange = .pi * 0.25
+            emitter.particleAlpha = 0.4
+            emitter.particleAlphaSpeed = -0.05
+            emitter.particleScale = 0.4
+            emitter.particleScaleRange = 0.2
+            emitter.particleColor = SKColor(red: 1.0, green: 0.85, blue: 0.9, alpha: 1)
+            emitter.particleColorRedRange = 0.1
+            emitter.particleColorBlueRange = 0.1
+
+        case .summer:
+            // Fireflies at night (we'll check hour in updateWorld — for now always create but low rate)
+            emitter.particleBirthRate = 2
+            emitter.particleLifetime = 4
+            emitter.particleLifetimeRange = 2
+            emitter.particleSpeed = 3
+            emitter.particleSpeedRange = 2
+            emitter.emissionAngle = .pi / 2
+            emitter.emissionAngleRange = .pi * 2
+            emitter.particleAlpha = 0.5
+            emitter.particleAlphaRange = 0.3
+            emitter.particleAlphaSpeed = -0.1
+            emitter.particleScale = 0.3
+            emitter.particleColor = SKColor(red: 0.9, green: 1.0, blue: 0.4, alpha: 1)
+
+        case .autumn:
+            // Orange-brown falling leaves
+            emitter.particleBirthRate = 2
+            emitter.particleLifetime = 8
+            emitter.particleLifetimeRange = 3
+            emitter.particleSpeed = 6
+            emitter.particleSpeedRange = 3
+            emitter.emissionAngle = -.pi / 2 // down
+            emitter.emissionAngleRange = .pi * 0.3
+            emitter.particleAlpha = 0.6
+            emitter.particleAlphaSpeed = -0.06
+            emitter.particleScale = 0.5
+            emitter.particleScaleRange = 0.2
+            emitter.particleColor = SKColor(red: 0.8, green: 0.5, blue: 0.2, alpha: 1)
+            emitter.particleColorRedRange = 0.2
+            emitter.particleColorGreenRange = 0.2
+            emitter.particleRotation = 0
+            emitter.particleRotationRange = .pi
+            emitter.particleRotationSpeed = 1.5
+            emitter.particleSize = CGSize(width: 4, height: 4)
+
+        case .winter:
+            // White snowflakes
+            emitter.particleBirthRate = 6
+            emitter.particleLifetime = 10
+            emitter.particleLifetimeRange = 4
+            emitter.particleSpeed = 10
+            emitter.particleSpeedRange = 5
+            emitter.emissionAngle = -.pi / 2 - 0.2
+            emitter.emissionAngleRange = .pi * 0.2
+            emitter.particleAlpha = 0.6
+            emitter.particleAlphaRange = 0.2
+            emitter.particleAlphaSpeed = -0.04
+            emitter.particleScale = 0.4
+            emitter.particleScaleRange = 0.3
+            emitter.particleColor = .white
+        }
+
+        let tex = SKTexture(imageNamed: "UI/ui_selection") // reuse small texture
+        emitter.particleTexture = tex
+        emitter.zPosition = 45
+        ambientLayer.addChild(emitter)
+        currentSeasonalEmitter = emitter
     }
 
     // MARK: - Health Bars
@@ -679,36 +1110,51 @@ class GameScene: SKScene {
         speechBubbleLayer.removeAllChildren()
 
         for conversation in snapshot.activeConversations {
-            guard let unit1 = snapshot.units.first(where: { $0.id == conversation.participant1Id }),
-                  let unit2 = snapshot.units.first(where: { $0.id == conversation.participant2Id }) else {
-                continue
+            // Render bubbles for each participant with a non-empty line
+            for participant in conversation.participants {
+                guard !participant.line.isEmpty,
+                      let unit = snapshot.units.first(where: { $0.id == participant.unitId }) else {
+                    continue
+                }
+
+                let bubble = createSpeechBubble(
+                    text: participant.line,
+                    isSuccess: conversation.isSuccess,
+                    isInitiator: participant.isSpeaking
+                )
+                bubble.position = worldToScene(
+                    x: unit.x, y: unit.y,
+                    worldHeight: snapshot.height,
+                    tileSize: tileSize
+                )
+                bubble.position.y += tileSize * 0.8
+                if !participant.isSpeaking {
+                    bubble.alpha = 0.6
+                }
+                speechBubbleLayer.addChild(bubble)
             }
 
-            let bubble1 = createSpeechBubble(
-                text: conversation.topic,
-                isSuccess: conversation.isSuccess,
-                isInitiator: true
-            )
-            bubble1.position = worldToScene(
-                x: unit1.x, y: unit1.y,
-                worldHeight: snapshot.height,
-                tileSize: tileSize
-            )
-            bubble1.position.y += tileSize * 0.8
-            speechBubbleLayer.addChild(bubble1)
+            // Render small dim "..." bubbles for eavesdroppers
+            for eavesdropperId in conversation.eavesdropperIds {
+                guard let unit = snapshot.units.first(where: { $0.id == eavesdropperId }) else {
+                    continue
+                }
 
-            let bubble2 = createSpeechBubble(
-                text: "...",
-                isSuccess: conversation.isSuccess,
-                isInitiator: false
-            )
-            bubble2.position = worldToScene(
-                x: unit2.x, y: unit2.y,
-                worldHeight: snapshot.height,
-                tileSize: tileSize
-            )
-            bubble2.position.y += tileSize * 0.8
-            speechBubbleLayer.addChild(bubble2)
+                let bubble = createSpeechBubble(
+                    text: "...",
+                    isSuccess: conversation.isSuccess,
+                    isInitiator: false
+                )
+                bubble.position = worldToScene(
+                    x: unit.x, y: unit.y,
+                    worldHeight: snapshot.height,
+                    tileSize: tileSize
+                )
+                bubble.position.y += tileSize * 0.8
+                bubble.alpha = 0.35
+                bubble.setScale(0.7)
+                speechBubbleLayer.addChild(bubble)
+            }
         }
     }
 
@@ -776,13 +1222,28 @@ class GameScene: SKScene {
     @objc private func handlePan(_ gesture: UIPanGestureRecognizer) {
         guard let camera = cameraNode else { return }
 
-        let translation = gesture.translation(in: view)
-        let scale = camera.xScale
-
-        camera.position.x -= translation.x * scale
-        camera.position.y += translation.y * scale
-
-        gesture.setTranslation(.zero, in: view)
+        switch gesture.state {
+        case .began:
+            camera.removeAction(forKey: "cameraMomentum")
+        case .changed:
+            let translation = gesture.translation(in: view)
+            let scale = camera.xScale
+            camera.position.x -= translation.x * scale
+            camera.position.y += translation.y * scale
+            gesture.setTranslation(.zero, in: view)
+        case .ended:
+            if enhancedAnimations {
+                let velocity = gesture.velocity(in: view)
+                let scale = camera.xScale
+                let momentumDuration: TimeInterval = 0.5
+                let dx = -velocity.x * scale * CGFloat(momentumDuration) * 0.15
+                let dy = velocity.y * scale * CGFloat(momentumDuration) * 0.15
+                let momentum = SKAction.moveBy(x: dx, y: dy, duration: momentumDuration)
+                momentum.timingMode = .easeOut
+                camera.run(momentum, withKey: "cameraMomentum")
+            }
+        default: break
+        }
     }
 
     @objc private func handlePinch(_ gesture: UIPinchGestureRecognizer) {
@@ -813,13 +1274,28 @@ class GameScene: SKScene {
     @objc private func handlePan(_ gesture: NSPanGestureRecognizer) {
         guard let camera = cameraNode, let view = self.view else { return }
 
-        let translation = gesture.translation(in: view)
-        let scale = camera.xScale
-
-        camera.position.x -= translation.x * scale
-        camera.position.y -= translation.y * scale
-
-        gesture.setTranslation(.zero, in: view)
+        switch gesture.state {
+        case .began:
+            camera.removeAction(forKey: "cameraMomentum")
+        case .changed:
+            let translation = gesture.translation(in: view)
+            let scale = camera.xScale
+            camera.position.x -= translation.x * scale
+            camera.position.y -= translation.y * scale
+            gesture.setTranslation(.zero, in: view)
+        case .ended:
+            if enhancedAnimations {
+                let velocity = gesture.velocity(in: view)
+                let scale = camera.xScale
+                let momentumDuration: TimeInterval = 0.5
+                let dx = -velocity.x * scale * CGFloat(momentumDuration) * 0.15
+                let dy = -velocity.y * scale * CGFloat(momentumDuration) * 0.15
+                let momentum = SKAction.moveBy(x: dx, y: dy, duration: momentumDuration)
+                momentum.timingMode = .easeOut
+                camera.run(momentum, withKey: "cameraMomentum")
+            }
+        default: break
+        }
     }
 
     @objc private func handleMagnify(_ gesture: NSMagnificationGestureRecognizer) {

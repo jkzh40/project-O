@@ -26,6 +26,9 @@ final class SimulationViewModel {
     /// Target ticks per second
     var ticksPerSecond: Double = 10.0
 
+    /// Whether enhanced rendering (animations, shadows, particles) is enabled
+    var enhancedAnimations: Bool = true
+
     /// Current z-level being viewed
     var currentZ: Int = 0
 

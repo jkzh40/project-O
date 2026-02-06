@@ -18,6 +18,7 @@ public enum ThoughtType: String, Sendable, CaseIterable {
     case receivedGift = "received a gift"
     case attendedParty = "attended a party"
     case sawNature = "enjoyed nature"
+    case overheardConversation = "overheard an interesting conversation"
 
     // Negative thoughts
     case wasHungry = "was hungry"
@@ -53,6 +54,7 @@ public enum ThoughtType: String, Sendable, CaseIterable {
         case .receivedGift: return 30
         case .attendedParty: return 25
         case .sawNature: return 5
+        case .overheardConversation: return 5
 
         case .wasHungry: return -10
         case .wasThirsty: return -15
@@ -85,6 +87,8 @@ public enum ThoughtType: String, Sendable, CaseIterable {
             return 3000   // Lasting negative effects
         case .enjoyedSeason, .sufferedSeason:
             return 5000   // Seasonal effects
+        case .overheardConversation:
+            return 500    // Brief pleasant memory
         default:
             return 1000   // Normal thoughts
         }

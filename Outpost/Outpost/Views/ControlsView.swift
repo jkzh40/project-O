@@ -60,6 +60,16 @@ struct ControlsView: View {
                 }
             }
 
+            Divider()
+                .frame(height: 32)
+
+            Button(action: { viewModel.enhancedAnimations.toggle() }) {
+                Image(systemName: "sparkles")
+                    .font(.title3)
+                    .foregroundStyle(viewModel.enhancedAnimations ? .yellow : .secondary)
+            }
+            .help("Toggle enhanced animations")
+
             Spacer()
 
             // Clear selection button

@@ -65,8 +65,8 @@ public final class Simulation: Sendable {
     /// Active conversations for display (cleared each tick, populated when socializing starts)
     public private(set) var activeConversations: [ActiveConversation] = []
 
-    /// Duration in ticks to display a speech bubble
-    private let speechBubbleDuration: UInt64 = 30
+    /// Ticks per conversation exchange (how long each turn displays)
+    private let ticksPerExchange: UInt64 = 10
 
     // MARK: - Event Configuration
 
@@ -152,9 +152,14 @@ public final class Simulation: Sendable {
             eventLog.removeFirst()
         }
 
-        // Expire old active conversations (for speech bubble display)
+        // Expire completed conversations (for speech bubble display)
         activeConversations.removeAll { conversation in
-            world.currentTick - conversation.startTick > speechBubbleDuration
+            conversation.isComplete(at: world.currentTick)
+        }
+
+        // Eavesdropper-joins logic: every 20 ticks, idle eavesdroppers may join
+        if world.currentTick % 20 == 0 {
+            processEavesdropperJoins()
         }
     }
 
@@ -968,41 +973,87 @@ public final class Simulation: Sendable {
             return
         }
 
-        // Check if arrived near another unit for socializing
-        let nearbyUnits = world.getUnitsInRange(of: unit.position, radius: 2)
+        // Check if arrived near other units for socializing
+        let nearbyOrcs = world.getUnitsInRange(of: unit.position, radius: 2)
             .filter { $0.id != unit.id && $0.state != .dead && $0.creatureType == .orc }
-        if !nearbyUnits.isEmpty {
+            .filter { orc in
+                // Skip orcs already in active conversations
+                !activeConversations.contains { conv in
+                    conv.participantIds.contains(orc.id) && !conv.isComplete(at: world.currentTick)
+                }
+            }
+        if !nearbyOrcs.isEmpty {
             unit.transition(to: .socializing)
 
-            // Have a conversation
-            if let partner = nearbyUnits.first {
-                let result = socialManager.haveConversation(
-                    participant1: unit.id,
-                    participant2: partner.id,
-                    personality1: unit.personality,
-                    personality2: partner.personality,
-                    currentTick: world.currentTick
-                )
+            // Gather group: up to 4 partners (idle or socializing without conversation), 5 total
+            let partners = Array(nearbyOrcs
+                .filter { $0.state == .idle || $0.state == .socializing }
+                .prefix(4))
 
-                if result.success {
-                    moodManager.addThought(unitId: unit.id, type: .talkedWithFriend, currentTick: world.currentTick)
-                }
-
-                logEvent(.social(unit1Name: unit.name.firstName, unit2Name: partner.name.firstName, message: result.description))
-                stats.totalConversations += 1
-
-                // Track active conversation for speech bubble display
-                let conversation = ActiveConversation(
-                    participant1Id: unit.id,
-                    participant2Id: partner.id,
-                    participant1Name: unit.name.firstName,
-                    participant2Name: partner.name.firstName,
-                    topic: result.topic.rawValue,
-                    isSuccess: result.success,
-                    startTick: world.currentTick
-                )
-                activeConversations.append(conversation)
+            guard !partners.isEmpty else {
+                unit.transition(to: .idle)
+                return
             }
+
+            // Build participant list
+            var participants = [ConversationParticipant(unitId: unit.id, name: unit.name.firstName, personality: unit.personality)]
+            for partner in partners {
+                participants.append(ConversationParticipant(unitId: partner.id, name: partner.name.firstName, personality: partner.personality))
+            }
+
+            let plan = socialManager.haveGroupConversation(
+                participants: participants,
+                currentTick: world.currentTick
+            )
+
+            if plan.overallSuccess {
+                for p in participants {
+                    moodManager.addThought(unitId: p.unitId, type: .talkedWithFriend, currentTick: world.currentTick)
+                }
+            }
+
+            // Transition all partners to socializing
+            for partner in partners {
+                if var p = world.getUnit(id: partner.id) {
+                    p.transition(to: .socializing)
+                    world.updateUnit(p)
+                }
+            }
+
+            let participantNames = Dictionary(uniqueKeysWithValues: participants.map { ($0.unitId, $0.name) })
+            let nameList = participants.map { $0.name }.joined(separator: ", ")
+            let description = plan.overallSuccess
+                ? "Had a pleasant conversation about \(plan.topic.rawValue)"
+                : "Had an awkward conversation about \(plan.topic.rawValue)"
+            logEvent(.social(unit1Name: nameList, unit2Name: "", message: description))
+            stats.totalConversations += 1
+
+            // Detect eavesdroppers: orcs within radius 4 NOT in the conversation
+            let conversationParticipantIds = Set(plan.participantIds)
+            let eavesdroppers = world.getUnitsInRange(of: unit.position, radius: 4)
+                .filter { $0.creatureType == .orc && $0.state != .dead && !conversationParticipantIds.contains($0.id) }
+            let eavesdropperIds = Set(eavesdroppers.map { $0.id })
+
+            // Give eavesdroppers mood boost for interesting topics
+            let interestingTopics: Set<ConversationTopic> = [.gossip, .joke, .stories]
+            if interestingTopics.contains(plan.topic) {
+                for eavesdropper in eavesdroppers {
+                    moodManager.addThought(unitId: eavesdropper.id, type: .overheardConversation, currentTick: world.currentTick)
+                }
+            }
+
+            // Track active conversation for speech bubble display
+            let conversation = ActiveConversation(
+                participantIds: plan.participantIds,
+                participantNames: participantNames,
+                eavesdropperIds: eavesdropperIds,
+                topic: plan.topic.rawValue,
+                isSuccess: plan.overallSuccess,
+                startTick: world.currentTick,
+                exchanges: plan.exchanges,
+                ticksPerExchange: ticksPerExchange
+            )
+            activeConversations.append(conversation)
             return
         }
 
@@ -1275,9 +1326,45 @@ public final class Simulation: Sendable {
             return
         }
 
-        if Int.random(in: 0...15) < 2 {
-            unit.transition(to: .idle)
-            logEvent(.unitAction(unitId: unit.id, unitName: unit.name.firstName, action: "finished socializing"))
+        // Check if this unit is in an active conversation (as participant or eavesdropper)
+        let inConversation = activeConversations.contains { conv in
+            (conv.participantIds.contains(unit.id) || conv.eavesdropperIds.contains(unit.id)) &&
+            !conv.isComplete(at: world.currentTick)
+        }
+
+        if inConversation {
+            // Stay socializing while conversation is active
+            return
+        }
+
+        // No active conversation — finish socializing
+        unit.transition(to: .idle)
+        logEvent(.unitAction(unitId: unit.id, unitName: unit.name.firstName, action: "finished socializing"))
+    }
+
+    // MARK: - Eavesdropper Joins
+
+    /// Process eavesdroppers potentially joining active conversations
+    private func processEavesdropperJoins() {
+        for i in 0..<activeConversations.count {
+            guard !activeConversations[i].isComplete(at: world.currentTick) else { continue }
+            guard activeConversations[i].participantIds.count < 5 else { continue }
+
+            let eavesdropperIds = activeConversations[i].eavesdropperIds
+            for eavesdropperId in eavesdropperIds {
+                guard var eavesdropper = world.getUnit(id: eavesdropperId) else { continue }
+                guard eavesdropper.state == .idle else { continue }
+
+                // 20% chance to join
+                guard Int.random(in: 1...100) <= 20 else { continue }
+                guard activeConversations[i].participantIds.count < 5 else { break }
+
+                // Promote eavesdropper
+                activeConversations[i].promoteEavesdropper(eavesdropperId)
+                eavesdropper.transition(to: .socializing)
+                world.updateUnit(eavesdropper)
+                logEvent(.unitAction(unitId: eavesdropperId, unitName: eavesdropper.name.firstName, action: "joined the conversation"))
+            }
         }
     }
 
@@ -1775,31 +1862,81 @@ public enum SimulationEvent: Sendable, CustomStringConvertible {
 
 // MARK: - Active Conversation
 
-/// Represents a conversation currently being displayed with speech bubbles
+/// Represents a multi-turn conversation currently being displayed with speech bubbles
 public struct ActiveConversation: Sendable {
-    public let participant1Id: UInt64
-    public let participant2Id: UInt64
-    public let participant1Name: String
-    public let participant2Name: String
+    public let participantIds: [UInt64]
+    public let participantNames: [UInt64: String]
+    public private(set) var eavesdropperIds: Set<UInt64>
     public let topic: String
     public let isSuccess: Bool
     public let startTick: UInt64
+    public let exchanges: [ConversationExchange]
+    public let ticksPerExchange: UInt64
 
     public init(
-        participant1Id: UInt64,
-        participant2Id: UInt64,
-        participant1Name: String,
-        participant2Name: String,
+        participantIds: [UInt64],
+        participantNames: [UInt64: String],
+        eavesdropperIds: Set<UInt64> = [],
         topic: String,
         isSuccess: Bool,
-        startTick: UInt64
+        startTick: UInt64,
+        exchanges: [ConversationExchange],
+        ticksPerExchange: UInt64 = 10
     ) {
-        self.participant1Id = participant1Id
-        self.participant2Id = participant2Id
-        self.participant1Name = participant1Name
-        self.participant2Name = participant2Name
+        self.participantIds = participantIds
+        self.participantNames = participantNames
+        self.eavesdropperIds = eavesdropperIds
         self.topic = topic
         self.isSuccess = isSuccess
         self.startTick = startTick
+        self.exchanges = exchanges
+        self.ticksPerExchange = ticksPerExchange
+    }
+
+    /// Total duration of the conversation in ticks
+    public var totalDuration: UInt64 {
+        UInt64(exchanges.count) * ticksPerExchange
+    }
+
+    /// Which exchange index is active at the given tick
+    public func currentExchangeIndex(at tick: UInt64) -> Int {
+        let elapsed = tick - startTick
+        return min(Int(elapsed / ticksPerExchange), exchanges.count - 1)
+    }
+
+    /// The current exchange at the given tick, or nil if conversation is complete
+    public func currentExchange(at tick: UInt64) -> ConversationExchange? {
+        guard !isComplete(at: tick) else { return nil }
+        let idx = currentExchangeIndex(at: tick)
+        guard idx >= 0 && idx < exchanges.count else { return nil }
+        return exchanges[idx]
+    }
+
+    /// Whether the conversation has finished all exchanges
+    public func isComplete(at tick: UInt64) -> Bool {
+        tick - startTick >= totalDuration
+    }
+
+    /// Current dialogue line for a given participant at the given tick
+    public func lineForParticipant(_ unitId: UInt64, at tick: UInt64) -> String {
+        guard !isComplete(at: tick) else { return "" }
+        let idx = currentExchangeIndex(at: tick)
+        for i in stride(from: idx, through: 0, by: -1) {
+            if exchanges[i].speakerId == unitId {
+                return exchanges[i].line
+            }
+        }
+        return ""
+    }
+
+    /// Whether a given participant is the active speaker at the given tick
+    public func isSpeaking(_ unitId: UInt64, at tick: UInt64) -> Bool {
+        guard let exchange = currentExchange(at: tick) else { return false }
+        return exchange.speakerId == unitId
+    }
+
+    /// Promote an eavesdropper to participant (they get relationship/mood benefits)
+    public mutating func promoteEavesdropper(_ unitId: UInt64) {
+        eavesdropperIds.remove(unitId)
     }
 }

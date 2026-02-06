@@ -2240,6 +2240,622 @@ func drawUIHealthbarFill() -> PixelCanvas {
     return p
 }
 
+// MARK: - Unit Shadow
+
+func drawUnitShadow() -> PixelCanvas {
+    let p = PixelCanvas()
+    p.fillEllipse(cx: 15, cy: 28, rx: 10, ry: 3, C(0, 0, 0, 50))
+    return p
+}
+
+// MARK: - Terrain Variants
+
+func drawTerrainGrassVariant(_ variant: Int) -> PixelCanvas {
+    let p = PixelCanvas(fill: C(50, 130, 40))
+    var rng = SimpleRNG(seed: UInt64(42 + variant * 137))
+    let dark = C(35, 100, 28)
+    let light = C(70, 155, 55)
+    let lightYellow = C(90, 150, 50)
+
+    for y in 0..<32 {
+        for x in 0..<32 {
+            let v = rng.nextInt(100)
+            if v < 15 { p.set(x, y, dark) }
+            else if v < 22 { p.set(x, y, light) }
+            else if v < 25 { p.set(x, y, lightYellow) }
+        }
+    }
+    // Different blade cluster positions per variant
+    for bx in stride(from: 2 + variant * 3, to: 30, by: 7) {
+        let by = 4 + rng.nextInt(23)
+        p.set(bx, by, dark); p.set(bx, by - 1, dark); p.set(bx + 1, by, dark)
+        p.set(bx, by - 2, C(40, 110, 30))
+    }
+    // Variant 1: small flower
+    if variant == 1 {
+        let flowerC = C(220, 180, 60)
+        p.set(10, 14, flowerC); p.set(11, 13, flowerC); p.set(9, 13, flowerC)
+        p.set(10, 12, flowerC); p.set(10, 13, C(200, 100, 40))
+    }
+    // Variant 2: dirt patches
+    if variant == 2 {
+        let dirtPatch = C(130, 105, 65)
+        p.fillRect(6, 20, 4, 3, dirtPatch)
+        p.fillRect(22, 8, 3, 2, dirtPatch)
+    }
+    return p
+}
+
+func drawTerrainDirtVariant(_ variant: Int) -> PixelCanvas {
+    let p = PixelCanvas(fill: C(140, 110, 70))
+    var rng = SimpleRNG(seed: UInt64(101 + variant * 137))
+    let dark = C(120, 90, 55)
+    let light = C(160, 130, 85)
+    let pebble = C(110, 100, 80)
+
+    for y in 0..<32 {
+        for x in 0..<32 {
+            let v = rng.nextInt(100)
+            if v < 12 { p.set(x, y, dark) }
+            else if v < 20 { p.set(x, y, light) }
+        }
+    }
+    // Different pebble positions
+    for _ in 0..<(3 + variant) {
+        let px = rng.nextInt(28) + 2
+        let py = rng.nextInt(28) + 2
+        p.set(px, py, pebble); p.set(px + 1, py, pebble)
+    }
+    return p
+}
+
+// MARK: - Walk Cycle Frames
+
+// Bipeds (orc, goblin, giant, undead): shift leg pixels to simulate walking
+// Frame 0 = standing (base), 1 = left forward, 2 = mid-step (crouch), 3 = right forward
+
+func drawCreatureOrcWalk(frame: Int) -> PixelCanvas {
+    let p = drawCreatureOrc()
+    let pants = C(80, 60, 40)
+    let boot = C(50, 35, 20)
+    switch frame {
+    case 1: // left leg forward, right leg back
+        // Clear base legs
+        for y in 23...30 { for x in 17...22 { p.set(x, y, .clear) } }
+        for y in 23...30 { for x in 9...14 { p.set(x, y, .clear) } }
+        // Left leg forward (shift up 2)
+        for y in 21...25 { for x in 10...14 { p.set(x, y, pants) } }
+        for y in 26...28 { for x in 9...14 { p.set(x, y, boot) } }
+        // Right leg back (shift down 2)
+        for y in 25...29 { for x in 17...21 { p.set(x, y, pants) } }
+        for y in 30...31 { for x in 17...22 { p.set(x, y, boot) } }
+    case 2: // mid-step crouch (torso 1px lower effect - just center legs)
+        // Subtle: both legs centered, slightly shorter stance
+        for y in 23...27 { for x in 10...14 { p.set(x, y, pants) } }
+        for y in 23...27 { for x in 17...21 { p.set(x, y, pants) } }
+        for y in 28...30 { for x in 9...14 { p.set(x, y, boot) } }
+        for y in 28...30 { for x in 17...22 { p.set(x, y, boot) } }
+    case 3: // right leg forward, left leg back (mirror of 1)
+        for y in 23...30 { for x in 17...22 { p.set(x, y, .clear) } }
+        for y in 23...30 { for x in 9...14 { p.set(x, y, .clear) } }
+        // Right leg forward
+        for y in 21...25 { for x in 17...21 { p.set(x, y, pants) } }
+        for y in 26...28 { for x in 17...22 { p.set(x, y, boot) } }
+        // Left leg back
+        for y in 25...29 { for x in 10...14 { p.set(x, y, pants) } }
+        for y in 30...31 { for x in 9...14 { p.set(x, y, boot) } }
+    default: break // frame 0 = base
+    }
+    return p
+}
+
+func drawCreatureGoblinWalk(frame: Int) -> PixelCanvas {
+    let p = drawCreatureGoblin()
+    let skin = C(80, 160, 50)
+    let skinDark = C(60, 130, 35)
+    switch frame {
+    case 1:
+        for y in 25...30 { for x in 12...14 { p.set(x, y, .clear) }; for x in 17...19 { p.set(x, y, .clear) } }
+        for y in 23...27 { for x in 12...14 { p.set(x, y, skin) } }
+        for y in 27...30 { for x in 17...19 { p.set(x, y, skin) } }
+        p.fillRect(11, 28, 4, 1, skinDark); p.fillRect(16, 31, 4, 1, skinDark)
+    case 2:
+        for y in 25...29 { for x in 12...14 { p.set(x, y, skin) }; for x in 17...19 { p.set(x, y, skin) } }
+        p.fillRect(11, 30, 4, 1, skinDark); p.fillRect(16, 30, 4, 1, skinDark)
+    case 3:
+        for y in 25...30 { for x in 12...14 { p.set(x, y, .clear) }; for x in 17...19 { p.set(x, y, .clear) } }
+        for y in 23...27 { for x in 17...19 { p.set(x, y, skin) } }
+        for y in 27...30 { for x in 12...14 { p.set(x, y, skin) } }
+        p.fillRect(16, 28, 4, 1, skinDark); p.fillRect(11, 31, 4, 1, skinDark)
+    default: break
+    }
+    return p
+}
+
+func drawCreatureGiantWalk(frame: Int) -> PixelCanvas {
+    let p = drawCreatureGiant()
+    let skinDark = C(80, 80, 110)
+    switch frame {
+    case 1:
+        for y in 22...31 { for x in 9...14 { p.set(x, y, .clear) }; for x in 17...22 { p.set(x, y, .clear) } }
+        for y in 20...26 { for x in 9...14 { p.set(x, y, skinDark) } }
+        for y in 24...31 { for x in 17...22 { p.set(x, y, skinDark) } }
+        for x in 8...15 { p.set(x, 27, skinDark) }
+    case 2:
+        for y in 22...30 { for x in 9...14 { p.set(x, y, skinDark) }; for x in 17...22 { p.set(x, y, skinDark) } }
+        for x in 8...15 { p.set(x, 31, skinDark) }; for x in 16...23 { p.set(x, 31, skinDark) }
+    case 3:
+        for y in 22...31 { for x in 9...14 { p.set(x, y, .clear) }; for x in 17...22 { p.set(x, y, .clear) } }
+        for y in 20...26 { for x in 17...22 { p.set(x, y, skinDark) } }
+        for y in 24...31 { for x in 9...14 { p.set(x, y, skinDark) } }
+        for x in 16...23 { p.set(x, 27, skinDark) }
+    default: break
+    }
+    return p
+}
+
+func drawCreatureUndeadWalk(frame: Int) -> PixelCanvas {
+    let p = drawCreatureUndead()
+    let robe = C(40, 35, 50)
+    let robeDark = C(25, 20, 35)
+    // Undead glides — robe sways
+    switch frame {
+    case 1:
+        // Robe sways left at bottom
+        for y in 26...29 { p.set(5, y, robe); p.set(4, y, robeDark) }
+        p.set(26, 28, .clear); p.set(25, 29, .clear)
+    case 2:
+        // Centered bob — robe slightly shorter
+        for x in 7...24 { p.set(x, 29, .clear) }
+    case 3:
+        // Robe sways right at bottom
+        for y in 26...29 { p.set(26, y, robe); p.set(27, y, robeDark) }
+        p.set(5, 28, .clear); p.set(6, 29, .clear)
+    default: break
+    }
+    return p
+}
+
+// Quadrupeds (wolf, bear): gallop cycle — front/back leg pairs alternate
+
+func drawCreatureWolfWalk(frame: Int) -> PixelCanvas {
+    let p = drawCreatureWolf()
+    let fur = C(130, 130, 140)
+    let furDark = C(100, 100, 110)
+    switch frame {
+    case 1: // Front legs forward, back legs back
+        // Clear base front legs
+        for y in 22...30 { for x in 17...23 { p.set(x, y, .clear) } }
+        // Front legs stretched forward
+        for y in 20...27 { p.set(22, y, furDark); p.set(23, y, furDark); p.set(24, y, fur) }
+        for y in 20...27 { p.set(19, y, fur); p.set(20, y, fur) }
+        p.fillRect(18, 28, 4, 2, furDark); p.fillRect(21, 28, 4, 2, furDark)
+        // Back legs stretched back
+        for y in 22...30 { for x in 8...12 { p.set(x, y, .clear) } }
+        for y in 22...28 { p.set(6, y, furDark); p.set(7, y, furDark); p.set(8, y, fur) }
+        for y in 22...28 { p.set(10, y, fur); p.set(11, y, fur) }
+        p.fillRect(5, 29, 4, 2, furDark); p.fillRect(9, 29, 3, 2, furDark)
+    case 2: // Legs passing under body (bunched)
+        for y in 22...30 { for x in 8...23 { p.set(x, y, .clear) } }
+        // All legs close together under body
+        for y in 22...28 { for x in 13...18 { p.set(x, y, furDark) } }
+        p.fillRect(12, 29, 4, 2, furDark); p.fillRect(16, 29, 4, 2, furDark)
+    case 3: // Front legs back, back legs forward (opposite of 1)
+        for y in 22...30 { for x in 17...23 { p.set(x, y, .clear) } }
+        // Front legs tucked back
+        for y in 22...28 { p.set(18, y, furDark); p.set(19, y, furDark); p.set(20, y, fur) }
+        p.fillRect(17, 29, 4, 2, furDark)
+        // Back legs stretched forward
+        for y in 22...30 { for x in 8...12 { p.set(x, y, .clear) } }
+        for y in 20...27 { p.set(11, y, furDark); p.set(12, y, fur); p.set(13, y, fur) }
+        p.fillRect(10, 28, 4, 2, furDark)
+    default: break
+    }
+    return p
+}
+
+func drawCreatureBearWalk(frame: Int) -> PixelCanvas {
+    let p = drawCreatureBear()
+    let fur = C(120, 80, 40)
+    let furDark = C(90, 60, 30)
+    switch frame {
+    case 1: // Front legs forward, back legs back
+        for y in 24...30 { for x in 17...25 { p.set(x, y, .clear) } }
+        for y in 22...28 { for x in 19...24 { p.set(x, y, furDark) } }
+        for y in 22...28 { for x in 17...20 { p.set(x, y, fur) } }
+        p.fillRect(16, 29, 5, 2, furDark); p.fillRect(21, 29, 4, 2, furDark)
+        for y in 24...30 { for x in 6...14 { p.set(x, y, .clear) } }
+        for y in 24...29 { for x in 5...9 { p.set(x, y, furDark) } }
+        for y in 24...29 { for x in 11...14 { p.set(x, y, fur) } }
+        p.fillRect(4, 30, 6, 1, furDark); p.fillRect(10, 30, 5, 1, furDark)
+    case 2:
+        for y in 24...30 { for x in 6...25 { p.set(x, y, .clear) } }
+        for y in 24...29 { for x in 12...19 { p.set(x, y, furDark) } }
+        p.fillRect(11, 30, 5, 1, furDark); p.fillRect(16, 30, 5, 1, furDark)
+    case 3:
+        for y in 24...30 { for x in 17...25 { p.set(x, y, .clear) } }
+        for y in 24...29 { for x in 18...22 { p.set(x, y, furDark) } }
+        p.fillRect(17, 30, 6, 1, furDark)
+        for y in 24...30 { for x in 6...14 { p.set(x, y, .clear) } }
+        for y in 22...28 { for x in 9...13 { p.set(x, y, fur) } }
+        for y in 22...28 { for x in 6...10 { p.set(x, y, furDark) } }
+        p.fillRect(5, 29, 5, 2, furDark); p.fillRect(10, 29, 4, 2, furDark)
+    default: break
+    }
+    return p
+}
+
+// MARK: - Attack Frames
+
+func drawCreatureOrcAttack(frame: Int) -> PixelCanvas {
+    let p = drawCreatureOrc()
+    let skin = C(60, 120, 40)
+    let leatherDark = C(85, 55, 25)
+    switch frame {
+    case 0: // Arm raised
+        for y in 16...23 { p.set(23, y, .clear); p.set(24, y, .clear) }
+        // Right arm up
+        for y in 8...16 { p.set(23, y, skin); p.set(24, y, skin) }
+        for y in 8...12 { p.set(23, y, leatherDark); p.set(24, y, leatherDark) }
+    case 1: // Mid-swing (arm horizontal, lean forward)
+        for y in 16...23 { p.set(23, y, .clear); p.set(24, y, .clear) }
+        // Right arm horizontal
+        for x in 23...30 { p.set(x, 16, skin); p.set(x, 17, skin) }
+        for x in 23...26 { p.set(x, 16, leatherDark); p.set(x, 17, leatherDark) }
+    case 2: // Follow-through (arm down and forward)
+        for y in 16...23 { p.set(23, y, .clear); p.set(24, y, .clear) }
+        // Right arm down-forward diagonal
+        for i in 0..<6 { p.set(24 + i / 2, 18 + i, skin); p.set(25 + i / 2, 18 + i, skin) }
+    default: break
+    }
+    return p
+}
+
+func drawCreatureGoblinAttack(frame: Int) -> PixelCanvas {
+    let p = drawCreatureGoblin()
+    let skin = C(80, 160, 50)
+    switch frame {
+    case 0:
+        for y in 17...23 { p.set(21, y, .clear); p.set(22, y, .clear) }
+        for y in 10...17 { p.set(21, y, skin); p.set(22, y, skin) }
+    case 1:
+        for y in 17...23 { p.set(21, y, .clear); p.set(22, y, .clear) }
+        for x in 21...28 { p.set(x, 17, skin); p.set(x, 18, skin) }
+    case 2:
+        for y in 17...23 { p.set(21, y, .clear); p.set(22, y, .clear) }
+        for i in 0..<5 { p.set(22 + i / 2, 19 + i, skin); p.set(23 + i / 2, 19 + i, skin) }
+    default: break
+    }
+    return p
+}
+
+func drawCreatureWolfAttack(frame: Int) -> PixelCanvas {
+    let p = drawCreatureWolf()
+    let fur = C(130, 130, 140)
+    let furDark = C(100, 100, 110)
+    let nose = C(30, 30, 30)
+    switch frame {
+    case 0: // Crouch before lunge
+        // Lower body 2px
+        for y in 12...21 { for x in 6...25 {
+            let c = p.get(x, y); if c.a > 0 { p.set(x, y, .clear); p.set(x, y + 2, c) }
+        }}
+    case 1: // Lunge forward with open mouth
+        for x in 28...31 { for y in 12...16 { p.set(x, y, fur) } }
+        // Open mouth
+        p.set(31, 14, nose); p.set(31, 15, C(180, 40, 40))
+        p.set(30, 16, C(180, 40, 40)); p.set(31, 16, furDark)
+    case 2: // Return
+        // Slight recoil — head shifted left 1px
+        for y in 9...16 { p.set(30, y, .clear); p.set(31, y, .clear) }
+    default: break
+    }
+    return p
+}
+
+func drawCreatureBearAttack(frame: Int) -> PixelCanvas {
+    let p = drawCreatureBear()
+    let fur = C(120, 80, 40)
+    let furDark = C(90, 60, 30)
+    switch frame {
+    case 0: // Rear up
+        for y in 6...16 { for x in 23...31 {
+            let c = p.get(x, y); if c.a > 0 { p.set(x, y, .clear); p.set(x, y - 3, c) }
+        }}
+    case 1: // Swipe — paw extended
+        for x in 28...31 { for y in 8...12 { p.set(x, y, furDark) } }
+        p.set(31, 9, fur); p.set(31, 10, fur); p.set(31, 11, fur)
+    case 2: // Return
+        for y in 3...8 { for x in 28...31 { p.set(x, y, .clear) } }
+    default: break
+    }
+    return p
+}
+
+func drawCreatureGiantAttack(frame: Int) -> PixelCanvas {
+    let p = drawCreatureGiant()
+    let club = C(100, 70, 35)
+    let clubDark = C(75, 50, 25)
+    switch frame {
+    case 0: // Club raised high
+        for y in 5...24 { p.set(3, y, .clear); p.set(4, y, .clear) }
+        for y in 3...7 { p.set(2, y, .clear); p.set(5, y, .clear) }
+        // Club overhead
+        for x in 3...20 { p.set(x, 0, club); p.set(x, 1, club) }
+        for x in 1...6 { p.set(x, 0, clubDark); p.set(x, 1, clubDark) }
+    case 1: // Club mid-swing horizontal
+        for y in 5...24 { p.set(3, y, .clear); p.set(4, y, .clear) }
+        for y in 3...7 { p.set(2, y, .clear); p.set(5, y, .clear) }
+        for x in 0...28 { p.set(x, 11, club); p.set(x, 12, club) }
+        for x in 24...28 { p.set(x, 11, clubDark); p.set(x, 12, clubDark) }
+    case 2: // Club follow-through down
+        for y in 5...24 { p.set(3, y, .clear); p.set(4, y, .clear) }
+        for y in 3...7 { p.set(2, y, .clear); p.set(5, y, .clear) }
+        for y in 14...31 { p.set(26, y, club); p.set(27, y, club) }
+        for y in 27...31 { p.set(26, y, clubDark); p.set(27, y, clubDark) }
+    default: break
+    }
+    return p
+}
+
+func drawCreatureUndeadAttack(frame: Int) -> PixelCanvas {
+    let p = drawCreatureUndead()
+    let bone = C(200, 190, 170)
+    let boneDark = C(160, 150, 130)
+    let glow = C(0, 220, 220)
+    switch frame {
+    case 0: // Arms raised
+        for y in 16...23 { p.set(7, y, .clear); p.set(8, y, .clear); p.set(23, y, .clear); p.set(24, y, .clear) }
+        for y in 6...16 { p.set(7, y, bone); p.set(8, y, boneDark); p.set(23, y, bone); p.set(24, y, boneDark) }
+        p.set(7, 6, glow); p.set(24, 6, glow)
+    case 1: // Arms thrust forward
+        for y in 16...23 { p.set(7, y, .clear); p.set(8, y, .clear); p.set(23, y, .clear); p.set(24, y, .clear) }
+        for x in 24...31 { p.set(x, 14, bone); p.set(x, 15, boneDark) }
+        for x in 0...7 { p.set(x, 14, bone); p.set(x, 15, boneDark) }
+        p.set(31, 14, glow); p.set(0, 14, glow)
+    case 2: // Arms drop
+        for y in 16...23 { p.set(7, y, bone); p.set(8, y, boneDark); p.set(23, y, bone); p.set(24, y, boneDark) }
+        // Hands lower
+        p.set(6, 24, bone); p.set(7, 24, boneDark); p.set(25, 24, bone); p.set(24, 24, boneDark)
+    default: break
+    }
+    return p
+}
+
+// MARK: - Idle Breathing Frames
+
+func drawCreatureOrcIdle(frame: Int) -> PixelCanvas {
+    let p = drawCreatureOrc()
+    if frame == 1 {
+        // Torso 1px taller: expand shoulders slightly
+        let leatherDark = C(85, 55, 25)
+        p.set(7, 15, leatherDark); p.set(24, 15, leatherDark)
+        p.set(6, 16, leatherDark); p.set(25, 16, leatherDark)
+    }
+    return p
+}
+
+func drawCreatureGoblinIdle(frame: Int) -> PixelCanvas {
+    let p = drawCreatureGoblin()
+    if frame == 1 {
+        let rag = C(100, 75, 45)
+        p.set(10, 17, rag); p.set(21, 17, rag)
+    }
+    return p
+}
+
+func drawCreatureWolfIdle(frame: Int) -> PixelCanvas {
+    let p = drawCreatureWolf()
+    if frame == 1 {
+        // Belly slightly expanded
+        let belly = C(170, 170, 175)
+        for x in 7...24 { p.set(x, 22, belly) }
+    }
+    return p
+}
+
+func drawCreatureBearIdle(frame: Int) -> PixelCanvas {
+    let p = drawCreatureBear()
+    if frame == 1 {
+        let furLight = C(140, 100, 55)
+        for x in 7...25 { p.set(x, 25, furLight) }
+    }
+    return p
+}
+
+func drawCreatureGiantIdle(frame: Int) -> PixelCanvas {
+    let p = drawCreatureGiant()
+    if frame == 1 {
+        let skin = C(100, 100, 130)
+        p.set(6, 10, skin); p.set(25, 10, skin)
+        p.set(6, 11, skin); p.set(25, 11, skin)
+    }
+    return p
+}
+
+func drawCreatureUndeadIdle(frame: Int) -> PixelCanvas {
+    let p = drawCreatureUndead()
+    if frame == 1 {
+        // Glow flickers brighter
+        let glowBright = C(0, 255, 255)
+        p.set(13, 6, glowBright); p.set(18, 6, glowBright)
+        p.set(11, 6, glowBright); p.set(21, 6, glowBright)
+    }
+    return p
+}
+
+// MARK: - Death Frames
+
+func drawCreatureOrcDeath(frame: Int) -> PixelCanvas {
+    let p = drawCreatureOrc()
+    let skin = C(60, 120, 40)
+    let leather = C(110, 70, 35)
+    switch frame {
+    case 0: // Stagger — torso shifted 2px right
+        // Shift upper body right by coloring offset pixels
+        for y in 6...22 { p.set(24, y, skin); p.set(25, y, leather) }
+    case 1: // Falling — torso down 4px
+        // Darken and shift appearance
+        for y in 2...14 {
+            for x in 9...24 {
+                let c = p.get(x, y)
+                if c.a > 0 { p.set(x, y + 4, C(c.r / 2 + c.r / 4, c.g / 2 + c.g / 4, c.b / 2 + c.b / 4)) }
+            }
+        }
+        for y in 2...5 { for x in 9...24 { p.set(x, y, .clear) } }
+    case 2: // Flat on ground (horizontal corpse)
+        let p2 = PixelCanvas()
+        let corpseBody = C(85, 55, 28)
+        let corpseSkin = C(45, 90, 30)
+        // Horizontal body on bottom portion
+        p2.fillRect(4, 24, 24, 4, corpseBody)
+        // Head
+        p2.fillRect(26, 23, 4, 5, corpseSkin)
+        // Legs
+        p2.fillRect(2, 25, 3, 3, C(60, 45, 30))
+        return p2
+    default: break
+    }
+    return p
+}
+
+func drawCreatureGoblinDeath(frame: Int) -> PixelCanvas {
+    let p = drawCreatureGoblin()
+    let skin = C(80, 160, 50)
+    let rag = C(100, 75, 45)
+    switch frame {
+    case 0:
+        for y in 6...24 { p.set(23, y, skin) }
+    case 1:
+        for y in 4...14 {
+            for x in 10...22 {
+                let c = p.get(x, y)
+                if c.a > 0 { p.set(x, y + 4, C(c.r / 2 + c.r / 4, c.g / 2 + c.g / 4, c.b / 2 + c.b / 4)) }
+            }
+        }
+        for y in 4...7 { for x in 10...22 { p.set(x, y, .clear) } }
+    case 2:
+        let p2 = PixelCanvas()
+        p2.fillRect(5, 25, 22, 3, rag)
+        p2.fillRect(25, 24, 4, 4, skin)
+        p2.fillRect(3, 26, 3, 2, C(60, 130, 35))
+        return p2
+    default: break
+    }
+    return p
+}
+
+func drawCreatureWolfDeath(frame: Int) -> PixelCanvas {
+    let p = drawCreatureWolf()
+    let fur = C(130, 130, 140)
+    let furDark = C(100, 100, 110)
+    switch frame {
+    case 0: // Stagger
+        for y in 22...30 { for x in 17...23 { p.set(x, y, .clear) } }
+        // Front legs buckle
+        for y in 24...30 { p.set(20, y, furDark); p.set(21, y, furDark) }
+    case 1: // Falling
+        for y in 8...16 { for x in 23...31 {
+            let c = p.get(x, y)
+            if c.a > 0 { p.set(x, y + 3, C(c.r / 2 + c.r / 4, c.g / 2 + c.g / 4, c.b / 2 + c.b / 4)) }
+        }}
+    case 2:
+        let p2 = PixelCanvas()
+        p2.fillRect(3, 24, 26, 4, fur)
+        p2.fillRect(3, 28, 26, 1, furDark)
+        // Head
+        p2.fillRect(26, 23, 5, 5, fur)
+        p2.set(30, 24, C(20, 20, 20)) // closed eye
+        // Legs sticking up
+        p2.fillRect(8, 22, 2, 3, furDark); p2.fillRect(20, 22, 2, 3, furDark)
+        return p2
+    default: break
+    }
+    return p
+}
+
+func drawCreatureBearDeath(frame: Int) -> PixelCanvas {
+    let p = drawCreatureBear()
+    let fur = C(120, 80, 40)
+    let furDark = C(90, 60, 30)
+    switch frame {
+    case 0:
+        for y in 24...30 { for x in 17...25 { p.set(x, y, .clear) } }
+        for y in 26...31 { for x in 18...23 { p.set(x, y, furDark) } }
+    case 1:
+        for y in 5...16 { for x in 23...31 {
+            let c = p.get(x, y)
+            if c.a > 0 { p.set(x, y + 4, C(c.r / 2 + c.r / 4, c.g / 2 + c.g / 4, c.b / 2 + c.b / 4)) }
+        }}
+    case 2:
+        let p2 = PixelCanvas()
+        p2.fillRect(2, 22, 28, 6, fur)
+        p2.fillRect(2, 28, 28, 1, furDark)
+        p2.fillRect(28, 21, 4, 7, fur)
+        p2.set(31, 23, C(20, 20, 20))
+        p2.fillRect(6, 20, 3, 3, furDark); p2.fillRect(18, 20, 3, 3, furDark)
+        return p2
+    default: break
+    }
+    return p
+}
+
+func drawCreatureGiantDeath(frame: Int) -> PixelCanvas {
+    let p = drawCreatureGiant()
+    let skin = C(100, 100, 130)
+    let cloth = C(90, 70, 50)
+    switch frame {
+    case 0:
+        for y in 1...21 { p.set(26, y, skin); p.set(27, y, skin) }
+    case 1:
+        for y in 0...8 {
+            for x in 11...20 {
+                let c = p.get(x, y)
+                if c.a > 0 { p.set(x, y + 5, C(c.r / 2 + c.r / 4, c.g / 2 + c.g / 4, c.b / 2 + c.b / 4)) }
+            }
+        }
+        for y in 0...4 { for x in 11...20 { p.set(x, y, .clear) } }
+    case 2:
+        let p2 = PixelCanvas()
+        p2.fillRect(2, 23, 28, 5, cloth)
+        p2.fillRect(28, 22, 4, 6, C(80, 80, 110))
+        p2.fillRect(0, 24, 3, 4, C(80, 80, 110))
+        return p2
+    default: break
+    }
+    return p
+}
+
+func drawCreatureUndeadDeath(frame: Int) -> PixelCanvas {
+    let p = drawCreatureUndead()
+    let bone = C(200, 190, 170)
+    let robe = C(40, 35, 50)
+    switch frame {
+    case 0:
+        for y in 3...11 { p.set(22, y, bone) }
+        for y in 14...29 { p.set(27, y, robe) }
+    case 1:
+        for y in 2...11 {
+            for x in 11...20 {
+                let c = p.get(x, y)
+                if c.a > 0 { p.set(x, y + 4, C(c.r / 2 + c.r / 4, c.g / 2 + c.g / 4, c.b / 2 + c.b / 4)) }
+            }
+        }
+        for y in 2...5 { for x in 11...20 { p.set(x, y, .clear) } }
+    case 2:
+        let p2 = PixelCanvas()
+        let robeDark = C(25, 20, 35)
+        p2.fillRect(3, 24, 26, 4, robe)
+        p2.fillRect(3, 28, 26, 1, robeDark)
+        // Skull
+        p2.fillRect(26, 23, 5, 5, bone)
+        p2.set(28, 24, C(0, 180, 180)); p2.set(30, 24, C(0, 180, 180)) // glowing eyes
+        return p2
+    default: break
+    }
+    return p
+}
+
 // MARK: - Main Generation
 
 print("=== Outpost Asset Generator ===")
@@ -2254,7 +2870,9 @@ guard fm.fileExists(atPath: assetsRoot.path) else {
 }
 
 // Create new imagesets
-let newImagesets: [(String, URL)] = [
+let creatureNames = ["orc", "goblin", "wolf", "bear", "giant", "undead"]
+
+var newImagesets: [(String, URL)] = [
     ("terrain_water_0", terrainDir),
     ("terrain_water_1", terrainDir),
     ("terrain_water_2", terrainDir),
@@ -2277,7 +2895,21 @@ let newImagesets: [(String, URL)] = [
     ("terrain_water_winter_0", terrainDir),
     ("terrain_water_winter_1", terrainDir),
     ("terrain_water_winter_2", terrainDir),
+    // Unit shadow
+    ("ui_unit_shadow", uiDir),
+    // Terrain variants
+    ("terrain_grass_v1", terrainDir),
+    ("terrain_grass_v2", terrainDir),
+    ("terrain_dirt_v1", terrainDir),
+    ("terrain_dirt_v2", terrainDir),
 ]
+// Animation frame imagesets
+for name in creatureNames {
+    for f in 0...3 { newImagesets.append(("creature_\(name)_walk_\(f)", creaturesDir)) }
+    for f in 0...2 { newImagesets.append(("creature_\(name)_attack_\(f)", creaturesDir)) }
+    for f in 0...1 { newImagesets.append(("creature_\(name)_idle_\(f)", creaturesDir)) }
+    for f in 0...2 { newImagesets.append(("creature_\(name)_death_\(f)", creaturesDir)) }
+}
 print("Creating new imagesets...")
 for (name, dir) in newImagesets {
     createImagesetIfNeeded(name: name, dir: dir)
@@ -2365,6 +2997,71 @@ print("Generating UI...")
 writeAllScales(canvas: drawUISelection(), name: "ui_selection", dir: uiDir)
 writeAllScales(canvas: drawUIHealthbarBG(), name: "ui_healthbar_bg", dir: uiDir)
 writeAllScales(canvas: drawUIHealthbarFill(), name: "ui_healthbar_fill", dir: uiDir)
+writeAllScales(canvas: drawUnitShadow(), name: "ui_unit_shadow", dir: uiDir)
+print("")
+
+// Generate Terrain Variants
+print("Generating Terrain Variants...")
+writeAllScales(canvas: drawTerrainGrassVariant(1), name: "terrain_grass_v1", dir: terrainDir)
+writeAllScales(canvas: drawTerrainGrassVariant(2), name: "terrain_grass_v2", dir: terrainDir)
+writeAllScales(canvas: drawTerrainDirtVariant(1), name: "terrain_dirt_v1", dir: terrainDir)
+writeAllScales(canvas: drawTerrainDirtVariant(2), name: "terrain_dirt_v2", dir: terrainDir)
+print("")
+
+// Generate Walk Cycle Frames
+print("Generating Walk Cycle Frames...")
+let walkDrawers: [String: (Int) -> PixelCanvas] = [
+    "orc": drawCreatureOrcWalk, "goblin": drawCreatureGoblinWalk,
+    "wolf": drawCreatureWolfWalk, "bear": drawCreatureBearWalk,
+    "giant": drawCreatureGiantWalk, "undead": drawCreatureUndeadWalk,
+]
+for name in creatureNames {
+    for f in 0...3 {
+        writeAllScales(canvas: walkDrawers[name]!(f), name: "creature_\(name)_walk_\(f)", dir: creaturesDir)
+    }
+}
+print("")
+
+// Generate Attack Frames
+print("Generating Attack Frames...")
+let attackDrawers: [String: (Int) -> PixelCanvas] = [
+    "orc": drawCreatureOrcAttack, "goblin": drawCreatureGoblinAttack,
+    "wolf": drawCreatureWolfAttack, "bear": drawCreatureBearAttack,
+    "giant": drawCreatureGiantAttack, "undead": drawCreatureUndeadAttack,
+]
+for name in creatureNames {
+    for f in 0...2 {
+        writeAllScales(canvas: attackDrawers[name]!(f), name: "creature_\(name)_attack_\(f)", dir: creaturesDir)
+    }
+}
+print("")
+
+// Generate Idle Frames
+print("Generating Idle Frames...")
+let idleDrawers: [String: (Int) -> PixelCanvas] = [
+    "orc": drawCreatureOrcIdle, "goblin": drawCreatureGoblinIdle,
+    "wolf": drawCreatureWolfIdle, "bear": drawCreatureBearIdle,
+    "giant": drawCreatureGiantIdle, "undead": drawCreatureUndeadIdle,
+]
+for name in creatureNames {
+    for f in 0...1 {
+        writeAllScales(canvas: idleDrawers[name]!(f), name: "creature_\(name)_idle_\(f)", dir: creaturesDir)
+    }
+}
+print("")
+
+// Generate Death Frames
+print("Generating Death Frames...")
+let deathDrawers: [String: (Int) -> PixelCanvas] = [
+    "orc": drawCreatureOrcDeath, "goblin": drawCreatureGoblinDeath,
+    "wolf": drawCreatureWolfDeath, "bear": drawCreatureBearDeath,
+    "giant": drawCreatureGiantDeath, "undead": drawCreatureUndeadDeath,
+]
+for name in creatureNames {
+    for f in 0...2 {
+        writeAllScales(canvas: deathDrawers[name]!(f), name: "creature_\(name)_death_\(f)", dir: creaturesDir)
+    }
+}
 print("")
 
 print("=== Done! All assets generated. ===")
