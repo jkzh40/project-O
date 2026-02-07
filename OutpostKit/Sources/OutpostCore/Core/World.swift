@@ -3,8 +3,7 @@
 import Foundation
 
 /// The game world containing the map, units, and items
-@MainActor
-public final class World: Sendable {
+public struct World: Sendable {
     /// Width of the world (x-axis)
     public let width: Int
 
@@ -29,6 +28,15 @@ public final class World: Sendable {
     /// Calendar derived from current tick
     public var calendar: WorldCalendar { WorldCalendar(tick: currentTick) }
 
+    /// World history (populated by world generation)
+    public var history: WorldHistory?
+
+    /// Large-scale world map data (populated by world generation)
+    public var worldMap: WorldMap?
+
+    /// Current world generation phase (populated by world generation)
+    public var generationPhase: WorldGenPhase?
+
     /// Creates a new world with the specified dimensions
     /// Generates a flat grass world with some terrain variation
     /// - Parameters:
@@ -42,6 +50,9 @@ public final class World: Sendable {
         self.units = [:]
         self.items = [:]
         self.currentTick = 0
+        self.history = nil
+        self.worldMap = nil
+        self.generationPhase = nil
 
         // Initialize tiles with grass
         self.tiles = Array(
@@ -73,10 +84,13 @@ public final class World: Sendable {
         self.items = [:]
         self.currentTick = 0
         self.tiles = tiles
+        self.history = nil
+        self.worldMap = nil
+        self.generationPhase = nil
     }
 
     /// Generates terrain features for the world
-    private func generateTerrain() {
+    private mutating func generateTerrain() {
         let random = { () -> Double in Double.random(in: 0...1) }
 
         // Scatter trees (about 8% of the map)
@@ -184,7 +198,7 @@ public final class World: Sendable {
     /// - Parameters:
     ///   - tile: The tile to set
     ///   - position: The position to set it at
-    public func setTile(_ tile: Tile, at position: Position) {
+    public mutating func setTile(_ tile: Tile, at position: Position) {
         guard isValidPosition(position) else { return }
         tiles[position.z][position.y][position.x] = tile
     }
@@ -212,7 +226,7 @@ public final class World: Sendable {
     /// - Parameter unit: The unit to add
     /// - Returns: The ID of the added unit
     @discardableResult
-    public func addUnit(_ unit: Unit) -> UInt64 {
+    public mutating func addUnit(_ unit: Unit) -> UInt64 {
         units[unit.id] = unit
 
         // Mark the tile as occupied
@@ -225,7 +239,7 @@ public final class World: Sendable {
 
     /// Removes a unit from the world
     /// - Parameter id: The ID of the unit to remove
-    public func removeUnit(id: UInt64) {
+    public mutating func removeUnit(id: UInt64) {
         guard let unit = units[id] else { return }
 
         // Clear the tile occupation
@@ -245,7 +259,7 @@ public final class World: Sendable {
 
     /// Updates a unit in the world
     /// - Parameter unit: The updated unit
-    public func updateUnit(_ unit: Unit) {
+    public mutating func updateUnit(_ unit: Unit) {
         guard let oldUnit = units[unit.id] else { return }
 
         // If position changed, update tile occupancy
@@ -269,7 +283,7 @@ public final class World: Sendable {
     /// - Parameter item: The item to add
     /// - Returns: The ID of the added item
     @discardableResult
-    public func addItem(_ item: Item) -> UInt64 {
+    public mutating func addItem(_ item: Item) -> UInt64 {
         items[item.id] = item
 
         // Add item to tile
@@ -282,7 +296,7 @@ public final class World: Sendable {
 
     /// Removes an item from the world
     /// - Parameter id: The ID of the item to remove
-    public func removeItem(id: UInt64) {
+    public mutating func removeItem(id: UInt64) {
         guard let item = items[id] else { return }
 
         // Remove from tile
@@ -515,7 +529,7 @@ public final class World: Sendable {
     // MARK: - Simulation
 
     /// Advances the simulation by one tick
-    public func tick() {
+    public mutating func tick() {
         currentTick += 1
     }
 
@@ -543,7 +557,7 @@ public final class World: Sendable {
     /// - Parameter position: Position to mine
     /// - Returns: Item produced by mining (stone, ore), or nil
     @discardableResult
-    public func mineTile(at position: Position) -> Item? {
+    public mutating func mineTile(at position: Position) -> Item? {
         guard isValidPosition(position) else { return nil }
         guard var tile = getTile(at: position) else { return nil }
 
@@ -594,7 +608,7 @@ public final class World: Sendable {
     ///   - type: Type of stairs (up, down, upDown)
     /// - Returns: Whether carving succeeded
     @discardableResult
-    public func carveStairs(at position: Position, type: TerrainType) -> Bool {
+    public mutating func carveStairs(at position: Position, type: TerrainType) -> Bool {
         guard isValidPosition(position) else { return false }
         guard type == .stairsUp || type == .stairsDown || type == .stairsUpDown else { return false }
 
@@ -625,7 +639,7 @@ public final class World: Sendable {
 
     /// Carve a ramp at a position
     @discardableResult
-    public func carveRamp(at position: Position) -> Bool {
+    public mutating func carveRamp(at position: Position) -> Bool {
         guard isValidPosition(position) else { return false }
 
         var tile = tiles[position.z][position.y][position.x]
@@ -649,7 +663,7 @@ public final class World: Sendable {
 
     /// Channel out a tile (remove floor, create hole to level below)
     @discardableResult
-    public func channelTile(at position: Position) -> Bool {
+    public mutating func channelTile(at position: Position) -> Bool {
         guard isValidPosition(position) else { return false }
 
         var tile = tiles[position.z][position.y][position.x]
@@ -676,7 +690,7 @@ public final class World: Sendable {
 
     /// Generates a fortress-style multi-level world
     /// Call this after init for a proper underground fortress map
-    public func generateFortressTerrain() {
+    public mutating func generateFortressTerrain() {
         guard depth > 1 else { return }
 
         // Level 0 (surface): Keep existing terrain generation

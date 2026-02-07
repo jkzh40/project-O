@@ -2,6 +2,7 @@
 // Stage 3: Hydraulic droplet erosion + thermal talus erosion
 
 import Foundation
+import OutpostCore
 
 /// Simulates hydraulic and thermal erosion on the heightmap
 struct ErosionSimulator: Sendable {

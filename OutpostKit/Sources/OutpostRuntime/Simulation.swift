@@ -12,7 +12,7 @@ public final class Simulation: Sendable {
     // MARK: - Core Systems
 
     /// The game world
-    public let world: World
+    public var world: World
 
     /// Job management system
     public let jobManager: JobManager

@@ -1,6 +1,8 @@
 // MARK: - Strata Generator
 // Builds geological columns from tectonic context
 
+import OutpostCore
+
 /// Tectonic setting classification for strata generation
 enum TectonicContext: Sendable {
     case stableContinental

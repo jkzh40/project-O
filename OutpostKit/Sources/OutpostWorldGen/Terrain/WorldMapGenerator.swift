@@ -2,6 +2,7 @@
 // Orchestrator: runs all 7 stages of the terrain generation pipeline
 
 import Foundation
+import OutpostCore
 
 /// Progress callback for world map generation
 typealias WorldMapProgressCallback = (String) -> Void

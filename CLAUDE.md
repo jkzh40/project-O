@@ -4,16 +4,16 @@
 
 - **OutpostKit/** — Game engine library (Swift Package, 3 targets)
   - `Sources/OutpostCore/` — Shared types, models, config (Layer 1 — depends on Yams only)
-    - `Core/` — Data model: `Unit`, `World`, `Item`, `Enums`, `Models`
-    - `Types/` — Shared types: `BiomeType`, `TerrainType`, `Tile`, `UnitName`/`NameGenerator`
+    - `Core/` — Data model: `Unit`, `World` (unified struct), `Item`, `Enums`, `Models`, `WorldHistory`
+    - `Types/` — Shared types: `BiomeType`, `TerrainType`, `Tile`, `UnitName`/`NameGenerator`, `WorldMap`
+    - `Types/Geology/` — Geological data types: `RockType`, `OreType`, `GemstoneType`, `GeologicalColumn`, `TectonicPlate`, `PlateBoundaryType`
     - `DataTypes/` — Data types for systems: Health, Job, Memory, Mood, Social, Construction, Crafting, Stockpile, Work, Simulation
     - `Config/` — YAML config loading (`ConfigurationLoader`, registries)
     - `Resources/` — Default YAML configs (`outpost.yaml`, `creatures.yaml`, `items.yaml`)
   - `Sources/OutpostWorldGen/` — World generation module (Layer 2 — depends on OutpostCore)
     - `Terrain/` — 7-stage procedural terrain pipeline (13 files)
-    - `Terrain/Geology/` — Geological subsystem: `TectonicSimulator`, `StrataGenerator`, `GeologyGenerator`, `RockType`, `GeologicalColumn`, `OreType`, `GemstoneType`
-    - `WorldGenerator.swift` — World generator with history simulation
-    - `History.swift` — Historical events, figures, civilizations
+    - `Terrain/Geology/` — Geological simulation: `TectonicSimulator`, `StrataGenerator`, `GeologyGenerator`
+    - `WorldGenerator.swift` — World generator with history simulation (produces unified `World` struct)
   - `Sources/OutpostRuntime/` — Simulation engine and manager systems (Layer 3 — depends on OutpostCore + OutpostWorldGen)
     - `Simulation.swift` — Core simulation orchestrator
     - `Systems/` — Manager classes: Combat, Job, Mood, Social, Construction, Crafting, Stockpile, AutonomousWork

@@ -2,6 +2,7 @@
 // Stage 2: Multi-octave noise blended with tectonic data for detailed elevation
 
 import Foundation
+import OutpostCore
 
 /// Generates detailed heightmap by blending tectonic coarse elevation with multi-octave noise
 struct HeightmapGenerator: Sendable {

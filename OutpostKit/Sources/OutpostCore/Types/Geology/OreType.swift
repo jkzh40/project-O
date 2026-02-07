@@ -1,7 +1,7 @@
 // MARK: - Ore Type
 
 /// Types of mineable ore deposits
-enum OreType: String, CaseIterable, Sendable {
+public enum OreType: String, CaseIterable, Sendable {
     // Original ores
     case iron
     case copper
