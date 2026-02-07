@@ -13,6 +13,7 @@ public enum WorldGenPhase: String, Sendable {
     case tectonics = "Simulating Tectonics"
     case heightmap = "Generating Heightmap"
     case erosion = "Simulating Erosion"
+    case strata = "Generating Strata"
     case climate = "Simulating Climate"
     case hydrology = "Tracing Rivers"
     case biomes = "Classifying Biomes"
@@ -137,6 +138,7 @@ public final class WorldGenerator: Sendable {
             (.tectonics, "Simulating tectonic plates..."),
             (.heightmap, "Generating heightmap..."),
             (.erosion, "Simulating erosion (\(params.erosionDroplets) droplets)..."),
+            (.strata, "Generating geological strata..."),
             (.climate, "Simulating climate..."),
             (.hydrology, "Tracing rivers and lakes..."),
             (.biomes, "Classifying biomes..."),
@@ -172,27 +174,32 @@ public final class WorldGenerator: Sendable {
             var erosionRNG = rng.fork("erosion")
             ErosionSimulator.simulate(map: &map, params: params, rng: &erosionRNG)
 
-            // Stage 4: Climate
+            // Stage 3.5: Geological Strata
             continuation.yield(3)
+            var geologyRNG = rng.fork("geology")
+            GeologyGenerator.generate(map: &map, noise: noise, rng: &geologyRNG)
+
+            // Stage 4: Climate
+            continuation.yield(4)
             var climateRNG = rng.fork("climate")
             ClimateSimulator.simulate(map: &map, noise: noise, rng: &climateRNG)
 
             // Stage 5: Hydrology
-            continuation.yield(4)
+            continuation.yield(5)
             var hydrologyRNG = rng.fork("hydrology")
             HydrologySimulator.simulate(map: &map, rng: &hydrologyRNG)
 
             // Stage 6: Biome Classification
-            continuation.yield(5)
+            continuation.yield(6)
             BiomeClassifier.classify(map: &map)
 
             // Stage 7: Detail Pass
-            continuation.yield(6)
+            continuation.yield(7)
             var detailRNG = rng.fork("detail")
             DetailPass.apply(map: &map, noise: noise, rng: &detailRNG)
 
             // Find embark site
-            continuation.yield(7)
+            continuation.yield(8)
             var embarkRNG = seed.makeRNG().fork("embark")
             let region = WorldMapGenerator.findEmbarkSite(map: map, size: params.embarkSize, rng: &embarkRNG)
 

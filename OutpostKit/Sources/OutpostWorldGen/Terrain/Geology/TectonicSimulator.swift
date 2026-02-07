@@ -85,6 +85,8 @@ struct TectonicSimulator: Sendable {
                     }
                 }
 
+                map[x, y].neighborPlateId = isBoundary ? neighborPlateId : nil
+
                 if isBoundary {
                     let p1 = plates[myPlate]
                     let p2 = plates[neighborPlateId]

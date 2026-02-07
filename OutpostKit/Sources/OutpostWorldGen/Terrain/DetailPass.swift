@@ -149,10 +149,21 @@ struct DetailPass: Sendable {
 
         let richness = Float((oreNoise - 0.5) * 2.0) // 0-1 range from threshold
 
-        // Ore type depends on elevation and boundary type
+        // If geological column exists, pick ore from mid-depth rock compatibility
+        if let column = cell.geologicalColumn {
+            let midRock = column.rockType(atZLevel: 1, totalDepth: 3)
+            let compatible = midRock.compatibleOres
+            guard !compatible.isEmpty else { return }
+
+            let oreType = compatible[rng.nextInt(in: 0...(compatible.count - 1))]
+            cell.oreType = oreType
+            cell.oreRichness = richness
+            return
+        }
+
+        // Legacy fallback: ore type depends on elevation and boundary type
         let oreType: OreType
         if cell.elevation > 0.7 {
-            // High elevation: precious metals
             if rng.nextBool(probability: 0.3) {
                 oreType = .gold
             } else if rng.nextBool(probability: 0.4) {
@@ -161,14 +172,12 @@ struct DetailPass: Sendable {
                 oreType = .gemstone
             }
         } else if cell.boundaryStress > 0.3 {
-            // Near plate boundaries: volcanic ores
             if rng.nextBool(probability: 0.5) {
                 oreType = .iron
             } else {
                 oreType = .copper
             }
         } else if cell.elevation > 0.5 {
-            // Moderate elevation
             if rng.nextBool(probability: 0.4) {
                 oreType = .iron
             } else if rng.nextBool(probability: 0.3) {
@@ -177,7 +186,6 @@ struct DetailPass: Sendable {
                 oreType = .coal
             }
         } else {
-            // Low elevation
             if rng.nextBool(probability: 0.5) {
                 oreType = .coal
             } else {

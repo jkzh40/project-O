@@ -178,8 +178,7 @@ struct LocalTerrainGenerator: Sendable {
         // Mountain
         case .mountain:
             if rng.nextBool(probability: 0.3) { return .stone }
-            if rng.nextBool(probability: 0.2) { return .granite }
-            if rng.nextBool(probability: 0.1) { return .gravel }
+            if rng.nextBool(probability: 0.2) { return .gravel }
             return .stone
         case .volcanicWaste:
             if rng.nextBool(probability: 0.1) { return .lava }
@@ -215,6 +214,7 @@ struct LocalTerrainGenerator: Sendable {
     ) {
         let width = region.width
         let height = region.height
+        let undergroundDepth = depth - 1 // Number of underground levels
 
         for z in 1..<depth {
             for y in 0..<height {
@@ -228,21 +228,36 @@ struct LocalTerrainGenerator: Sendable {
                     if worldMap.isValid(x: mapX, y: mapY) {
                         let cell = worldMap[mapX, mapY]
 
-                        // Rock type based on geology
-                        if cell.boundaryStress > 0.5 {
-                            terrain = rng.nextBool(probability: 0.2) ? .obsidian : .granite
-                        } else if cell.elevation > 0.6 {
-                            terrain = rng.nextBool(probability: 0.3) ? .granite : .wall
-                        } else {
-                            terrain = rng.nextBool(probability: 0.15) ? .limestone : .wall
-                        }
+                        // Use geological column if available
+                        if let column = cell.geologicalColumn {
+                            let rockType = column.rockType(atZLevel: z, totalDepth: undergroundDepth)
+                            terrain = rockType.terrainType
 
-                        // Ore veins
-                        if let oreType = cell.oreType {
-                            // Probability increases with depth and richness
-                            let oreChance = Double(cell.oreRichness) * 0.15 * Double(z)
-                            if rng.nextBool(probability: min(0.3, oreChance)) {
-                                terrain = .ore
+                            // Ore veins — only in compatible host rock
+                            if let oreType = cell.oreType {
+                                let oreChance = Double(cell.oreRichness) * 0.15 * Double(z)
+                                if rng.nextBool(probability: min(0.3, oreChance)) {
+                                    if rockType.compatibleOres.contains(oreType) {
+                                        terrain = .ore
+                                    }
+                                }
+                            }
+                        } else {
+                            // Legacy fallback for cells without geological data
+                            if cell.boundaryStress > 0.5 {
+                                terrain = rng.nextBool(probability: 0.2) ? .obsidian : .wall
+                            } else if cell.elevation > 0.6 {
+                                terrain = .wall
+                            } else {
+                                terrain = .wall
+                            }
+
+                            // Legacy ore veins
+                            if cell.oreType != nil {
+                                let oreChance = Double(cell.oreRichness) * 0.15 * Double(z)
+                                if rng.nextBool(probability: min(0.3, oreChance)) {
+                                    terrain = .ore
+                                }
                             }
                         }
 

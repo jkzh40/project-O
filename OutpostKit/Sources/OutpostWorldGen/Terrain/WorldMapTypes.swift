@@ -49,50 +49,6 @@ public struct WorldGenParameters: Sendable {
     }
 }
 
-// MARK: - Tectonic Plate
-
-/// A tectonic plate with drift vector and type
-struct TectonicPlate: Sendable {
-    let id: Int
-    let centerX: Double
-    let centerY: Double
-    let driftX: Double
-    let driftY: Double
-    let isOceanic: Bool
-
-    init(id: Int, centerX: Double, centerY: Double, driftX: Double, driftY: Double, isOceanic: Bool) {
-        self.id = id
-        self.centerX = centerX
-        self.centerY = centerY
-        self.driftX = driftX
-        self.driftY = driftY
-        self.isOceanic = isOceanic
-    }
-}
-
-// MARK: - Plate Boundary
-
-/// Classification of plate boundary types
-enum PlateBoundaryType: Sendable {
-    case convergent   // Plates moving toward each other → mountains
-    case divergent    // Plates moving apart → rifts/valleys
-    case transform    // Plates sliding past → moderate elevation
-    case none         // Interior of plate
-}
-
-// MARK: - Ore Type
-
-/// Types of mineable ore deposits
-enum OreType: String, CaseIterable, Sendable {
-    case iron
-    case copper
-    case tin
-    case gold
-    case silver
-    case coal
-    case gemstone
-}
-
 // MARK: - World Map Cell
 
 /// A single cell in the world map containing all geological/climate data
@@ -100,8 +56,10 @@ struct WorldMapCell: Sendable {
     // Geology
     var elevation: Float = 0.0       // 0.0 = deep ocean, 1.0 = highest peak
     var plateId: Int = 0
+    var neighborPlateId: Int? = nil   // Plate ID of nearest different plate (for subduction detection)
     var boundaryType: PlateBoundaryType = .none
     var boundaryStress: Float = 0.0  // 0-1, how close to plate boundary
+    var geologicalColumn: GeologicalColumn? = nil  // Subsurface strata profile
 
     // Erosion
     var sediment: Float = 0.0        // Deposited sediment thickness

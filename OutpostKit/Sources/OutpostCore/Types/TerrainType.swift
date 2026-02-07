@@ -41,6 +41,16 @@ public enum TerrainType: String, CaseIterable, Sendable {
     case frozenGround
     case lava
 
+    // Geological rock types
+    case basalt
+    case marble
+    case slate
+    case shale
+    case diorite
+    case gabbro
+    case quartzite
+    case schist
+
     // Constructed terrain
     case woodenFloor
     case stoneFloor
@@ -59,11 +69,13 @@ public enum TerrainType: String, CaseIterable, Sendable {
         case .emptyAir, .grass, .dirt, .stone, .woodenFloor, .stoneFloor,
              .stairsUp, .stairsDown, .stairsUpDown, .rampUp, .rampDown, .ore,
              .sand, .snow, .gravel, .mud, .tallGrass, .moss, .topsoil,
-             .frozenGround, .clay, .sandstone, .limestone, .granite:
+             .frozenGround, .clay:
             return true
         case .water, .tree, .shrub, .wall, .constructedWall,
              .deepWater, .ice, .coniferTree, .palmTree, .deadTree,
-             .cactus, .reeds, .marsh, .obsidian, .lava:
+             .cactus, .reeds, .marsh, .obsidian, .lava,
+             .sandstone, .limestone, .granite,
+             .basalt, .marble, .slate, .shale, .diorite, .gabbro, .quartzite, .schist:
             return false
         }
     }
@@ -91,7 +103,8 @@ public enum TerrainType: String, CaseIterable, Sendable {
     /// Whether this is a solid tile that can be mined
     public var isMinable: Bool {
         switch self {
-        case .wall, .stone, .ore, .sandstone, .limestone, .granite, .obsidian:
+        case .wall, .stone, .ore, .sandstone, .limestone, .granite, .obsidian,
+             .basalt, .marble, .slate, .shale, .diorite, .gabbro, .quartzite, .schist:
             return true
         default:
             return false
@@ -135,7 +148,7 @@ public enum TerrainType: String, CaseIterable, Sendable {
         case .grass, .dirt, .woodenFloor, .stoneFloor, .stairsUp, .stairsDown, .stairsUpDown,
              .topsoil, .moss:
             return 1.0
-        case .stone, .ore, .sandstone, .limestone, .granite:
+        case .stone, .ore:
             return 1.2
         case .rampUp, .rampDown:
             return 1.5
@@ -188,6 +201,14 @@ public enum TerrainType: String, CaseIterable, Sendable {
         case .topsoil: return "▫"
         case .frozenGround: return "◻"
         case .lava: return "▣"
+        case .basalt: return "▧"
+        case .marble: return "▨"
+        case .slate: return "▩"
+        case .shale: return "▬"
+        case .diorite: return "▮"
+        case .gabbro: return "▰"
+        case .quartzite: return "◈"
+        case .schist: return "◆"
         case .woodenFloor: return "="
         case .stoneFloor: return "+"
         case .constructedWall: return "H"

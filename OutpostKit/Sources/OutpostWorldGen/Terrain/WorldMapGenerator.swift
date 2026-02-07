@@ -38,6 +38,11 @@ struct WorldMapGenerator: Sendable {
         var erosionRNG = rng.fork("erosion")
         ErosionSimulator.simulate(map: &map, params: params, rng: &erosionRNG)
 
+        // Stage 3.5: Geological Strata
+        progress?("Generating geological strata...")
+        var geologyRNG = rng.fork("geology")
+        GeologyGenerator.generate(map: &map, noise: noise, rng: &geologyRNG)
+
         // Stage 4: Climate
         progress?("Simulating climate...")
         var climateRNG = rng.fork("climate")

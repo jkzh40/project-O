@@ -138,6 +138,17 @@ public final class Renderer: Sendable {
             return "\(ANSI.green)*\(ANSI.reset)"
         case .wall:
             return "\(ANSI.white)#\(ANSI.reset)"
+        // Geological rock types
+        case .sandstone, .limestone:
+            return "\(ANSI.yellow)\(char)\(ANSI.reset)"
+        case .granite, .diorite, .quartzite:
+            return "\(ANSI.gray)\(char)\(ANSI.reset)"
+        case .basalt, .gabbro, .obsidian:
+            return "\(ANSI.dim)\(ANSI.gray)\(char)\(ANSI.reset)"
+        case .marble:
+            return "\(ANSI.white)\(char)\(ANSI.reset)"
+        case .slate, .shale, .schist:
+            return "\(ANSI.gray)\(char)\(ANSI.reset)"
         default:
             return char
         }
