@@ -105,15 +105,15 @@ struct OutpostSimApp: AsyncParsableCommand {
         try await Task.sleep(nanoseconds: 1_500_000_000)
 
         if config.enableWorldGen {
-            let history = await Self.runWorldGeneration(config: config)
+            let generatedWorld = await Self.runWorldGeneration(config: config)
 
             print("\n\u{001B}[?25h")  // Show cursor
-            print("Press Enter to begin simulation in \(history?.worldName ?? "the world")...")
+            print("Press Enter to begin simulation in \(generatedWorld?.history?.worldName ?? "the world")...")
             _ = readLine()
 
-            await Self.runSimulation(config: config, worldHistory: history)
+            await Self.runSimulation(config: config, world: generatedWorld)
         } else {
-            await Self.runSimulation(config: config, worldHistory: nil)
+            await Self.runSimulation(config: config, world: nil)
         }
     }
 
@@ -280,7 +280,7 @@ struct OutpostSimApp: AsyncParsableCommand {
     // MARK: - World Generation
 
     @MainActor
-    static func runWorldGeneration(config: RuntimeConfig) async -> WorldHistory? {
+    static func runWorldGeneration(config: RuntimeConfig) async -> World? {
         let generator = WorldGenerator(
             worldWidth: config.worldWidth,
             worldHeight: config.worldHeight,
@@ -305,15 +305,20 @@ struct OutpostSimApp: AsyncParsableCommand {
         renderer.renderSummary(history: generator.history)
         renderer.showCursor()
 
-        return generator.history
+        return generator.world
     }
 
     // MARK: - Simulation
 
     @MainActor
-    static func runSimulation(config: RuntimeConfig, worldHistory: WorldHistory?) async {
-        // Create simulation
-        let simulation = Simulation(worldWidth: config.worldWidth, worldHeight: config.worldHeight)
+    static func runSimulation(config: RuntimeConfig, world: World?) async {
+        // Create simulation — use the generated world if available
+        let simulation: Simulation
+        if let world = world {
+            simulation = Simulation(world: world)
+        } else {
+            simulation = Simulation(worldWidth: config.worldWidth, worldHeight: config.worldHeight)
+        }
 
         // Configure event parameters from config
         simulation.configure(
@@ -333,11 +338,9 @@ struct OutpostSimApp: AsyncParsableCommand {
             bedCount: config.bedCount
         )
 
-        // If we have world history, integrate it with the simulation
-        if worldHistory != nil {
-            // Clear event log to start fresh
+        // If we have a generated world, clear event log to start fresh
+        if world != nil {
             simulation.clearEventLog()
-            // Future: Could name orcs after historical figures, use world lore, etc.
         }
 
         // Create renderer (unless headless)

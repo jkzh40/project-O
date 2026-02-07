@@ -2,24 +2,33 @@
 // Vertical strata profile for a world map cell
 
 /// A single rock layer within a geological column
-struct RockLayer: Sendable {
+public struct RockLayer: Sendable {
     /// The type of rock in this layer
-    let rockType: RockType
+    public let rockType: RockType
     /// Normalized thickness (0-1 fraction of total column depth)
-    let thickness: Float
+    public let thickness: Float
+
+    public init(rockType: RockType, thickness: Float) {
+        self.rockType = rockType
+        self.thickness = thickness
+    }
 }
 
 /// Vertical sequence of rock layers at a world map cell
-struct GeologicalColumn: Sendable {
+public struct GeologicalColumn: Sendable {
     /// Rock layers ordered from top (surface) to bottom (deep crust)
-    let layers: [RockLayer]
+    public let layers: [RockLayer]
+
+    public init(layers: [RockLayer]) {
+        self.layers = layers
+    }
 
     /// Returns the rock type at a given z-level
     /// - Parameters:
     ///   - z: The z-level (0 = surface, increasing downward)
     ///   - totalDepth: Total number of underground z-levels
     /// - Returns: The rock type at that depth
-    func rockType(atZLevel z: Int, totalDepth: Int) -> RockType {
+    public func rockType(atZLevel z: Int, totalDepth: Int) -> RockType {
         guard !layers.isEmpty, totalDepth > 0 else { return .granite }
 
         let normalizedDepth = Float(z) / Float(totalDepth)

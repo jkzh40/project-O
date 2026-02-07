@@ -1,10 +1,8 @@
 // MARK: - Rock Type
 // Geological rock classification for subsurface strata
 
-import OutpostCore
-
 /// Geological rock types used in underground strata generation
-enum RockType: String, CaseIterable, Sendable {
+public enum RockType: String, CaseIterable, Sendable {
     // Sedimentary
     case sandstone
     case limestone
@@ -59,7 +57,7 @@ enum RockType: String, CaseIterable, Sendable {
     case livingrock
 
     /// Maps to the corresponding TerrainType for tile rendering
-    var terrainType: TerrainType {
+    public var terrainType: TerrainType {
         switch self {
         case .sandstone: return .sandstone
         case .limestone: return .limestone
@@ -104,7 +102,7 @@ enum RockType: String, CaseIterable, Sendable {
     }
 
     /// Rock hardness (0-1), affects mining speed
-    var hardness: Float {
+    public var hardness: Float {
         switch self {
         case .chalk: return 0.15
         case .mudstone: return 0.18
@@ -147,7 +145,7 @@ enum RockType: String, CaseIterable, Sendable {
     }
 
     /// Ore types that can appear within this rock
-    var compatibleOres: [OreType] {
+    public var compatibleOres: [OreType] {
         switch self {
         // Sedimentary: coal, iron, tin + new sedimentary ores
         case .sandstone, .conglomerate:

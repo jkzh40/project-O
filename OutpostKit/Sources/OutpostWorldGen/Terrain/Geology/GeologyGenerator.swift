@@ -1,6 +1,8 @@
 // MARK: - Geology Generator
 // Facade: generates geological strata columns for all world map cells
 
+import OutpostCore
+
 /// Generates geological columns for the world map using tectonic context
 struct GeologyGenerator: Sendable {
 

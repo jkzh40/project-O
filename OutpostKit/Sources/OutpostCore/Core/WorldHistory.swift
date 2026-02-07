@@ -2,7 +2,27 @@
 // Historical events, figures, and civilizations for world generation
 
 import Foundation
-import OutpostCore
+
+// MARK: - World Generation Phase
+
+/// Phases of world generation
+public enum WorldGenPhase: String, Sendable {
+    case creation = "Creating World"
+    case tectonics = "Simulating Tectonics"
+    case heightmap = "Generating Heightmap"
+    case erosion = "Simulating Erosion"
+    case strata = "Generating Strata"
+    case climate = "Simulating Climate"
+    case hydrology = "Tracing Rivers"
+    case biomes = "Classifying Biomes"
+    case detailPass = "Adding Detail"
+    case embark = "Selecting Embark Site"
+    case terrain = "Shaping Terrain"
+    case regions = "Defining Regions"
+    case civilizations = "Founding Civilizations"
+    case history = "Simulating History"
+    case complete = "Generation Complete"
+}
 
 // MARK: - Historical Figure
 

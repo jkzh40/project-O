@@ -2,7 +2,7 @@
 // Specific gemstone varieties replacing the catch-all .gemstone OreType
 
 /// Types of gemstones that can be found in ore deposits
-enum GemstoneType: String, CaseIterable, Sendable {
+public enum GemstoneType: String, CaseIterable, Sendable {
     case diamond
     case ruby
     case emerald
@@ -17,7 +17,7 @@ enum GemstoneType: String, CaseIterable, Sendable {
     case lapis
 
     /// Rarity factor (0-1, lower = rarer)
-    var rarity: Float {
+    public var rarity: Float {
         switch self {
         case .diamond: return 0.05
         case .ruby: return 0.08
@@ -35,7 +35,7 @@ enum GemstoneType: String, CaseIterable, Sendable {
     }
 
     /// Base trade value
-    var value: Int {
+    public var value: Int {
         switch self {
         case .diamond: return 500
         case .ruby: return 350
@@ -57,7 +57,7 @@ enum GemstoneType: String, CaseIterable, Sendable {
 
 extension RockType {
     /// Gemstone types that can appear within this rock
-    var compatibleGemstones: [GemstoneType] {
+    public var compatibleGemstones: [GemstoneType] {
         switch self {
         // Sedimentary: common gems
         case .sandstone, .limestone, .shale, .conglomerate,

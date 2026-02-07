@@ -7,48 +7,11 @@ import OutpostCore
 /// Callback for world generation progress
 public typealias WorldGenCallback = @MainActor (WorldGenPhase, String, WorldHistory) -> Void
 
-/// Phases of world generation
-public enum WorldGenPhase: String, Sendable {
-    case creation = "Creating World"
-    case tectonics = "Simulating Tectonics"
-    case heightmap = "Generating Heightmap"
-    case erosion = "Simulating Erosion"
-    case strata = "Generating Strata"
-    case climate = "Simulating Climate"
-    case hydrology = "Tracing Rivers"
-    case biomes = "Classifying Biomes"
-    case detailPass = "Adding Detail"
-    case embark = "Selecting Embark Site"
-    case terrain = "Shaping Terrain"
-    case regions = "Defining Regions"
-    case civilizations = "Founding Civilizations"
-    case history = "Simulating History"
-    case complete = "Generation Complete"
-}
-
-/// Result of world generation containing the tile grid
-public struct WorldGenerationResult: Sendable {
-    public let tiles: [[[Tile]]]
-    public let width: Int
-    public let height: Int
-    public let depth: Int
-
-    public init(tiles: [[[Tile]]], width: Int, height: Int, depth: Int) {
-        self.tiles = tiles
-        self.width = width
-        self.height = height
-        self.depth = depth
-    }
-}
-
 /// Generates a world with history
 @MainActor
 public final class WorldGenerator: Sendable {
-    /// The result of terrain generation
-    public private(set) var result: WorldGenerationResult?
-
-    /// The large-scale world map (kept for potential world map display)
-    public private(set) var worldMap: WorldMap?
+    /// The generated world (populated after terrain generation)
+    public private(set) var world: World?
 
     /// Historical data
     public private(set) var history: WorldHistory
@@ -123,8 +86,10 @@ public final class WorldGenerator: Sendable {
         // Phase 6: History Simulation
         await phaseHistory()
 
-        // Complete
+        // Complete — store history and phase in the world
         currentPhase = .complete
+        world?.history = history
+        world?.generationPhase = .complete
         emitProgress("World generation complete! \(history.events.count) events recorded.")
     }
 
@@ -221,15 +186,15 @@ public final class WorldGenerator: Sendable {
 
         let (map, tiles, region) = await task.value
 
-        self.worldMap = map
-
-        // Store the generation result
-        self.result = WorldGenerationResult(
-            tiles: tiles,
+        // Create the unified World struct with tiles and world map
+        var generatedWorld = World(
             width: region.width,
             height: region.height,
-            depth: depth
+            depth: depth,
+            tiles: tiles
         )
+        generatedWorld.worldMap = map
+        self.world = generatedWorld
 
         emitProgress("Terrain generated: \(region.width)x\(region.height) embark site ready")
         await delay()

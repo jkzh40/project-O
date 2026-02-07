@@ -331,7 +331,6 @@ struct HealthTests {
 // MARK: - World Tests
 
 @Suite("World")
-@MainActor
 struct WorldTests {
     @Test("World creates with correct dimensions")
     func worldDimensions() {
@@ -354,7 +353,7 @@ struct WorldTests {
 
     @Test("Tick advances currentTick")
     func worldTick() {
-        let world = World(width: 10, height: 10)
+        var world = World(width: 10, height: 10)
         #expect(world.currentTick == 0)
         world.tick()
         #expect(world.currentTick == 1)
@@ -372,7 +371,7 @@ struct WorldTests {
 
     @Test("Unit add, get, update, remove")
     func unitCRUD() {
-        let world = World(width: 20, height: 20)
+        var world = World(width: 20, height: 20)
         var unit = Unit.create(at: Position(x: 5, y: 5))
         let unitId = unit.id
 
@@ -395,7 +394,7 @@ struct WorldTests {
 
     @Test("Item add, get, remove")
     func itemCRUD() {
-        let world = World(width: 20, height: 20)
+        var world = World(width: 20, height: 20)
         let item = Item.create(type: .food, at: Position(x: 3, y: 3))
         let itemId = item.id
 
@@ -409,7 +408,7 @@ struct WorldTests {
 
     @Test("Find nearest item")
     func findNearestItem() {
-        let world = World(width: 30, height: 30)
+        var world = World(width: 30, height: 30)
         let far = Item.create(type: .food, at: Position(x: 20, y: 20))
         let near = Item.create(type: .food, at: Position(x: 2, y: 2))
         world.addItem(far)
@@ -421,7 +420,7 @@ struct WorldTests {
 
     @Test("Get units in range")
     func unitsInRange() {
-        let world = World(width: 30, height: 30)
+        var world = World(width: 30, height: 30)
         let u1 = Unit.create(at: Position(x: 5, y: 5))
         let u2 = Unit.create(at: Position(x: 6, y: 6))
         let u3 = Unit.create(at: Position(x: 20, y: 20))
@@ -435,7 +434,7 @@ struct WorldTests {
 
     @Test("Pathfinding finds a path on open terrain")
     func pathfinding() {
-        let world = World(width: 10, height: 10)
+        var world = World(width: 10, height: 10)
         // Manually clear all to grass for deterministic test
         for y in 0..<10 {
             for x in 0..<10 {
@@ -456,7 +455,7 @@ struct WorldTests {
 
     @Test("Pathfinding returns nil when blocked")
     func pathfindingBlocked() {
-        let world = World(width: 5, height: 5)
+        var world = World(width: 5, height: 5)
         // Clear terrain
         for y in 0..<5 {
             for x in 0..<5 {
@@ -480,7 +479,7 @@ struct WorldTests {
 
     @Test("Mining produces items")
     func mining() {
-        let world = World(width: 10, height: 10)
+        var world = World(width: 10, height: 10)
         let pos = Position(x: 3, y: 3)
         var tile = world.getTile(at: pos)!
         tile.terrain = .wall

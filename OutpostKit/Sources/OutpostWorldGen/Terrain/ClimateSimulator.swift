@@ -2,6 +2,7 @@
 // Stage 4: Temperature from latitude/elevation, wind bands, orographic rainfall
 
 import Foundation
+import OutpostCore
 
 /// Simulates climate: temperature, wind, moisture, and rainfall
 struct ClimateSimulator: Sendable {

@@ -2,6 +2,7 @@
 // Stage 5: Flow direction, accumulation, sink filling, river tracing
 
 import Foundation
+import OutpostCore
 
 /// Simulates water flow: direction fields, river paths, and lake formation
 struct HydrologySimulator: Sendable {

@@ -2,6 +2,7 @@
 // Stage 1: Voronoi-based tectonic plates with drift vectors and boundary classification
 
 import Foundation
+import OutpostCore
 
 /// Generates tectonic plates using Voronoi tessellation with drift vectors
 struct TectonicSimulator: Sendable {
