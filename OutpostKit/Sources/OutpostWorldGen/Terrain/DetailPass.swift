@@ -158,6 +158,14 @@ struct DetailPass: Sendable {
             let oreType = compatible[rng.nextInt(in: 0...(compatible.count - 1))]
             cell.oreType = oreType
             cell.oreRichness = richness
+
+            // If ore is gemstone, pick a specific gemstone type from rock compatibility
+            if oreType == .gemstone {
+                let gems = midRock.compatibleGemstones
+                if !gems.isEmpty {
+                    cell.gemstoneType = gems[rng.nextInt(in: 0...(gems.count - 1))]
+                }
+            }
             return
         }
 

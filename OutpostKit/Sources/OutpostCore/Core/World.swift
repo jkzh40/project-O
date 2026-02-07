@@ -556,12 +556,20 @@ public final class World: Sendable {
         var resultItem: Item?
         switch terrain {
         case .wall, .stone, .sandstone, .limestone, .granite,
-             .basalt, .diorite, .gabbro, .slate, .shale, .schist, .obsidian:
+             .basalt, .diorite, .gabbro, .slate, .shale, .schist, .obsidian,
+             .chalk, .mudstone, .siltstone, .tuff, .pumice,
+             .serpentinite, .soapstone, .phyllite,
+             .deepslate, .shadowrock, .voidrock, .dragonrock, .livingrock:
             tile.terrain = .stoneFloor
             resultItem = Item.create(type: .stone, at: position, quality: .standard)
-        case .marble, .quartzite:
+        case .marble, .quartzite,
+             .pegmatite, .migmatite, .travertine,
+             .crystalrock, .moonstone, .sunrock, .aetherstone:
             tile.terrain = .stoneFloor
             resultItem = Item.create(type: .stone, at: position, quality: .finelyCrafted)
+        case .glowstone, .bloodstone, .runestone, .rhyolite:
+            tile.terrain = .stoneFloor
+            resultItem = Item.create(type: .stone, at: position, quality: .masterwork)
         case .ore:
             tile.terrain = .stoneFloor
             resultItem = Item.create(type: .ore, at: position, quality: .standard)

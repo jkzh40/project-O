@@ -138,17 +138,33 @@ public final class Renderer: Sendable {
             return "\(ANSI.green)*\(ANSI.reset)"
         case .wall:
             return "\(ANSI.white)#\(ANSI.reset)"
-        // Geological rock types
-        case .sandstone, .limestone:
+        // Geological rock types — sedimentary
+        case .sandstone, .limestone, .chalk, .mudstone, .siltstone, .travertine:
             return "\(ANSI.yellow)\(char)\(ANSI.reset)"
-        case .granite, .diorite, .quartzite:
+        // Igneous extrusive
+        case .rhyolite, .tuff, .pumice:
             return "\(ANSI.gray)\(char)\(ANSI.reset)"
-        case .basalt, .gabbro, .obsidian:
+        // Igneous intrusive
+        case .granite, .diorite, .quartzite, .pegmatite:
+            return "\(ANSI.gray)\(char)\(ANSI.reset)"
+        case .basalt, .gabbro, .obsidian, .deepslate:
             return "\(ANSI.dim)\(ANSI.gray)\(char)\(ANSI.reset)"
-        case .marble:
+        case .marble, .migmatite:
             return "\(ANSI.white)\(char)\(ANSI.reset)"
-        case .slate, .shale, .schist:
+        // Metamorphic
+        case .slate, .shale, .schist, .phyllite, .serpentinite, .soapstone:
             return "\(ANSI.gray)\(char)\(ANSI.reset)"
+        // Fantasy rocks — magical glow
+        case .glowstone, .crystalrock, .aetherstone, .moonstone:
+            return "\(ANSI.cyan)\(char)\(ANSI.reset)"
+        case .sunrock, .dragonrock:
+            return "\(ANSI.red)\(char)\(ANSI.reset)"
+        case .shadowrock, .voidrock:
+            return "\(ANSI.dim)\(ANSI.magenta)\(char)\(ANSI.reset)"
+        case .bloodstone:
+            return "\(ANSI.red)\(char)\(ANSI.reset)"
+        case .runestone, .livingrock:
+            return "\(ANSI.green)\(char)\(ANSI.reset)"
         default:
             return char
         }

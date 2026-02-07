@@ -84,6 +84,7 @@ struct WorldMapCell: Sendable {
     var soilDepth: Float = 0.0       // 0-1
     var oreType: OreType? = nil
     var oreRichness: Float = 0.0     // 0-1
+    var gemstoneType: GemstoneType? = nil
 
     init() {}
 }
