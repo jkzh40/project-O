@@ -2,6 +2,7 @@
 // Generates world history, civilizations, and lore over simulated years
 
 import Foundation
+import OutpostCore
 
 /// Callback for world generation progress
 public typealias WorldGenCallback = @MainActor (WorldGenPhase, String, WorldHistory) -> Void

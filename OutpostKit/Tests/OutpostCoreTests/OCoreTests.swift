@@ -1,6 +1,7 @@
 import Testing
 
 @testable import OutpostCore
+@testable import OutpostRuntime
 
 // MARK: - Calendar System Tests
 

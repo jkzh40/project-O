@@ -1,5 +1,5 @@
 import Foundation
-import OutpostCore
+import OutpostRuntime
 
 // MARK: - World Snapshot DTOs
 

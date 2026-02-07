@@ -1,5 +1,5 @@
 import SpriteKit
-import OutpostCore
+import OutpostRuntime
 
 #if os(iOS)
 import UIKit

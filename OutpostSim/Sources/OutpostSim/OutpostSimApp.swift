@@ -3,7 +3,7 @@
 
 import ArgumentParser
 import Foundation
-import OutpostCore
+import OutpostRuntime
 
 @main
 struct OutpostSimApp: AsyncParsableCommand {

@@ -1,85 +1,7 @@
-// MARK: - Autonomous Work System
-// Automatically generates jobs based on colony needs and available resources
+// MARK: - Autonomous Work Manager
 
 import Foundation
-
-// MARK: - Resource Need Priority
-
-/// Priority levels for different resource needs
-public enum ResourceNeed: Int, Comparable, Sendable {
-    case critical = 0   // Immediate survival needs
-    case high = 1       // Important for colony function
-    case normal = 2     // Standard maintenance
-    case low = 3        // Nice to have
-
-    public static func < (lhs: ResourceNeed, rhs: ResourceNeed) -> Bool {
-        lhs.rawValue < rhs.rawValue
-    }
-}
-
-// MARK: - Work Target
-
-/// A potential work target found in the world
-public struct WorkTarget: Sendable {
-    public let position: Position          // Where the worker should stand
-    public let targetPosition: Position?   // The actual resource position (for trees, ore, etc.)
-    public let type: WorkTargetType
-    public let priority: ResourceNeed
-
-    public init(position: Position, type: WorkTargetType, priority: ResourceNeed = .normal, targetPosition: Position? = nil) {
-        self.position = position
-        self.targetPosition = targetPosition
-        self.type = type
-        self.priority = priority
-    }
-}
-
-/// Types of work targets
-public enum WorkTargetType: Sendable {
-    case tree           // Chop for logs
-    case stone          // Mine for stone blocks
-    case ore            // Mine for metal ore
-    case shrub          // Gather plants
-    case water          // Fishing spot
-    case huntable(UInt64)  // Animal to hunt (unit ID)
-    case workshop(WorkshopType)  // Crafting at workshop
-}
-
-// MARK: - Colony Needs Assessment
-
-/// Assessment of current colony resource needs
-public struct ColonyNeeds: Sendable {
-    public var foodNeed: ResourceNeed = .normal
-    public var drinkNeed: ResourceNeed = .normal
-    public var woodNeed: ResourceNeed = .normal
-    public var stoneNeed: ResourceNeed = .normal
-    public var oreNeed: ResourceNeed = .normal
-    public var plantNeed: ResourceNeed = .normal
-
-    /// Food/drink per orc thresholds
-    public static let criticalFoodPerOrc = 1
-    public static let lowFoodPerOrc = 3
-    public static let adequateFoodPerOrc = 5
-
-    public static let criticalDrinkPerOrc = 1
-    public static let lowDrinkPerOrc = 3
-    public static let adequateDrinkPerOrc = 5
-
-    /// Material thresholds (absolute)
-    public static let criticalWood = 5
-    public static let lowWood = 15
-    public static let adequateWood = 30
-
-    public static let criticalStone = 5
-    public static let lowStone = 20
-    public static let adequateStone = 50
-
-    public static let criticalOre = 0
-    public static let lowOre = 10
-    public static let adequateOre = 25
-}
-
-// MARK: - Autonomous Work Manager
+import OutpostCore
 
 /// Manages automatic job generation based on colony needs
 @MainActor
@@ -230,7 +152,7 @@ public final class AutonomousWorkManager: Sendable {
                     }
                 }
 
-                if targets.count >= limit * 3 { break } // Get extra for filtering
+                if targets.count >= limit * 3 { break }
             }
             if targets.count >= limit * 3 { break }
         }
@@ -392,30 +314,17 @@ public final class AutonomousWorkManager: Sendable {
             guard unit.isAlive else { continue }
             guard unit.creatureType != .orc else { continue }
 
-            // Hunt wild animals (wolves, bears) - they're animals that can be hunted for food
-            // regardless of whether they're currently hostile
             let priority: ResourceNeed
             switch unit.creatureType {
             case .wolf, .bear:
-                priority = .normal  // Good meat source
+                priority = .normal
             default:
-                continue  // Don't hunt goblins, giants, undead - they're enemies, not game
+                continue
             }
             targets.append(WorkTarget(position: unit.position, type: .huntable(unitId), priority: priority))
         }
 
         return targets
-    }
-
-    /// Check if a position is accessible (adjacent to a passable tile)
-    private func isAccessible(position: Position, in world: World) -> Bool {
-        for dir in Direction.allCases {
-            let neighbor = position.moved(in: dir)
-            if let tile = world.getTile(at: neighbor), tile.isPassable {
-                return true
-            }
-        }
-        return false
     }
 
     // MARK: - Job Generation
@@ -507,7 +416,6 @@ public final class AutonomousWorkManager: Sendable {
                 let mineTargets = findMineableResources(in: world, limit: maxMineJobs + 2)
                 for target in mineTargets {
                     if (jobCountByType[.mine] ?? 0) >= maxMineJobs { break }
-                    // Prioritize ore if ore need is high
                     if case .ore = target.type, needs.oreNeed <= .high {
                         if createJob(type: .mine, at: target.position, jobManager: jobManager, currentTick: currentTick, priority: .high, targetPosition: target.targetPosition) {
                             jobsCreated += 1
@@ -539,7 +447,6 @@ public final class AutonomousWorkManager: Sendable {
         // Cooking - when we have raw meat, create cooking jobs
         let rawMeatItems = world.items.values.filter { $0.itemType == .rawMeat }
         if (jobCountByType[.cook] ?? 0) < 2 && !rawMeatItems.isEmpty {
-            // Create cooking job at the meat's location
             for meat in rawMeatItems.prefix(2) {
                 if createJob(type: .cook, at: meat.position, jobManager: jobManager, currentTick: currentTick) {
                     jobsCreated += 1
@@ -551,11 +458,9 @@ public final class AutonomousWorkManager: Sendable {
         // Brewing - when we have plants and need drinks
         let plantItems = world.items.values.filter { $0.itemType == .plant }
         if needs.drinkNeed <= .normal && (jobCountByType[.brew] ?? 0) < 2 && plantItems.count >= 2 {
-            // Create brewing job at plant location
             if let plant = plantItems.first {
                 if createJob(type: .brew, at: plant.position, jobManager: jobManager, currentTick: currentTick) {
                     jobsCreated += 1
-                    // Track brewing jobs in craft stats for now
                     stats.craftJobsCreated += 1
                 }
             }
@@ -640,23 +545,5 @@ public final class AutonomousWorkManager: Sendable {
     public func reset() {
         generatedJobPositions.removeAll()
         stats = AutonomousWorkStats()
-    }
-}
-
-// MARK: - Statistics
-
-/// Statistics for autonomous work generation
-public struct AutonomousWorkStats: Sendable {
-    public var chopJobsCreated: Int = 0
-    public var mineJobsCreated: Int = 0
-    public var gatherJobsCreated: Int = 0
-    public var huntJobsCreated: Int = 0
-    public var fishJobsCreated: Int = 0
-    public var cookJobsCreated: Int = 0
-    public var craftJobsCreated: Int = 0
-
-    public var totalJobsCreated: Int {
-        chopJobsCreated + mineJobsCreated + gatherJobsCreated +
-        huntJobsCreated + fishJobsCreated + cookJobsCreated + craftJobsCreated
     }
 }

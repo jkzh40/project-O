@@ -2,7 +2,7 @@
 // Displays the world generation process in the terminal
 
 import Foundation
-import OutpostCore
+import OutpostRuntime
 
 /// Renders world generation progress to the terminal
 @MainActor

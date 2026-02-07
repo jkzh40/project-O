@@ -2,6 +2,7 @@
 // Stage 6: Extended Whittaker diagram mapping temperature + moisture to biome
 
 import Foundation
+import OutpostCore
 
 /// Classifies biomes based on temperature, moisture, elevation, and hydrology
 struct BiomeClassifier: Sendable {

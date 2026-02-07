@@ -15,7 +15,7 @@ let package = Package(
         .executableTarget(
             name: "OutpostSim",
             dependencies: [
-                .product(name: "OutpostCore", package: "OutpostKit"),
+                .product(name: "OutpostRuntime", package: "OutpostKit"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]
         ),
