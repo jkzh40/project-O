@@ -40,7 +40,7 @@ let package = Package(
             name: "OutpostWorldGen",
             dependencies: ["OutpostCore"],
             resources: [
-                .process("Terrain/Metal/TerrainShaders.metal")
+                .process("Metal/TerrainShaders.metal")
             ]
         ),
         .target(

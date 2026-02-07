@@ -11,9 +11,16 @@
     - `Config/` — YAML config loading (`ConfigurationLoader`, registries)
     - `Resources/` — Default YAML configs (`outpost.yaml`, `creatures.yaml`, `items.yaml`)
   - `Sources/OutpostWorldGen/` — World generation module (Layer 2 — depends on OutpostCore)
-    - `Terrain/` — 7-stage procedural terrain pipeline (13 files)
-    - `Terrain/Geology/` — Geological simulation: `TectonicSimulator`, `StrataGenerator`, `GeologyGenerator`
-    - `Terrain/Metal/` — GPU acceleration: `TerrainShaders.metal` (compute kernels), `MetalTerrainAccelerator.swift` (Swift↔GPU bridge)
+    - `Pipeline/` — Orchestration: `WorldMapGenerator`, `WorldMapTypes`, `LocalTerrainGenerator`
+    - `Noise/` — Shared infrastructure: `SeededRNG`, `SimplexNoise`, `NoiseUtilities`
+    - `Tectonics/` — Stage 1: `TectonicSimulator`, `GeologyGenerator`, `StrataGenerator`
+    - `Heightmap/` — Stage 2: `HeightmapGenerator`
+    - `Erosion/` — Stage 3: `ErosionSimulator`
+    - `Climate/` — Stage 4: `ClimateSimulator`
+    - `Hydrology/` — Stage 5: `HydrologySimulator`
+    - `Biomes/` — Stage 6: `BiomeClassifier`
+    - `Detail/` — Stage 7: `DetailPass`
+    - `Metal/` — GPU acceleration: `TerrainShaders.metal`, `MetalTerrainAccelerator.swift`
     - `WorldGenerator.swift` — World generator with history simulation (produces unified `World` struct)
   - `Sources/OutpostRuntime/` — Simulation engine and manager systems (Layer 3 — depends on OutpostCore + OutpostWorldGen)
     - `Simulation.swift` — Core simulation orchestrator
