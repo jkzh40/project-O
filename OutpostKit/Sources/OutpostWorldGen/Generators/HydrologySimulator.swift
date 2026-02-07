@@ -340,3 +340,17 @@ struct HydrologySimulator: Sendable {
         }
     }
 }
+
+// MARK: - TerrainStage Conformance
+
+extension HydrologySimulator: TerrainStage {
+    var forkLabel: String { "hydrology" }
+
+    func progressMessage(context: WorldGenContext) -> String {
+        "Tracing rivers and lakes..."
+    }
+
+    func run(map: inout WorldMap, rng: inout SeededRNG, context: WorldGenContext) {
+        Self.simulate(map: &map, rng: &rng)
+    }
+}

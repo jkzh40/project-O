@@ -215,3 +215,17 @@ struct TectonicSimulator: Sendable {
         }
     }
 }
+
+// MARK: - TerrainStage Conformance
+
+extension TectonicSimulator: TerrainStage {
+    var forkLabel: String { "tectonic" }
+
+    func progressMessage(context: WorldGenContext) -> String {
+        "Simulating tectonic plates..."
+    }
+
+    func run(map: inout WorldMap, rng: inout SeededRNG, context: WorldGenContext) {
+        Self.simulate(map: &map, params: context.params, rng: &rng)
+    }
+}

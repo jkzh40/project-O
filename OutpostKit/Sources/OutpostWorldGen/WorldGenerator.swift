@@ -7,6 +7,18 @@ import OutpostCore
 /// Callback for world generation progress
 public typealias WorldGenCallback = @MainActor (WorldGenPhase, String, WorldHistory) -> Void
 
+/// Maps a `TerrainStage.forkLabel` to the corresponding `WorldGenPhase`.
+private let forkLabelToPhase: [String: WorldGenPhase] = [
+    "tectonic": .tectonics,
+    "heightmap": .heightmap,
+    "erosion": .erosion,
+    "geology": .strata,
+    "climate": .climate,
+    "hydrology": .hydrology,
+    "biome": .biomes,
+    "detail": .detailPass,
+]
+
 /// Generates a world with history
 @MainActor
 public final class WorldGenerator: Sendable {
@@ -99,72 +111,41 @@ public final class WorldGenerator: Sendable {
         let params = genParams
         let depth = self.depth
 
-        let phases: [(WorldGenPhase, String)] = [
-            (.tectonics, "Simulating tectonic plates..."),
-            (.heightmap, "Generating heightmap..."),
-            (.erosion, "Simulating erosion (\(params.erosionDroplets) droplets)..."),
-            (.strata, "Generating geological strata..."),
-            (.climate, "Simulating climate..."),
-            (.hydrology, "Tracing rivers and lakes..."),
-            (.biomes, "Classifying biomes..."),
-            (.detailPass, "Adding vegetation and ore deposits..."),
-            (.embark, "Selecting embark site..."),
-        ]
-
         // Show initial phase
         currentPhase = .tectonics
         emitProgress("Simulating tectonic plates...")
 
-        let (stream, continuation) = AsyncStream<Int>.makeStream()
+        let (stream, continuation) = AsyncStream<(WorldGenPhase, String)>.makeStream()
 
         // Run the heavy pipeline off the main thread so UI stays responsive
         let task = Task.detached { () -> (WorldMap, [[[Tile]]], EmbarkRegion) in
             let seed = params.seed
             let rng = seed.makeRNG()
-            var map = WorldMap(size: params.mapSize, seed: seed)
-            let noise = SimplexNoise(seed: seed.value)
+            let context = WorldGenContext(
+                params: params,
+                noise: SimplexNoise(seed: seed.value)
+            )
 
-            // Stage 1: Tectonic Plates
-            continuation.yield(0)
-            var tectonicRNG = rng.fork("tectonic")
-            TectonicSimulator.simulate(map: &map, params: params, rng: &tectonicRNG)
+            let pipeline = TerrainPipeline.cpuPipeline()
 
-            // Stage 2: Heightmap
-            continuation.yield(1)
-            var heightmapRNG = rng.fork("heightmap")
-            HeightmapGenerator.generate(map: &map, noise: noise, rng: &heightmapRNG)
-
-            // Stage 3: Erosion
-            continuation.yield(2)
-            var erosionRNG = rng.fork("erosion")
-            ErosionSimulator.simulate(map: &map, params: params, rng: &erosionRNG)
-
-            // Stage 3.5: Geological Strata
-            continuation.yield(3)
-            var geologyRNG = rng.fork("geology")
-            GeologyGenerator.generate(map: &map, noise: noise, rng: &geologyRNG)
-
-            // Stage 4: Climate
-            continuation.yield(4)
-            var climateRNG = rng.fork("climate")
-            ClimateSimulator.simulate(map: &map, noise: noise, rng: &climateRNG)
-
-            // Stage 5: Hydrology
-            continuation.yield(5)
-            var hydrologyRNG = rng.fork("hydrology")
-            HydrologySimulator.simulate(map: &map, rng: &hydrologyRNG)
-
-            // Stage 6: Biome Classification
-            continuation.yield(6)
-            BiomeClassifier.classify(map: &map)
-
-            // Stage 7: Detail Pass
-            continuation.yield(7)
-            var detailRNG = rng.fork("detail")
-            DetailPass.apply(map: &map, noise: noise, rng: &detailRNG)
+            // Use a stageIndex counter to map progress messages to phases
+            var stageIndex = 0
+            let stages = pipeline.stages
+            let map = pipeline.run(context: context, rng: rng) { message in
+                // Map the stage's forkLabel to a WorldGenPhase
+                if stageIndex < stages.count {
+                    let label = stages[stageIndex].forkLabel
+                    let phase = forkLabelToPhase[label] ?? .tectonics
+                    continuation.yield((phase, message))
+                }
+                // "World map generation complete." is the final message from the pipeline
+                if !message.hasSuffix("complete.") {
+                    stageIndex += 1
+                }
+            }
 
             // Find embark site
-            continuation.yield(8)
+            continuation.yield((.embark, "Selecting embark site..."))
             var embarkRNG = seed.makeRNG().fork("embark")
             let region = WorldMapGenerator.findEmbarkSite(map: map, size: params.embarkSize, rng: &embarkRNG)
 
@@ -177,11 +158,9 @@ public final class WorldGenerator: Sendable {
         }
 
         // Process progress updates on the main thread as each stage begins
-        for await stageIndex in stream {
-            if stageIndex < phases.count {
-                currentPhase = phases[stageIndex].0
-                emitProgress(phases[stageIndex].1)
-            }
+        for await (phase, message) in stream {
+            currentPhase = phase
+            emitProgress(message)
         }
 
         let (map, tiles, region) = await task.value

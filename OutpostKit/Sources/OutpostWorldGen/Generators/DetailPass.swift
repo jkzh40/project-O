@@ -205,3 +205,17 @@ struct DetailPass: Sendable {
         cell.oreRichness = richness
     }
 }
+
+// MARK: - TerrainStage Conformance
+
+extension DetailPass: TerrainStage {
+    var forkLabel: String { "detail" }
+
+    func progressMessage(context: WorldGenContext) -> String {
+        "Adding vegetation and ore deposits..."
+    }
+
+    func run(map: inout WorldMap, rng: inout SeededRNG, context: WorldGenContext) {
+        Self.apply(map: &map, noise: context.noise, rng: &rng)
+    }
+}
