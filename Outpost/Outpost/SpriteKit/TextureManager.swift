@@ -132,6 +132,15 @@ final class TextureManager {
             .topsoil: PlatformColor(red: 0.45, green: 0.35, blue: 0.2, alpha: 1),
             .frozenGround: PlatformColor(red: 0.7, green: 0.72, blue: 0.8, alpha: 1),
             .lava: PlatformColor(red: 0.9, green: 0.3, blue: 0.05, alpha: 1),
+            // Geological rock types
+            .basalt: PlatformColor(red: 0.25, green: 0.25, blue: 0.28, alpha: 1),
+            .marble: PlatformColor(red: 0.9, green: 0.88, blue: 0.85, alpha: 1),
+            .slate: PlatformColor(red: 0.4, green: 0.42, blue: 0.45, alpha: 1),
+            .shale: PlatformColor(red: 0.5, green: 0.45, blue: 0.38, alpha: 1),
+            .diorite: PlatformColor(red: 0.6, green: 0.58, blue: 0.6, alpha: 1),
+            .gabbro: PlatformColor(red: 0.3, green: 0.3, blue: 0.32, alpha: 1),
+            .quartzite: PlatformColor(red: 0.82, green: 0.78, blue: 0.72, alpha: 1),
+            .schist: PlatformColor(red: 0.45, green: 0.48, blue: 0.42, alpha: 1),
         ]
 
         let size = CGSize(width: 32, height: 32)

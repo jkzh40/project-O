@@ -6,6 +6,7 @@
   - `Sources/OutpostWorldGen/` — World generation module (separate target, re-exported by OutpostCore)
     - `Types/` — Shared types: `BiomeType`, `TerrainType`, `Tile`, `UnitName`/`NameGenerator`
     - `Terrain/` — 7-stage procedural terrain pipeline (13 files)
+    - `Terrain/Geology/` — Geological subsystem: `TectonicSimulator`, `StrataGenerator`, `GeologyGenerator`, `RockType`, `GeologicalColumn`
     - `WorldGenerator.swift` — World generator with history simulation
     - `History.swift` — Historical events, figures, civilizations
   - `Sources/OutpostCore/Core/` — Data model: `Unit`, `World`, `Item`, `Enums`

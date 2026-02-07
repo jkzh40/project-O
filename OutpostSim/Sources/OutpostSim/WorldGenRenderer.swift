@@ -147,16 +147,17 @@ public final class WorldGenRenderer: Sendable {
         case .tectonics: return 1
         case .heightmap: return 2
         case .erosion: return 3
-        case .climate: return 4
-        case .hydrology: return 5
-        case .biomes: return 6
-        case .detailPass: return 7
-        case .terrain: return 8
-        case .embark: return 9
-        case .regions: return 10
-        case .civilizations: return 11
-        case .history: return 12
-        case .complete: return 13
+        case .strata: return 4
+        case .climate: return 5
+        case .hydrology: return 6
+        case .biomes: return 7
+        case .detailPass: return 8
+        case .terrain: return 9
+        case .embark: return 10
+        case .regions: return 11
+        case .civilizations: return 12
+        case .history: return 13
+        case .complete: return 14
         }
     }
 
@@ -239,6 +240,7 @@ public final class WorldGenRenderer: Sendable {
         case .tectonics: progress = 0.08
         case .heightmap: progress = 0.11
         case .erosion: progress = 0.14
+        case .strata: progress = 0.155
         case .climate: progress = 0.17
         case .hydrology: progress = 0.20
         case .biomes: progress = 0.23

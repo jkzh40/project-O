@@ -99,8 +99,10 @@ struct WorldMapCell: Sendable {
     // Geology
     var elevation: Float = 0.0       // 0.0 = deep ocean, 1.0 = highest peak
     var plateId: Int = 0
+    var neighborPlateId: Int? = nil   // Plate ID of nearest different plate (for subduction detection)
     var boundaryType: PlateBoundaryType = .none
     var boundaryStress: Float = 0.0  // 0-1, how close to plate boundary
+    var geologicalColumn: GeologicalColumn? = nil  // Subsurface strata profile
 
     // Erosion
     var sediment: Float = 0.0        // Deposited sediment thickness

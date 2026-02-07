@@ -555,9 +555,13 @@ public final class World: Sendable {
         // Determine what item is produced
         var resultItem: Item?
         switch terrain {
-        case .wall, .stone:
+        case .wall, .stone, .sandstone, .limestone, .granite,
+             .basalt, .diorite, .gabbro, .slate, .shale, .schist, .obsidian:
             tile.terrain = .stoneFloor
             resultItem = Item.create(type: .stone, at: position, quality: .standard)
+        case .marble, .quartzite:
+            tile.terrain = .stoneFloor
+            resultItem = Item.create(type: .stone, at: position, quality: .finelyCrafted)
         case .ore:
             tile.terrain = .stoneFloor
             resultItem = Item.create(type: .ore, at: position, quality: .standard)
