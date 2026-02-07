@@ -13,6 +13,7 @@
   - `Sources/OutpostWorldGen/` — World generation module (Layer 2 — depends on OutpostCore)
     - `Terrain/` — 7-stage procedural terrain pipeline (13 files)
     - `Terrain/Geology/` — Geological simulation: `TectonicSimulator`, `StrataGenerator`, `GeologyGenerator`
+    - `Terrain/Metal/` — GPU acceleration: `TerrainShaders.metal` (compute kernels), `MetalTerrainAccelerator.swift` (Swift↔GPU bridge)
     - `WorldGenerator.swift` — World generator with history simulation (produces unified `World` struct)
   - `Sources/OutpostRuntime/` — Simulation engine and manager systems (Layer 3 — depends on OutpostCore + OutpostWorldGen)
     - `Simulation.swift` — Core simulation orchestrator

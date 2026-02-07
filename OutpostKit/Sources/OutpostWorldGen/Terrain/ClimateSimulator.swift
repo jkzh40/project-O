@@ -106,6 +106,14 @@ struct ClimateSimulator: Sendable {
         }
     }
 
+    // MARK: - Moisture Advection (standalone for GPU path)
+
+    /// Runs moisture transport and rainfall calculation.
+    /// Called standalone when GPU handles temperature and wind.
+    static func applyMoistureAdvection(map: inout WorldMap, noise: SimplexNoise, rng: inout SeededRNG) {
+        computeMoistureAndRainfall(map: &map, noise: noise, size: map.size)
+    }
+
     // MARK: - Moisture and Rainfall
 
     private static func computeMoistureAndRainfall(map: inout WorldMap, noise: SimplexNoise, size: Int) {

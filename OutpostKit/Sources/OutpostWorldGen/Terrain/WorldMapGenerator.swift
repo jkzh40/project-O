@@ -24,6 +24,10 @@ struct WorldMapGenerator: Sendable {
 
         let noise = SimplexNoise(seed: params.seed.value)
 
+        #if canImport(Metal)
+        let accelerator = MetalTerrainAccelerator()
+        #endif
+
         // Stage 1: Tectonic Plates
         progress?("Simulating tectonic plates...")
         var tectonicRNG = rng.fork("tectonic")
@@ -32,7 +36,15 @@ struct WorldMapGenerator: Sendable {
         // Stage 2: Heightmap
         progress?("Generating heightmap...")
         var heightmapRNG = rng.fork("heightmap")
+        #if canImport(Metal)
+        if let accel = accelerator {
+            accel.generateHeightmap(map: &map, noise: noise)
+        } else {
+            HeightmapGenerator.generate(map: &map, noise: noise, rng: &heightmapRNG)
+        }
+        #else
         HeightmapGenerator.generate(map: &map, noise: noise, rng: &heightmapRNG)
+        #endif
 
         // Stage 3: Erosion
         progress?("Simulating erosion (\(params.erosionDroplets) droplets)...")
@@ -47,7 +59,16 @@ struct WorldMapGenerator: Sendable {
         // Stage 4: Climate
         progress?("Simulating climate...")
         var climateRNG = rng.fork("climate")
+        #if canImport(Metal)
+        if let accel = accelerator {
+            accel.generateTemperatureAndWind(map: &map, noise: noise)
+            ClimateSimulator.applyMoistureAdvection(map: &map, noise: noise, rng: &climateRNG)
+        } else {
+            ClimateSimulator.simulate(map: &map, noise: noise, rng: &climateRNG)
+        }
+        #else
         ClimateSimulator.simulate(map: &map, noise: noise, rng: &climateRNG)
+        #endif
 
         // Stage 5: Hydrology
         progress?("Tracing rivers and lakes...")

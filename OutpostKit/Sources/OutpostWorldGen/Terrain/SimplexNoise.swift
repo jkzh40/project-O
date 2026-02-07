@@ -5,8 +5,8 @@ import Foundation
 
 /// OpenSimplex2-style noise generator — deterministic from seed
 struct SimplexNoise: Sendable {
-    private let perm: [Int]
-    private let permGrad2: [(Double, Double)]
+    let perm: [Int]
+    let permGrad2: [(Double, Double)]
     private let permGrad3: [(Double, Double, Double)]
 
     private static let gradients2D: [(Double, Double)] = [
