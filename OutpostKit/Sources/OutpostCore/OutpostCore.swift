@@ -3,16 +3,15 @@
 // A watch-only simulation featuring autonomous orcs with emergent behavior
 // driven by needs, personality, and environment.
 
-/// Re-export all public types for convenient access
+/// Re-export Foundation for convenient access
 @_exported import Foundation
-@_exported import OutpostWorldGen
 
 // All types are already public in their respective files:
-// - Enums.swift: UnitState, NeedType, TerrainType, ItemType, etc.
-// - Models.swift: Position, AttributeValue, SkillEntry, Personality, etc.
-// - Unit.swift: Unit struct
-// - Item.swift: Item struct
-// - Tile.swift: Tile struct
-// - World.swift: World class
-// - Simulation.swift: Simulation class, SimulationEvent enum
-// - Renderer is in OutpostSim (terminal frontend)
+// - Core/Enums.swift: UnitState, NeedType, ItemType, etc.
+// - Core/Models.swift: Position, AttributeValue, SkillEntry, Personality, etc.
+// - Core/Unit.swift: Unit struct
+// - Core/Item.swift: Item struct
+// - Core/World.swift: World class
+// - Types/Tile.swift, BiomeType.swift, TerrainType.swift, UnitName.swift
+// - DataTypes/*.swift: Health, Job, Memory, Mood, Social, Construction, Crafting, Stockpile, Work types
+// - Config/: YAML config loading

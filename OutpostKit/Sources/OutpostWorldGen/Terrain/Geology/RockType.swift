@@ -1,6 +1,8 @@
 // MARK: - Rock Type
 // Geological rock classification for subsurface strata
 
+import OutpostCore
+
 /// Geological rock types used in underground strata generation
 enum RockType: String, CaseIterable, Sendable {
     // Sedimentary

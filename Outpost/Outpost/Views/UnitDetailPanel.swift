@@ -1,5 +1,5 @@
 import SwiftUI
-import OutpostCore
+import OutpostRuntime
 
 /// Panel showing details of the selected unit
 struct UnitDetailPanel: View {

@@ -2,6 +2,7 @@
 // Converts a WorldMap embark region into a detailed 3D tile grid for gameplay
 
 import Foundation
+import OutpostCore
 
 /// Converts a region of the world map into the detailed 3D tile grid used by the World
 struct LocalTerrainGenerator: Sendable {

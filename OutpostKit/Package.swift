@@ -18,26 +18,35 @@ let package = Package(
             name: "OutpostWorldGen",
             targets: ["OutpostWorldGen"]
         ),
+        .library(
+            name: "OutpostRuntime",
+            targets: ["OutpostRuntime"]
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/jpsim/Yams.git", from: "5.0.0"),
     ],
     targets: [
         .target(
-            name: "OutpostWorldGen"
-        ),
-        .target(
             name: "OutpostCore",
-            dependencies: ["OutpostWorldGen", "Yams"],
+            dependencies: ["Yams"],
             resources: [
                 .copy("Resources/outpost.yaml"),
                 .copy("Resources/creatures.yaml"),
                 .copy("Resources/items.yaml")
             ]
         ),
+        .target(
+            name: "OutpostWorldGen",
+            dependencies: ["OutpostCore"]
+        ),
+        .target(
+            name: "OutpostRuntime",
+            dependencies: ["OutpostCore", "OutpostWorldGen"]
+        ),
         .testTarget(
             name: "OutpostCoreTests",
-            dependencies: ["OutpostCore"]
+            dependencies: ["OutpostRuntime"]
         ),
     ]
 )

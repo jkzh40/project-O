@@ -112,7 +112,7 @@
 			);
 			name = Outpost;
 			packageProductDependencies = (
-				04C81DD62F34500000E4B335 /* OutpostCore */,
+				04C81DD62F34500000E4B335 /* OutpostRuntime */,
 			);
 			productName = Outpost;
 			productReference = 04C81DAB2F34497800E4B335 /* Outpost.app */;
@@ -628,9 +628,9 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		04C81DD62F34500000E4B335 /* OutpostCore */ = {
+		04C81DD62F34500000E4B335 /* OutpostRuntime */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = OutpostCore;
+			productName = OutpostRuntime;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

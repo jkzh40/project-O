@@ -2,6 +2,7 @@
 // Data structures for the large-scale world map used during terrain generation
 
 import Foundation
+import OutpostCore
 
 // MARK: - World Seed
 

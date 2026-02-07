@@ -2,6 +2,7 @@
 // Stage 7: Vegetation density, ore placement, soil depth
 
 import Foundation
+import OutpostCore
 
 /// Adds final detail: vegetation, ore deposits, soil depth based on biome and geology
 struct DetailPass: Sendable {

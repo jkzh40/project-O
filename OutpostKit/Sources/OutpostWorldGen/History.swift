@@ -2,6 +2,7 @@
 // Historical events, figures, and civilizations for world generation
 
 import Foundation
+import OutpostCore
 
 // MARK: - Historical Figure
 

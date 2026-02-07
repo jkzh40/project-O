@@ -2,23 +2,27 @@
 
 ## Project Layout
 
-- **OutpostKit/** — Game engine library (Swift Package)
-  - `Sources/OutpostWorldGen/` — World generation module (separate target, re-exported by OutpostCore)
+- **OutpostKit/** — Game engine library (Swift Package, 3 targets)
+  - `Sources/OutpostCore/` — Shared types, models, config (Layer 1 — depends on Yams only)
+    - `Core/` — Data model: `Unit`, `World`, `Item`, `Enums`, `Models`
     - `Types/` — Shared types: `BiomeType`, `TerrainType`, `Tile`, `UnitName`/`NameGenerator`
+    - `DataTypes/` — Data types for systems: Health, Job, Memory, Mood, Social, Construction, Crafting, Stockpile, Work, Simulation
+    - `Config/` — YAML config loading (`ConfigurationLoader`, registries)
+    - `Resources/` — Default YAML configs (`outpost.yaml`, `creatures.yaml`, `items.yaml`)
+  - `Sources/OutpostWorldGen/` — World generation module (Layer 2 — depends on OutpostCore)
     - `Terrain/` — 7-stage procedural terrain pipeline (13 files)
     - `Terrain/Geology/` — Geological subsystem: `TectonicSimulator`, `StrataGenerator`, `GeologyGenerator`, `RockType`, `GeologicalColumn`
     - `WorldGenerator.swift` — World generator with history simulation
     - `History.swift` — Historical events, figures, civilizations
-  - `Sources/OutpostCore/Core/` — Data model: `Unit`, `World`, `Item`, `Enums`
-  - `Sources/OutpostCore/Systems/` — Simulation systems: Combat, Job, Mood, Social, Construction, Crafting, Stockpile, AutonomousWork, Memory
-  - `Sources/OutpostCore/Config/` — YAML config loading (`ConfigurationLoader`, registries)
-  - `Sources/OutpostCore/Resources/` — Default YAML configs (`outpost.yaml`, `creatures.yaml`, `items.yaml`)
+  - `Sources/OutpostRuntime/` — Simulation engine and manager systems (Layer 3 — depends on OutpostCore + OutpostWorldGen)
+    - `Simulation.swift` — Core simulation orchestrator
+    - `Systems/` — Manager classes: Combat, Job, Mood, Social, Construction, Crafting, Stockpile, AutonomousWork
   - `Tests/` — Unit tests
-- **OutpostSim/** — Terminal CLI app (Swift Package, depends on OutpostKit)
+- **OutpostSim/** — Terminal CLI app (Swift Package, depends on OutpostRuntime)
   - `Sources/OutpostSim/` — CLI runner, ANSI renderers
-- **Outpost/** — macOS/iOS SpriteKit app (Xcode project)
+- **Outpost/** — macOS/iOS SpriteKit app (Xcode project, depends on OutpostRuntime)
   - `Outpost/SpriteKit/` — `GameScene` (rendering), `TextureManager` (sprite loading)
-  - `Outpost/ViewModels/` — `SimulationViewModel` (bridges OutpostCore → SwiftUI)
+  - `Outpost/ViewModels/` — `SimulationViewModel` (bridges OutpostRuntime → SwiftUI)
   - `Outpost/Views/` — SwiftUI views including `UnitDetailPanel`
   - `Outpost/Models/` — `WorldSnapshot` DTOs for render layer
   - `Scripts/` — `GenerateAssets.swift` (pixel art generator)
@@ -26,8 +30,20 @@
 
 ## Architecture
 
+OutpostKit uses a 4-layer dependency architecture:
+
+```
+Layer 4: UI (Outpost app, OutpostSim)  →  import OutpostRuntime
+Layer 3: OutpostRuntime (Simulation + Managers)  →  depends on OutpostCore + OutpostWorldGen
+Layer 2: OutpostWorldGen (world generation pipeline)  →  depends on OutpostCore
+Layer 1: OutpostCore (shared types, models, config)  →  depends on Yams only
+```
+
 - `Simulation` is the core orchestrator (`@MainActor`), processes each tick sequentially through all systems
-- OutpostCore is a pure Swift library with no UI dependencies — consumed by both OutpostSim (terminal) and Outpost (SpriteKit)
+- OutpostCore contains pure data types (structs/enums) with no simulation logic
+- OutpostRuntime contains manager classes and the simulation engine
+- OutpostRuntime re-exports OutpostCore and OutpostWorldGen via `@_exported import`
+- Consumers import only `OutpostRuntime` to get all types
 - Configuration is YAML-based, loaded at startup with fallback chain: `./outpost.yaml` → `~/.config/outpost/` → bundled defaults
 - World generation is a 7-stage pipeline: Tectonics → Heightmap → Erosion → Climate → Hydrology → Biomes → Detail
 - All randomness flows through `SeededRNG` (Xoshiro256**) for deterministic replay from a `WorldSeed`
