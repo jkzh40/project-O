@@ -279,3 +279,17 @@ struct ErosionSimulator: Sendable {
         }
     }
 }
+
+// MARK: - TerrainStage Conformance
+
+extension ErosionSimulator: TerrainStage {
+    var forkLabel: String { "erosion" }
+
+    func progressMessage(context: WorldGenContext) -> String {
+        "Simulating erosion (\(context.params.erosionDroplets) droplets)..."
+    }
+
+    func run(map: inout WorldMap, rng: inout SeededRNG, context: WorldGenContext) {
+        Self.simulate(map: &map, params: context.params, rng: &rng)
+    }
+}

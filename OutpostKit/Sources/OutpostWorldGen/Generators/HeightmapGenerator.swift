@@ -129,3 +129,17 @@ struct HeightmapGenerator: Sendable {
         }
     }
 }
+
+// MARK: - TerrainStage Conformance
+
+extension HeightmapGenerator: TerrainStage {
+    var forkLabel: String { "heightmap" }
+
+    func progressMessage(context: WorldGenContext) -> String {
+        "Generating heightmap..."
+    }
+
+    func run(map: inout WorldMap, rng: inout SeededRNG, context: WorldGenContext) {
+        Self.generate(map: &map, noise: context.noise, rng: &rng)
+    }
+}

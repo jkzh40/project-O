@@ -40,3 +40,17 @@ struct GeologyGenerator: Sendable {
         }
     }
 }
+
+// MARK: - TerrainStage Conformance
+
+extension GeologyGenerator: TerrainStage {
+    var forkLabel: String { "geology" }
+
+    func progressMessage(context: WorldGenContext) -> String {
+        "Generating geological strata..."
+    }
+
+    func run(map: inout WorldMap, rng: inout SeededRNG, context: WorldGenContext) {
+        Self.generate(map: &map, noise: context.noise, rng: &rng)
+    }
+}

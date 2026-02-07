@@ -186,3 +186,17 @@ struct BiomeClassifier: Sendable {
         return .tropicalRainforest
     }
 }
+
+// MARK: - TerrainStage Conformance
+
+extension BiomeClassifier: TerrainStage {
+    var forkLabel: String { "biome" }
+
+    func progressMessage(context: WorldGenContext) -> String {
+        "Classifying biomes..."
+    }
+
+    func run(map: inout WorldMap, rng: inout SeededRNG, context: WorldGenContext) {
+        Self.classify(map: &map)
+    }
+}

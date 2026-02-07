@@ -13,79 +13,21 @@ struct WorldMapGenerator: Sendable {
     /// Generate a complete world map from parameters
     /// - Parameters:
     ///   - params: World generation parameters
+    ///   - pipeline: Optional custom pipeline (defaults to `TerrainPipeline.defaultPipeline()`)
     ///   - progress: Optional progress callback
     /// - Returns: Complete world map with all data
     static func generate(
         params: WorldGenParameters,
+        pipeline: TerrainPipeline? = nil,
         progress: WorldMapProgressCallback? = nil
     ) -> WorldMap {
-        var rng = params.seed.makeRNG()
-        var map = WorldMap(size: params.mapSize, seed: params.seed)
-
-        let noise = SimplexNoise(seed: params.seed.value)
-
-        #if canImport(Metal)
-        let accelerator = MetalTerrainAccelerator()
-        #endif
-
-        // Stage 1: Tectonic Plates
-        progress?("Simulating tectonic plates...")
-        var tectonicRNG = rng.fork("tectonic")
-        TectonicSimulator.simulate(map: &map, params: params, rng: &tectonicRNG)
-
-        // Stage 2: Heightmap
-        progress?("Generating heightmap...")
-        var heightmapRNG = rng.fork("heightmap")
-        #if canImport(Metal)
-        if let accel = accelerator {
-            accel.generateHeightmap(map: &map, noise: noise)
-        } else {
-            HeightmapGenerator.generate(map: &map, noise: noise, rng: &heightmapRNG)
-        }
-        #else
-        HeightmapGenerator.generate(map: &map, noise: noise, rng: &heightmapRNG)
-        #endif
-
-        // Stage 3: Erosion
-        progress?("Simulating erosion (\(params.erosionDroplets) droplets)...")
-        var erosionRNG = rng.fork("erosion")
-        ErosionSimulator.simulate(map: &map, params: params, rng: &erosionRNG)
-
-        // Stage 3.5: Geological Strata
-        progress?("Generating geological strata...")
-        var geologyRNG = rng.fork("geology")
-        GeologyGenerator.generate(map: &map, noise: noise, rng: &geologyRNG)
-
-        // Stage 4: Climate
-        progress?("Simulating climate...")
-        var climateRNG = rng.fork("climate")
-        #if canImport(Metal)
-        if let accel = accelerator {
-            accel.generateTemperatureAndWind(map: &map, noise: noise)
-            ClimateSimulator.applyMoistureAdvection(map: &map, noise: noise, rng: &climateRNG)
-        } else {
-            ClimateSimulator.simulate(map: &map, noise: noise, rng: &climateRNG)
-        }
-        #else
-        ClimateSimulator.simulate(map: &map, noise: noise, rng: &climateRNG)
-        #endif
-
-        // Stage 5: Hydrology
-        progress?("Tracing rivers and lakes...")
-        var hydrologyRNG = rng.fork("hydrology")
-        HydrologySimulator.simulate(map: &map, rng: &hydrologyRNG)
-
-        // Stage 6: Biome Classification
-        progress?("Classifying biomes...")
-        BiomeClassifier.classify(map: &map)
-
-        // Stage 7: Detail Pass
-        progress?("Adding vegetation and ore deposits...")
-        var detailRNG = rng.fork("detail")
-        DetailPass.apply(map: &map, noise: noise, rng: &detailRNG)
-
-        progress?("World map generation complete.")
-        return map
+        let rng = params.seed.makeRNG()
+        let context = WorldGenContext(
+            params: params,
+            noise: SimplexNoise(seed: params.seed.value)
+        )
+        let activePipeline = pipeline ?? .defaultPipeline()
+        return activePipeline.run(context: context, rng: rng, progress: progress)
     }
 
     /// Find a good embark location: temperate, near water, not too mountainous

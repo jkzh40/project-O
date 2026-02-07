@@ -190,3 +190,17 @@ struct ClimateSimulator: Sendable {
         }
     }
 }
+
+// MARK: - TerrainStage Conformance
+
+extension ClimateSimulator: TerrainStage {
+    var forkLabel: String { "climate" }
+
+    func progressMessage(context: WorldGenContext) -> String {
+        "Simulating climate..."
+    }
+
+    func run(map: inout WorldMap, rng: inout SeededRNG, context: WorldGenContext) {
+        Self.simulate(map: &map, noise: context.noise, rng: &rng)
+    }
+}
