@@ -11,7 +11,7 @@
     - `Resources/` — Default YAML configs (`outpost.yaml`, `creatures.yaml`, `items.yaml`)
   - `Sources/OutpostWorldGen/` — World generation module (Layer 2 — depends on OutpostCore)
     - `Terrain/` — 7-stage procedural terrain pipeline (13 files)
-    - `Terrain/Geology/` — Geological subsystem: `TectonicSimulator`, `StrataGenerator`, `GeologyGenerator`, `RockType`, `GeologicalColumn`
+    - `Terrain/Geology/` — Geological subsystem: `TectonicSimulator`, `StrataGenerator`, `GeologyGenerator`, `RockType`, `GeologicalColumn`, `OreType`, `GemstoneType`
     - `WorldGenerator.swift` — World generator with history simulation
     - `History.swift` — Historical events, figures, civilizations
   - `Sources/OutpostRuntime/` — Simulation engine and manager systems (Layer 3 — depends on OutpostCore + OutpostWorldGen)

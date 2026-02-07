@@ -51,6 +51,34 @@ public enum TerrainType: String, CaseIterable, Sendable {
     case quartzite
     case schist
 
+    // Expanded geological rock types — real
+    case chalk
+    case mudstone
+    case siltstone
+    case travertine
+    case rhyolite
+    case tuff
+    case pumice
+    case pegmatite
+    case serpentinite
+    case soapstone
+    case phyllite
+    case migmatite
+
+    // Expanded geological rock types — fantasy
+    case deepslate
+    case glowstone
+    case shadowrock
+    case crystalrock
+    case bloodstone
+    case voidrock
+    case moonstone
+    case sunrock
+    case dragonrock
+    case runestone
+    case aetherstone
+    case livingrock
+
     // Constructed terrain
     case woodenFloor
     case stoneFloor
@@ -75,7 +103,13 @@ public enum TerrainType: String, CaseIterable, Sendable {
              .deepWater, .ice, .coniferTree, .palmTree, .deadTree,
              .cactus, .reeds, .marsh, .obsidian, .lava,
              .sandstone, .limestone, .granite,
-             .basalt, .marble, .slate, .shale, .diorite, .gabbro, .quartzite, .schist:
+             .basalt, .marble, .slate, .shale, .diorite, .gabbro, .quartzite, .schist,
+             .chalk, .mudstone, .siltstone, .travertine,
+             .rhyolite, .tuff, .pumice, .pegmatite,
+             .serpentinite, .soapstone, .phyllite, .migmatite,
+             .deepslate, .glowstone, .shadowrock, .crystalrock,
+             .bloodstone, .voidrock, .moonstone, .sunrock,
+             .dragonrock, .runestone, .aetherstone, .livingrock:
             return false
         }
     }
@@ -104,7 +138,13 @@ public enum TerrainType: String, CaseIterable, Sendable {
     public var isMinable: Bool {
         switch self {
         case .wall, .stone, .ore, .sandstone, .limestone, .granite, .obsidian,
-             .basalt, .marble, .slate, .shale, .diorite, .gabbro, .quartzite, .schist:
+             .basalt, .marble, .slate, .shale, .diorite, .gabbro, .quartzite, .schist,
+             .chalk, .mudstone, .siltstone, .travertine,
+             .rhyolite, .tuff, .pumice, .pegmatite,
+             .serpentinite, .soapstone, .phyllite, .migmatite,
+             .deepslate, .glowstone, .shadowrock, .crystalrock,
+             .bloodstone, .voidrock, .moonstone, .sunrock,
+             .dragonrock, .runestone, .aetherstone, .livingrock:
             return true
         default:
             return false
@@ -209,6 +249,33 @@ public enum TerrainType: String, CaseIterable, Sendable {
         case .gabbro: return "▰"
         case .quartzite: return "◈"
         case .schist: return "◆"
+        // Expanded real geology
+        case .chalk: return "▭"
+        case .mudstone: return "▯"
+        case .siltstone: return "▱"
+        case .travertine: return "▲"
+        case .rhyolite: return "▴"
+        case .tuff: return "▵"
+        case .pumice: return "▷"
+        case .pegmatite: return "▸"
+        case .serpentinite: return "▹"
+        case .soapstone: return "▻"
+        case .phyllite: return "▼"
+        case .migmatite: return "▽"
+        // Expanded fantasy geology
+        case .deepslate: return "◉"
+        case .glowstone: return "◎"
+        case .shadowrock: return "●"
+        case .crystalrock: return "◐"
+        case .bloodstone: return "◑"
+        case .voidrock: return "◒"
+        case .moonstone: return "◓"
+        case .sunrock: return "◔"
+        case .dragonrock: return "◕"
+        case .runestone: return "◖"
+        case .aetherstone: return "◗"
+        case .livingrock: return "◘"
+        // Constructed
         case .woodenFloor: return "="
         case .stoneFloor: return "+"
         case .constructedWall: return "H"

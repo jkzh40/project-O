@@ -97,65 +97,109 @@ struct StrataGenerator: Sendable {
     private static func layerSequence(for context: TectonicContext) -> [RockLayer] {
         switch context {
         case .stableContinental:
-            // Sediment field: sandstone → limestone → shale → gneiss → granite
+            // Sediment field with new soft rocks near surface, fantasy at depth
             return [
-                RockLayer(rockType: .sandstone, thickness: 0.20),
-                RockLayer(rockType: .limestone, thickness: 0.20),
-                RockLayer(rockType: .shale, thickness: 0.15),
-                RockLayer(rockType: .gneiss, thickness: 0.20),
-                RockLayer(rockType: .granite, thickness: 0.25),
+                RockLayer(rockType: .chalk, thickness: 0.08),
+                RockLayer(rockType: .sandstone, thickness: 0.14),
+                RockLayer(rockType: .limestone, thickness: 0.14),
+                RockLayer(rockType: .mudstone, thickness: 0.08),
+                RockLayer(rockType: .shale, thickness: 0.10),
+                RockLayer(rockType: .gneiss, thickness: 0.14),
+                RockLayer(rockType: .livingrock, thickness: 0.04),
+                RockLayer(rockType: .deepslate, thickness: 0.10),
+                RockLayer(rockType: .runestone, thickness: 0.03),
+                RockLayer(rockType: .aetherstone, thickness: 0.02),
+                RockLayer(rockType: .granite, thickness: 0.13),
             ]
 
         case .continentalCollision:
-            // High stress metamorphic: slate → schist → marble → granite
+            // High stress metamorphic with new metamorphic rocks
             return [
-                RockLayer(rockType: .slate, thickness: 0.20),
-                RockLayer(rockType: .schist, thickness: 0.25),
-                RockLayer(rockType: .marble, thickness: 0.25),
-                RockLayer(rockType: .granite, thickness: 0.30),
+                RockLayer(rockType: .phyllite, thickness: 0.10),
+                RockLayer(rockType: .slate, thickness: 0.14),
+                RockLayer(rockType: .schist, thickness: 0.14),
+                RockLayer(rockType: .serpentinite, thickness: 0.06),
+                RockLayer(rockType: .marble, thickness: 0.14),
+                RockLayer(rockType: .migmatite, thickness: 0.08),
+                RockLayer(rockType: .moonstone, thickness: 0.04),
+                RockLayer(rockType: .deepslate, thickness: 0.10),
+                RockLayer(rockType: .voidrock, thickness: 0.03),
+                RockLayer(rockType: .granite, thickness: 0.17),
             ]
 
         case .subductionZone:
-            // Volcanic arc: basalt → andesite → diorite → granite → schist
+            // Volcanic arc with new extrusive/intrusive rocks
             return [
-                RockLayer(rockType: .basalt, thickness: 0.15),
-                RockLayer(rockType: .andesite, thickness: 0.20),
-                RockLayer(rockType: .diorite, thickness: 0.20),
-                RockLayer(rockType: .granite, thickness: 0.25),
-                RockLayer(rockType: .schist, thickness: 0.20),
+                RockLayer(rockType: .tuff, thickness: 0.06),
+                RockLayer(rockType: .basalt, thickness: 0.10),
+                RockLayer(rockType: .rhyolite, thickness: 0.08),
+                RockLayer(rockType: .andesite, thickness: 0.12),
+                RockLayer(rockType: .diorite, thickness: 0.14),
+                RockLayer(rockType: .pegmatite, thickness: 0.06),
+                RockLayer(rockType: .sunrock, thickness: 0.04),
+                RockLayer(rockType: .dragonrock, thickness: 0.03),
+                RockLayer(rockType: .deepslate, thickness: 0.10),
+                RockLayer(rockType: .schist, thickness: 0.12),
+                RockLayer(rockType: .granite, thickness: 0.15),
             ]
 
         case .continentalRift:
-            // Rift fill: sandstone → basalt → granite
+            // Rift fill with siltstone and pumice, fantasy at depth
             return [
-                RockLayer(rockType: .sandstone, thickness: 0.30),
-                RockLayer(rockType: .basalt, thickness: 0.35),
-                RockLayer(rockType: .granite, thickness: 0.35),
+                RockLayer(rockType: .siltstone, thickness: 0.08),
+                RockLayer(rockType: .sandstone, thickness: 0.16),
+                RockLayer(rockType: .pumice, thickness: 0.06),
+                RockLayer(rockType: .basalt, thickness: 0.20),
+                RockLayer(rockType: .shadowrock, thickness: 0.04),
+                RockLayer(rockType: .crystalrock, thickness: 0.04),
+                RockLayer(rockType: .deepslate, thickness: 0.10),
+                RockLayer(rockType: .granite, thickness: 0.20),
+                RockLayer(rockType: .glowstone, thickness: 0.03),
+                RockLayer(rockType: .bloodstone, thickness: 0.03),
+                RockLayer(rockType: .deepslate, thickness: 0.06),
             ]
 
         case .oceanicSpread:
-            // Mid-ocean ridge: limestone → basalt → gabbro
+            // Mid-ocean ridge with tuff and soapstone
             return [
-                RockLayer(rockType: .limestone, thickness: 0.20),
-                RockLayer(rockType: .basalt, thickness: 0.40),
-                RockLayer(rockType: .gabbro, thickness: 0.40),
+                RockLayer(rockType: .travertine, thickness: 0.06),
+                RockLayer(rockType: .limestone, thickness: 0.12),
+                RockLayer(rockType: .tuff, thickness: 0.06),
+                RockLayer(rockType: .basalt, thickness: 0.26),
+                RockLayer(rockType: .soapstone, thickness: 0.04),
+                RockLayer(rockType: .gabbro, thickness: 0.26),
+                RockLayer(rockType: .deepslate, thickness: 0.08),
+                RockLayer(rockType: .aetherstone, thickness: 0.03),
+                RockLayer(rockType: .livingrock, thickness: 0.03),
+                RockLayer(rockType: .deepslate, thickness: 0.06),
             ]
 
         case .transformFault:
-            // Sheared strata: sandstone → slate → schist → granite
+            // Sheared strata with phyllite and serpentinite
             return [
-                RockLayer(rockType: .sandstone, thickness: 0.20),
-                RockLayer(rockType: .slate, thickness: 0.25),
-                RockLayer(rockType: .schist, thickness: 0.25),
-                RockLayer(rockType: .granite, thickness: 0.30),
+                RockLayer(rockType: .siltstone, thickness: 0.06),
+                RockLayer(rockType: .sandstone, thickness: 0.12),
+                RockLayer(rockType: .phyllite, thickness: 0.10),
+                RockLayer(rockType: .serpentinite, thickness: 0.08),
+                RockLayer(rockType: .slate, thickness: 0.14),
+                RockLayer(rockType: .schist, thickness: 0.14),
+                RockLayer(rockType: .runestone, thickness: 0.04),
+                RockLayer(rockType: .deepslate, thickness: 0.10),
+                RockLayer(rockType: .shadowrock, thickness: 0.03),
+                RockLayer(rockType: .granite, thickness: 0.19),
             ]
 
         case .stableOceanic:
-            // Ocean floor: limestone → basalt → gabbro
+            // Ocean floor with mudstone
             return [
-                RockLayer(rockType: .limestone, thickness: 0.15),
-                RockLayer(rockType: .basalt, thickness: 0.45),
-                RockLayer(rockType: .gabbro, thickness: 0.40),
+                RockLayer(rockType: .mudstone, thickness: 0.06),
+                RockLayer(rockType: .limestone, thickness: 0.10),
+                RockLayer(rockType: .basalt, thickness: 0.30),
+                RockLayer(rockType: .gabbro, thickness: 0.26),
+                RockLayer(rockType: .deepslate, thickness: 0.10),
+                RockLayer(rockType: .moonstone, thickness: 0.03),
+                RockLayer(rockType: .voidrock, thickness: 0.03),
+                RockLayer(rockType: .deepslate, thickness: 0.12),
             ]
         }
     }

@@ -141,6 +141,32 @@ final class TextureManager {
             .gabbro: PlatformColor(red: 0.3, green: 0.3, blue: 0.32, alpha: 1),
             .quartzite: PlatformColor(red: 0.82, green: 0.78, blue: 0.72, alpha: 1),
             .schist: PlatformColor(red: 0.45, green: 0.48, blue: 0.42, alpha: 1),
+            // Expanded real geology
+            .chalk: PlatformColor(red: 0.92, green: 0.9, blue: 0.85, alpha: 1),
+            .mudstone: PlatformColor(red: 0.52, green: 0.44, blue: 0.36, alpha: 1),
+            .siltstone: PlatformColor(red: 0.58, green: 0.52, blue: 0.42, alpha: 1),
+            .travertine: PlatformColor(red: 0.88, green: 0.82, blue: 0.7, alpha: 1),
+            .rhyolite: PlatformColor(red: 0.65, green: 0.55, blue: 0.5, alpha: 1),
+            .tuff: PlatformColor(red: 0.55, green: 0.5, blue: 0.42, alpha: 1),
+            .pumice: PlatformColor(red: 0.78, green: 0.76, blue: 0.72, alpha: 1),
+            .pegmatite: PlatformColor(red: 0.7, green: 0.65, blue: 0.62, alpha: 1),
+            .serpentinite: PlatformColor(red: 0.3, green: 0.45, blue: 0.3, alpha: 1),
+            .soapstone: PlatformColor(red: 0.65, green: 0.68, blue: 0.62, alpha: 1),
+            .phyllite: PlatformColor(red: 0.48, green: 0.5, blue: 0.46, alpha: 1),
+            .migmatite: PlatformColor(red: 0.58, green: 0.52, blue: 0.55, alpha: 1),
+            // Expanded fantasy geology
+            .deepslate: PlatformColor(red: 0.18, green: 0.18, blue: 0.22, alpha: 1),
+            .glowstone: PlatformColor(red: 0.7, green: 0.85, blue: 0.6, alpha: 1),
+            .shadowrock: PlatformColor(red: 0.2, green: 0.15, blue: 0.25, alpha: 1),
+            .crystalrock: PlatformColor(red: 0.65, green: 0.75, blue: 0.85, alpha: 1),
+            .bloodstone: PlatformColor(red: 0.55, green: 0.15, blue: 0.15, alpha: 1),
+            .voidrock: PlatformColor(red: 0.12, green: 0.08, blue: 0.18, alpha: 1),
+            .moonstone: PlatformColor(red: 0.7, green: 0.72, blue: 0.85, alpha: 1),
+            .sunrock: PlatformColor(red: 0.85, green: 0.7, blue: 0.35, alpha: 1),
+            .dragonrock: PlatformColor(red: 0.5, green: 0.2, blue: 0.1, alpha: 1),
+            .runestone: PlatformColor(red: 0.45, green: 0.5, blue: 0.6, alpha: 1),
+            .aetherstone: PlatformColor(red: 0.6, green: 0.7, blue: 0.8, alpha: 1),
+            .livingrock: PlatformColor(red: 0.4, green: 0.55, blue: 0.35, alpha: 1),
         ]
 
         let size = CGSize(width: 32, height: 32)
